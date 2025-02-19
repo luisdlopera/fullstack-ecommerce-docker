@@ -58,7 +58,7 @@ export function Header() {
                     </div>
                 </div>
 
-                <div className="hidden sm:flex items-center justify-center gap-20">
+                <div className="hidden sm:flex items-center justify-center gap-12">
                     {menuItems.map((item, index) => {
                         const itemToUrlMap: { [key: string]: string } = {
                             "Inicio": "",
@@ -69,12 +69,13 @@ export function Header() {
                         };
                         const url = itemToUrlMap[item];
                         const isActive = window.location.pathname === `/${url}`;
+                        const isHomePage = window.location.pathname === "/";
                         return (
                             <div key={index}>
                                 <Link
                                     color="foreground"
                                     href={`/${url}`}
-                                    className={`${scrolled ? "text-black" : "text-white"} ${isActive ? "bg-primary text-white font-bold px-5 py-2 rounded-xl" : ""}`}
+                                    className={`text-black ${scrolled ? "text-black" : isHomePage ? "text-white" : "text-black"} ${isActive ? "bg-primary text-white font-bold px-5 py-2 rounded-xl" : "px-5 py-2 rounded-xl"} hover:bg-gray-200 hover:text-black transition-colors duration-300`}
                                 >
                                     {item}
                                 </Link>

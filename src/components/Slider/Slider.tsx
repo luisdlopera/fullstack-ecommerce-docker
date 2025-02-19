@@ -89,6 +89,7 @@ export function Slider() {
             <Link className="custom-next absolute right-10 top-1/2 -translate-y-1/2 p-3 z-10 text-white">
                 <ChevronRight size={30} />
             </Link>
+            <Image className='w-full relative -top-20' src='/Separator.svg' alt='' width={100} height={100}/>
         </div>
     );
 }

@@ -58,16 +58,14 @@ export function Slider() {
 							className='h-full w-full object-cover'
 						/>
 						<div className='absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-white'>
-							<h2 className='mb-4 text-5xl font-bold'>Tu outfit soñado, ahora con oferta.</h2>
+							<h2 className='mb-4 text-5xl font-bold'> El look que deseas, al mejor precio.</h2>
 							<p className='mb-6 text-lg'>
-								Hasta 60% de descuento en ropa de mujer y hombre. ¡Corre antes de que se agoten!
+								Encuentra las tendencias más exclusivas con descuentos irresistibles. ¡Solo por tiempo
+								limitado!
 							</p>
 							<div className='flex gap-4'>
 								<Button className='bg-primary text-white' endContent={<ArrowUpRight />}>
-									Nuevas colecciones
-								</Button>
-								<Button className='' variant='bordered'>
-									Accesorios
+									Conocer outfits
 								</Button>
 							</div>
 						</div>
@@ -83,16 +81,13 @@ export function Slider() {
 							className='h-full w-full object-cover'
 						/>
 						<div className='absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-white'>
-							<h2 className='mb-4 text-5xl font-bold'>Tu outfit soñado, ahora con oferta.</h2>
-							<p className='mb-6 text-lg'>
-								Hasta 60% de descuento en ropa de mujer y hombre. ¡Corre antes de que se agoten!
-							</p>
+							<h2 className='mb-4 text-5xl font-bold'>
+								La moda que te define, a precios que te encantan.
+							</h2>
+							<p className='mb-6 text-lg'>Moda para él, con hasta 50% de descuento. ¡No te lo pierdas!</p>
 							<div className='flex gap-4'>
 								<Button className='bg-primary text-white' endContent={<ArrowUpRight />}>
-									Nuevas colecciones
-								</Button>
-								<Button className='' variant='bordered'>
-									Accesorios
+									Conocer más
 								</Button>
 							</div>
 						</div>

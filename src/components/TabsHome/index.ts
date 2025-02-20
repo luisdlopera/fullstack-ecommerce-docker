@@ -1,0 +1,1 @@
+export { TabsHome } from './TabsHome';

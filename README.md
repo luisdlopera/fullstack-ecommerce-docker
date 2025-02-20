@@ -38,20 +38,22 @@ Puedes ejecutar los siguientes comandos en el proyecto:
 ## ⚙️ Configuración adicional
 
 1. **Configuración de Tailwind CSS**
-   - Asegúrate de que `tailwind.config.js` y `postcss.config.js` están correctamente configurados.
+
+    - Asegúrate de que `tailwind.config.js` y `postcss.config.js` están correctamente configurados.
 
 2. **Base de datos con Docker**
-   - Levanta la base de datos con Docker:
-     ```bash
-     docker-compose up -d
-     ```
-   - Ejecuta las migraciones de Prisma:
-     ```bash
-     npx prisma migrate dev
-     ```
+
+    - Levanta la base de datos con Docker:
+        ```bash
+        docker-compose up -d
+        ```
+    - Ejecuta las migraciones de Prisma:
+        ```bash
+        npx prisma migrate dev
+        ```
 
 3. **Variables de entorno**
-   - Renombra `.env.example` a `.env` y configura las credenciales necesarias.
+    - Renombra `.env.example` a `.env` y configura las credenciales necesarias.
 
 ## 📂 Estructura del Proyecto
 
@@ -78,10 +80,10 @@ my-app/
 
 ## 🔧 Comandos Útiles
 
-| Comando         | Descripción                                     |
-|----------------|---------------------------------------------|
-| `npm run dev`  | Inicia el servidor en modo desarrollo       |
-| `npm run build`| Compila la aplicación para producción       |
-| `npm run start`| Inicia la aplicación en producción          |
-| `npm run lint` | Ejecuta ESLint para corregir errores de código |
-| `npm run format` | Formatea el código con Prettier |
+| Comando          | Descripción                                    |
+| ---------------- | ---------------------------------------------- |
+| `npm run dev`    | Inicia el servidor en modo desarrollo          |
+| `npm run build`  | Compila la aplicación para producción          |
+| `npm run start`  | Inicia la aplicación en producción             |
+| `npm run lint`   | Ejecuta ESLint para corregir errores de código |
+| `npm run format` | Formatea el código con Prettier                |

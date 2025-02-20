@@ -1,7 +1,3 @@
 export function ProductCard() {
-    return (
-        <>
-            hola mundo soy un product card
-        </>
-    )
+	return <>hola mundo soy un product card</>;
 }

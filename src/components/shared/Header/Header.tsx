@@ -38,7 +38,7 @@ export function Header() {
 
 	return (
 		<header
-			className={`fixed top-0 z-20 mx-auto flex h-[84px] w-full items-center justify-center transition-all ${scrolled ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
+			className={`fixed top-0 z-50 mx-auto flex h-[84px] w-full items-center justify-center transition-all ${scrolled ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
 		>
 			<div className='mx-auto flex w-[90%] items-center justify-between'>
 				<div>

@@ -2,11 +2,11 @@ import { Link, Image } from '@heroui/react';
 
 export function Footer() {
 	return (
-		<footer className='absolute bottom-0 w-full bg-black py-8 text-center text-white'>
-			<div className='relative z-10 flex flex-col items-center gap-4'>
-				<h2 className='text-lg font-bold'>NEXSTORE</h2>
+		<footer className='absolute bottom-0 w-full bg-black py-8 text-center text-white mt-20'>
+			<div className='relative z-10 flex flex-col items-center gap-4 my-10'>
+				<h2 className='text-2xl font-bold'>NEXSTORE</h2>
 
-				<p className='text-sm'>
+				<p className='text-lg'>
 					<span className='font-semibold'>Descubre una experiencia de compra única:</span>
 					<br />
 					moda, calidad y exclusividad en un solo lugar.
@@ -24,7 +24,7 @@ export function Footer() {
 				<p className='text-xs text-gray-400'>©2024 Todos los derechos reservados a nexstore, open project</p>
 			</div>
 
-			<div className='absolute bottom-0 mt-6 flex w-full justify-center gap-6 bg-primary py-2 text-xs text-white'>
+			<div className='absolute bottom-0 mt-20 flex w-full justify-center gap-6 bg-primary py-2 text-xs text-white'>
 				<a href='#' className='hover:underline'>
 					Términos y condiciones
 				</a>

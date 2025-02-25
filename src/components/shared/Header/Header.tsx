@@ -87,7 +87,7 @@ export function Header() {
 					<div className='hidden lg:flex'>
 						<Button
 							as={Link}
-							href='/login'
+							href='/auth'
 							aria-label='Login'
 							color='default'
 							className='flex items-center gap-2 font-bold'

@@ -6,7 +6,7 @@ import { ProductCard } from '../shared/ProductCard';
 export function TabsHome() {
 	return (
 		<>
-			<section className='mx-auto mt-96 flex w-11/12 flex-col'>
+			<section className='mx-auto flex w-11/12 flex-col'>
 				<Tabs aria-label='Options' className='flex w-full justify-center'>
 					<Tab key='new' title='Nuevas colecciones' className='p-7 text-xl'>
 						<ProductCard

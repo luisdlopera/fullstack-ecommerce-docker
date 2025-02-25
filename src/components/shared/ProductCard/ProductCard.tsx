@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Image } from '@heroui/react';
+import { Button, Image, Tooltip } from '@heroui/react';
 import { Heart, ShoppingCart } from 'lucide-react';
 
 interface ProductCardProps {
@@ -32,7 +32,6 @@ export function ProductCard({
 				onMouseEnter={() => setHover(true)}
 				onMouseLeave={() => setHover(false)}
 			>
-				{/* Etiquetas de Nuevo y Descuento */}
 				<div className='absolute left-3 top-3 z-20 flex gap-2'>
 					{isNew && <span className='z-10 rounded-md bg-black px-2 py-1 text-xs text-white'>Nuevo</span>}
 					{discount > 0 && (
@@ -43,33 +42,33 @@ export function ProductCard({
 					)}
 				</div>
 
-				{/* Imagen del producto */}
-				<div className='flex justify-center'>
+				<div className='flex justify-center cursor-pointer'>
 					<Image
 						src={image}
 						alt={name}
-						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity ${
-							hover ? 'absolute opacity-0' : 'opacity-100'
-						}`}
+						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${hover ? 'absolute opacity-0' : 'opacity-100'
+							}`}
 					/>
 					<Image
 						src={image2}
 						alt={name}
-						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity ${
-							hover ? 'opacity-100' : 'absolute opacity-0'
-						}`}
+						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${hover ? 'opacity-100' : 'absolute opacity-0'
+							}`}
 					/>
 				</div>
 
-				{/* Contenido dinámico en hover */}
 				{hover && (
 					<div className='absolute right-3 top-3 z-20 flex flex-col gap-2'>
-						<Button className='rounded-full bg-white p-2 shadow-md hover:bg-gray-200'>
-							<Heart />
-						</Button>
-						<Button className='rounded-full bg-white p-2 shadow-md hover:bg-gray-200'>
-							<ShoppingCart />
-						</Button>
+						<Tooltip content="Agregar a favoritos" className='text-black'>
+							<Button isIconOnly className='w-14 h-14 bg-white p-2 shadow-md hover:bg-gray-200'>
+								<Heart />
+							</Button>
+						</Tooltip>
+						<Tooltip content="Agregar al carrito" className='text-black'>
+							<Button isIconOnly className=' w-14 h-14 bg-white p-2 shadow-md hover:bg-gray-200'>
+								<ShoppingCart />
+							</Button>
+						</Tooltip>
 					</div>
 				)}
 			</div>

@@ -2,6 +2,10 @@
 
 NexStore es un proyecto de e-commerce desarrollado con Next.js 15, React 19 y TailwindCSS, que utiliza Prisma y PostgreSQL con Docker en el backend.
 
+![Pantalla de NexStore](/public/img/screen.png)
+
+[Diseño en Figma](https://www.figma.com/design/QUbreJDw06vIif7ZdEoAcE/Nexstore?node-id=0-1&t=21h6mCPxhWuWpSN5-1)
+
 ## 🚀 Tecnologías utilizadas
 
 - **Next.js 15.1.7** - Framework de React para aplicaciones web modernas.

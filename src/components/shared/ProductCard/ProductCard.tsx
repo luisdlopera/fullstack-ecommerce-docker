@@ -42,30 +42,32 @@ export function ProductCard({
 					)}
 				</div>
 
-				<div className='flex justify-center cursor-pointer'>
+				<div className='flex cursor-pointer justify-center'>
 					<Image
 						src={image}
 						alt={name}
-						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${hover ? 'absolute opacity-0' : 'opacity-100'
-							}`}
+						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+							hover ? 'absolute opacity-0' : 'opacity-100'
+						}`}
 					/>
 					<Image
 						src={image2}
 						alt={name}
-						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${hover ? 'opacity-100' : 'absolute opacity-0'
-							}`}
+						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+							hover ? 'opacity-100' : 'absolute opacity-0'
+						}`}
 					/>
 				</div>
 
 				{hover && (
 					<div className='absolute right-3 top-3 z-20 flex flex-col gap-2'>
-						<Tooltip content="Agregar a favoritos" className='text-black'>
-							<Button isIconOnly className='w-14 h-14 bg-white p-2 shadow-md hover:bg-gray-200'>
+						<Tooltip content='Agregar a favoritos' className='text-black'>
+							<Button isIconOnly className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'>
 								<Heart />
 							</Button>
 						</Tooltip>
-						<Tooltip content="Agregar al carrito" className='text-black'>
-							<Button isIconOnly className=' w-14 h-14 bg-white p-2 shadow-md hover:bg-gray-200'>
+						<Tooltip content='Agregar al carrito' className='text-black'>
+							<Button isIconOnly className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'>
 								<ShoppingCart />
 							</Button>
 						</Tooltip>

@@ -23,9 +23,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='en'>
-			<body
-				className={`${urbanist.className} relative flex h-[2000px] min-h-screen flex-col bg-white antialiased`}
-			>
+			<body className={`${urbanist.className} relative flex min-h-screen flex-col bg-white antialiased`}>
 				<HeroUIProvider>
 					<Header />
 					{children}

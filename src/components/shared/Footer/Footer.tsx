@@ -2,8 +2,8 @@ import { Link, Image } from '@heroui/react';
 
 export function Footer() {
 	return (
-		<footer className='absolute bottom-0 w-full bg-black py-8 text-center text-white mt-20'>
-			<div className='relative z-10 flex flex-col items-center gap-4 my-10'>
+		<footer className='mt-auto w-full bg-black py-8 text-center text-white'>
+			<div className='relative z-10 my-10 flex flex-col items-center gap-4'>
 				<h2 className='text-2xl font-bold'>NEXSTORE</h2>
 
 				<p className='text-lg'>

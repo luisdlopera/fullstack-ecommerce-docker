@@ -27,7 +27,7 @@ git clone https://github.com/tu-usuario/nexstore.git
 cd nexstore
 
 # Instalar dependencias
-npm install  # o yarn install
+npm install
 ```
 
 ## 🏗️ Scripts disponibles

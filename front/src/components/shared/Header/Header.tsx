@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from '@heroui/react';
-import { Heart, Search, ShoppingCart, User } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { Badge, Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
+import { Heart, LogOut, Package, Search, ShoppingCart, User } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ItemToUrlMap {
 	Inicio: string;
@@ -16,6 +18,9 @@ interface ItemToUrlMap {
 
 export function Header() {
 	const pathname = usePathname();
+	const router = useRouter();
+	const { totalItems } = useCart();
+	const { user, logout } = useAuth();
 	const menuItems = ['Inicio', 'Nuevo', 'Hombre', 'Mujer', 'Niños'];
 	const [scrolled, setScrolled] = useState(false);
 
@@ -36,6 +41,11 @@ export function Header() {
 		Niños: 'kids',
 	};
 
+	const handleLogout = () => {
+		logout();
+		router.push('/');
+	};
+
 	return (
 		<header
 			className={`fixed top-0 z-50 mx-auto flex h-[84px] w-full items-center justify-center transition-all ${scrolled ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
@@ -52,8 +62,7 @@ export function Header() {
 
 				<div className='hidden items-center justify-center gap-8 sm:flex'>
 					{menuItems.map((item, index) => {
-						const url = itemToUrlMap[item as keyof ItemToUrlMap]; // Type assertion here
-
+						const url = itemToUrlMap[item as keyof ItemToUrlMap];
 						const isActive = pathname === `/${url}` || (pathname === '/' && url === '');
 						return (
 							<div key={index}>
@@ -80,21 +89,45 @@ export function Header() {
 						</Button>
 					</div>
 					<div className='hidden lg:flex'>
-						<Button as={Link} href='#' isIconOnly aria-label='Cart' color='default'>
-							<ShoppingCart />
-						</Button>
+						<Badge content={totalItems > 0 ? totalItems : undefined} color='primary' size='sm'>
+							<Button as={Link} href='/cart' isIconOnly aria-label='Cart' color='default'>
+								<ShoppingCart />
+							</Button>
+						</Badge>
 					</div>
 					<div className='hidden lg:flex'>
-						<Button
-							as={Link}
-							href='/auth'
-							aria-label='Login'
-							color='default'
-							className='flex items-center gap-2 font-bold'
-						>
-							<User />
-							Iniciar sesión
-						</Button>
+						{user ? (
+							<Dropdown>
+								<DropdownTrigger>
+									<Button aria-label='User menu' color='default' className='flex items-center gap-2 font-bold'>
+										<User size={18} />
+										{user.name}
+									</Button>
+								</DropdownTrigger>
+								<DropdownMenu aria-label='User actions'>
+									<DropdownItem key='account' startContent={<User size={16} />} onPress={() => router.push('/account')}>
+										Mi cuenta
+									</DropdownItem>
+									<DropdownItem key='orders' startContent={<Package size={16} />} onPress={() => router.push('/orders')}>
+										Mis pedidos
+									</DropdownItem>
+									<DropdownItem key='logout' startContent={<LogOut size={16} />} color='danger' onPress={handleLogout}>
+										Cerrar sesión
+									</DropdownItem>
+								</DropdownMenu>
+							</Dropdown>
+						) : (
+							<Button
+								as={Link}
+								href='/auth'
+								aria-label='Login'
+								color='default'
+								className='flex items-center gap-2 font-bold'
+							>
+								<User />
+								Iniciar sesión
+							</Button>
+						)}
 					</div>
 				</div>
 			</div>

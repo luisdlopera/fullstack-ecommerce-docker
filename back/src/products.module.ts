@@ -1,20 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ProductsController } from './interfaces/http/products.controller';
-import { GetFeaturedProductsUseCase } from './application/use-cases/get-featured-products.use-case';
 import { PrismaService } from './infrastructure/prisma/prisma.service';
-import { PrismaProductRepository } from './infrastructure/repositories/prisma-product.repository';
-import { PRODUCT_REPOSITORY } from './application/ports/product-repository.port';
+import { ProductsService } from './products/products.service';
+import { CategoriesController } from './interfaces/http/categories.controller';
+import { CountriesController } from './interfaces/http/countries.controller';
 
 @Module({
-  controllers: [ProductsController],
-  providers: [
-    PrismaService,
-    GetFeaturedProductsUseCase,
-    PrismaProductRepository,
-    {
-      provide: PRODUCT_REPOSITORY,
-      useExisting: PrismaProductRepository
-    }
-  ]
+  controllers: [ProductsController, CategoriesController, CountriesController],
+  providers: [PrismaService, ProductsService],
+  exports: [PrismaService, ProductsService]
 })
 export class ProductsModule {}

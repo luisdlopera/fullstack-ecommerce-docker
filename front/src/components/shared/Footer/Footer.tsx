@@ -1,3 +1,5 @@
+'use client';
+
 import { Link, Image } from '@heroui/react';
 
 export function Footer() {

@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
+import { PrismaService } from './infrastructure/prisma/prisma.service';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
   ],
   controllers: [HealthController],
   providers: [
+    PrismaService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard

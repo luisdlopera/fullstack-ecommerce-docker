@@ -1,9 +1,5 @@
-import { Header } from '@/components/shared/Header';
+import { ProductGrid } from '@/components/shared/ProductGrid';
 
 export default function NewPage() {
-	return (
-		<>
-			<Header />
-		</>
-	);
+	return <ProductGrid title='Nuevas Colecciones' />;
 }

@@ -20,7 +20,7 @@
     "@nestjs/common": "latest",
     "@nestjs/core": "latest",
     "@nestjs/platform-express": "latest",
-    "@prisma/client": "^6.4.1",
+    "@prisma/client": "^6.12.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -35,7 +35,7 @@
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
     "prettier": "^3.5.1",
-    "prisma": "^6.4.1",
+    "prisma": "^6.12.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",

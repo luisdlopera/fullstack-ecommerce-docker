@@ -18,6 +18,9 @@ import { Roles } from '../common/auth/roles.decorator';
 import { AdminService } from './admin.service';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpsertProductDto } from './dto/upsert-product.dto';
+import { UpsertCategoryDto } from './dto/upsert-category.dto';
+import { UpsertCountryDto } from './dto/upsert-country.dto';
+import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto';
 
 class ProductImageDto {
   @IsString()
@@ -29,6 +32,8 @@ class ProductImageDto {
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  // --- Users ---
 
   @Get('users')
   getUsers(
@@ -49,6 +54,8 @@ export class AdminController {
     return this.adminService.updateUserRole(userId, dto, user.sub);
   }
 
+  // --- Orders ---
+
   @Get('orders')
   getOrders(
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
@@ -57,6 +64,13 @@ export class AdminController {
   ) {
     return this.adminService.getOrders(page, limit, paid);
   }
+
+  @Patch('orders/:id/status')
+  updateOrderStatus(@Param('id') orderId: string, @Body() dto: UpdateOrderStatusDto) {
+    return this.adminService.updateOrderStatus(orderId, dto.status);
+  }
+
+  // --- Products ---
 
   @Post('products')
   createProduct(@Body() dto: UpsertProductDto) {
@@ -84,5 +98,44 @@ export class AdminController {
     @Param('imageId', ParseIntPipe) imageId: number
   ) {
     return this.adminService.deleteProductImage(productId, imageId);
+  }
+
+  // --- Categories ---
+
+  @Get('categories')
+  getCategories() {
+    return this.adminService.getCategories();
+  }
+
+  @Post('categories')
+  createCategory(@Body() dto: UpsertCategoryDto) {
+    return this.adminService.createCategory(dto);
+  }
+
+  @Patch('categories/:id')
+  updateCategory(@Param('id') id: string, @Body() dto: UpsertCategoryDto) {
+    return this.adminService.updateCategory(id, dto);
+  }
+
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.adminService.deleteCategory(id);
+  }
+
+  // --- Countries ---
+
+  @Get('countries')
+  getCountries() {
+    return this.adminService.getCountries();
+  }
+
+  @Post('countries')
+  createCountry(@Body() dto: UpsertCountryDto) {
+    return this.adminService.createCountry(dto);
+  }
+
+  @Delete('countries/:id')
+  deleteCountry(@Param('id') id: string) {
+    return this.adminService.deleteCountry(id);
   }
 }

@@ -4,11 +4,7 @@ const schema = z.object({
 	email: z.string().email(),
 	password: z
 		.string()
-		.min(8)
-		.regex(/[A-Z]/, 'Must contain one uppercase letter')
-		.regex(/[a-z]/, 'Must contain one lowercase letter')
-		.regex(/[0-9]/, 'Must contain one number')
-		.regex(/[!@#$%^&*]/, 'Must contain one special character (!@#$%^&*)'),
+		.min(8, 'Password must be at least 8 characters'),
 });
 
 export function validationErrors(formData: FormData) {

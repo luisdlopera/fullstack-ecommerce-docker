@@ -46,17 +46,32 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: 'user@nexstore.com' },
+    where: { email: 'admin@nexstore.com' },
     update: {
-      name: 'nexstore',
+      name: 'Admin',
       password: bcryptjs.hashSync('Qwert.12345', 10),
       role: 'admin'
     },
     create: {
-      email: 'user@nexstore.com',
-      name: 'nexstore',
+      email: 'admin@nexstore.com',
+      name: 'Admin',
       password: bcryptjs.hashSync('Qwert.12345', 10),
       role: 'admin'
+    }
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'cliente@nexstore.com' },
+    update: {
+      name: 'Cliente',
+      password: bcryptjs.hashSync('Qwert.12345', 10),
+      role: 'user'
+    },
+    create: {
+      email: 'cliente@nexstore.com',
+      name: 'Cliente',
+      password: bcryptjs.hashSync('Qwert.12345', 10),
+      role: 'user'
     }
   });
 

@@ -4,9 +4,16 @@ import {
   Injectable,
   NotFoundException
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { OrderStatus, Role } from '@prisma/client';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { CreateOrderDto, UpdateOrderPaymentDto } from './dto/create-order.dto';
+
+const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  [OrderStatus.pending]: [OrderStatus.shipped, OrderStatus.cancelled],
+  [OrderStatus.shipped]: [OrderStatus.delivered],
+  [OrderStatus.delivered]: [],
+  [OrderStatus.cancelled]: []
+};
 
 @Injectable()
 export class OrdersService {
@@ -62,6 +69,7 @@ export class OrdersService {
           tax,
           total,
           itemsInOrder,
+          status: OrderStatus.pending,
           OrderItem: {
             create: dto.items.map((item) => {
               const product = productMap.get(item.productId)!;
@@ -127,6 +135,36 @@ export class OrdersService {
     return order;
   }
 
+  async updateStatus(orderId: string, newStatus: OrderStatus, userId: string, role: Role) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+
+    if (newStatus === OrderStatus.cancelled) {
+      if (role !== Role.admin && order.userId !== userId) {
+        throw new ForbiddenException('You cannot cancel this order');
+      }
+    } else if (role !== Role.admin) {
+      throw new ForbiddenException('Only admins can update order status');
+    }
+
+    const allowed = ALLOWED_TRANSITIONS[order.status];
+    if (!allowed.includes(newStatus)) {
+      throw new BadRequestException(
+        `Cannot transition from "${order.status}" to "${newStatus}"`
+      );
+    }
+
+    if (newStatus === OrderStatus.cancelled && !order.isPaid) {
+      await this.restoreStock(orderId);
+    }
+
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+      include: { OrderItem: true, OrderAddress: true }
+    });
+  }
+
   async markAsPaid(orderId: string, dto: UpdateOrderPaymentDto) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Order not found');
@@ -147,5 +185,18 @@ export class OrdersService {
         transactionId: dto.transactionId
       }
     });
+  }
+
+  private async restoreStock(orderId: string) {
+    const items = await this.prisma.orderItem.findMany({
+      where: { orderId }
+    });
+
+    for (const item of items) {
+      await this.prisma.product.update({
+        where: { id: item.productId },
+        data: { inStock: { increment: item.quantity } }
+      });
+    }
   }
 }

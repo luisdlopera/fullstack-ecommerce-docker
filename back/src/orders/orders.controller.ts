@@ -4,6 +4,7 @@ import { CurrentUser } from '../common/auth/current-user.decorator';
 import type { JwtPayload } from '../common/auth/jwt-payload';
 import { Roles } from '../common/auth/roles.decorator';
 import { CreateOrderDto, UpdateOrderPaymentDto } from './dto/create-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
@@ -27,6 +28,15 @@ export class OrdersController {
   @Get(':id')
   getOrderById(@Param('id') orderId: string, @CurrentUser() user: JwtPayload) {
     return this.ordersService.getById(orderId, user.sub, user.role);
+  }
+
+  @Patch(':id/status')
+  updateOrderStatus(
+    @Param('id') orderId: string,
+    @Body() dto: UpdateOrderStatusDto,
+    @CurrentUser() user: JwtPayload
+  ) {
+    return this.ordersService.updateStatus(orderId, dto.status, user.sub, user.role);
   }
 
   @Roles(Role.admin)

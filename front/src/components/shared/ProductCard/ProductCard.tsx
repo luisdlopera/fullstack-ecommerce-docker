@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { Button, Image, Tooltip } from '@heroui/react';
 import { Heart, ShoppingCart } from 'lucide-react';
+import Link from 'next/link';
 
 interface ProductCardProps {
 	name: string;
 	price: number;
 	image: string;
 	image2?: string;
+	slug?: string;
 	isNew?: boolean;
 	discount?: number;
 	isSoldOut?: boolean;
@@ -19,13 +21,14 @@ export function ProductCard({
 	price,
 	image,
 	image2,
+	slug,
 	isNew = false,
 	discount = 0,
 	isSoldOut = false,
 }: ProductCardProps) {
 	const [hover, setHover] = useState<boolean>(false);
 
-	return (
+	const card = (
 		<div className='flex flex-col items-center gap-4'>
 			<div
 				className='relative h-[355px] w-[290px] rounded-3xl bg-gray-100'
@@ -51,7 +54,7 @@ export function ProductCard({
 						}`}
 					/>
 					<Image
-						src={image2}
+						src={image2 || image}
 						alt={name}
 						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
 							hover ? 'opacity-100' : 'absolute opacity-0'
@@ -66,7 +69,7 @@ export function ProductCard({
 								<Heart />
 							</Button>
 						</Tooltip>
-						<Tooltip content='Agregar al carrito' className='text-black'>
+						<Tooltip content='Ver producto' className='text-black'>
 							<Button isIconOnly className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'>
 								<ShoppingCart />
 							</Button>
@@ -81,4 +84,10 @@ export function ProductCard({
 			</div>
 		</div>
 	);
+
+	if (slug) {
+		return <Link href={`/products/${slug}`}>{card}</Link>;
+	}
+
+	return card;
 }

@@ -29,6 +29,13 @@ enum Role {
   user
 }
 
+enum OrderStatus {
+  pending
+  shipped
+  delivered
+  cancelled
+}
+
 model Category {
   id      String    @id @default(uuid())
   name    String    @unique
@@ -77,7 +84,8 @@ model User {
   address UserAddress?
 
   // Relaciones
-  Order Order[]
+  Order        Order[]
+  RefreshToken RefreshToken[]
 }
 
 model Country {
@@ -108,13 +116,14 @@ model UserAddress {
 
 // Order de compras
 model Order {
-  id           String    @id @default(uuid())
+  id           String      @id @default(uuid())
   subTotal     Float
   tax          Float
   total        Float
   itemsInOrder Int
-  isPaid       Boolean   @default(false)
+  isPaid       Boolean     @default(false)
   paidAt       DateTime?
+  status       OrderStatus @default(pending)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -127,6 +136,17 @@ model Order {
   OrderAddress OrderAddress?
 
   transactionId String?
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model OrderItem {

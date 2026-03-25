@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException
 } from '@nestjs/common';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
@@ -15,6 +16,8 @@ type MercadoPagoPayment = {
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async verifyMercadoPagoPayment(paymentId: string) {
@@ -34,6 +37,46 @@ export class PaymentsService {
     }
 
     const payment = (await response.json()) as MercadoPagoPayment;
+    return this.processPayment(payment);
+  }
+
+  async handleWebhook(body: Record<string, unknown>) {
+    const type = body.type ?? body.action;
+    if (type !== 'payment') {
+      return { ok: true, ignored: true };
+    }
+
+    const dataId = (body.data as { id?: string })?.id;
+    if (!dataId) {
+      return { ok: true, ignored: true };
+    }
+
+    const accessToken = process.env.MP_ACCESS_TOKEN;
+    if (!accessToken) {
+      this.logger.warn('Webhook received but MP_ACCESS_TOKEN is not configured');
+      return { ok: false, reason: 'not_configured' };
+    }
+
+    try {
+      const response = await fetch(`https://api.mercadopago.com/v1/payments/${dataId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!response.ok) {
+        this.logger.warn(`Webhook: failed to fetch payment ${dataId}`);
+        return { ok: false, reason: 'fetch_failed' };
+      }
+
+      const payment = (await response.json()) as MercadoPagoPayment;
+      const result = await this.processPayment(payment);
+      return result;
+    } catch (err) {
+      this.logger.error(`Webhook processing error for payment ${dataId}`, err);
+      return { ok: false, reason: 'processing_error' };
+    }
+  }
+
+  private async processPayment(payment: MercadoPagoPayment) {
     if (payment.status !== 'approved') {
       throw new BadRequestException(`Payment is not approved: ${payment.status}`);
     }

@@ -8,7 +8,13 @@ export class PrismaProductRepository implements ProductRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
   async findFeatured(limit = 8): Promise<Product[]> {
-    const rows = await this.prisma.product.findMany({
+    const rows: Array<{
+      id: string;
+      title: string;
+      price: number;
+      slug: string;
+      ProductImage: Array<{ url: string }>;
+    }> = await this.prisma.product.findMany({
       take: limit,
       orderBy: { title: 'asc' },
       include: {
@@ -21,7 +27,7 @@ export class PrismaProductRepository implements ProductRepositoryPort {
       title: row.title,
       price: row.price,
       slug: row.slug,
-      images: row.ProductImage.map((img) => img.url)
+      images: row.ProductImage.map((img: { url: string }) => img.url)
     }));
   }
 }

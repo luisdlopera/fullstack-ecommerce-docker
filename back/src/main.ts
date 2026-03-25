@@ -1,8 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { config as loadEnv } from 'dotenv';
+import { resolve } from 'node:path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Support both back/.env and root .env for local workspace runs.
+  loadEnv({ path: resolve(process.cwd(), '.env') });
+  loadEnv({ path: resolve(process.cwd(), '..', '.env') });
+
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api');

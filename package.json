@@ -17,6 +17,7 @@
     "dev:up": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "dev:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "dev:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
+    "dev:clean": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v && docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "dc:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "dc:dev:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "dc:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",

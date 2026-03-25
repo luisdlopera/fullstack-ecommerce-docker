@@ -4,9 +4,14 @@ services:
       context: ./back
       dockerfile: Dockerfile
       target: builder
-    command: sh -c "npx prisma migrate deploy && npm run start:dev"
+    command: sh -c "npx prisma db push --skip-generate && npm run start:dev"
     environment:
       CHOKIDAR_USEPOLLING: "true"
+      JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+      TAX_RATE: ${TAX_RATE:-0.15}
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-replace-with-mercadopago-access-token}
     healthcheck:
       disable: true
     volumes:

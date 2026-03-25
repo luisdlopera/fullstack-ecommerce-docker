@@ -1,12 +1,12 @@
 # NexStore
 
-NexStore ahora está organizado como monorepo con separación clara entre frontend y backend:
+NexStore es un e-commerce organizado como monorepo con separación clara entre frontend y backend:
 
 - `front/`: Next.js (UI)
 - `back/`: NestJS con arquitectura hexagonal + Prisma
 - `docker-compose.yml`: orquestación completa (`front`, `back`, `postgres`)
 
-## Stack actual
+## Stack
 
 - Next.js (`latest`) + React (`latest`) en `front/`
 - NestJS (`latest`) en `back/`
@@ -20,57 +20,9 @@ nexstore/
   front/                  # Next.js app
   back/                   # NestJS API + Prisma
   docker-compose.yml      # postgres + back + front
+  docker-compose.dev.yml  # overrides para desarrollo con hot reload
   .env.template
 ```
-
-## Levantar todo con un comando
-
-1) Crea `.env` en raíz a partir de `.env.template`:
-
-```bash
-cp .env.template .env
-```
-
-2) Levanta todo:
-
-```bash
-docker compose up --build
-```
-
-Servicios:
-
-- Frontend: `http://localhost:3000`
-- Backend health: `http://localhost:4000/api/health`
-- Backend products: `http://localhost:4000/api/products/featured`
-- PostgreSQL: `localhost:5432`
-
-## Desarrollo con Docker (hot reload)
-
-Para ver cambios del código inmediatamente sin reconstruir imágenes en cada cambio:
-
-```bash
-npm run dev:build
-```
-
-Luego, en ejecuciones siguientes puedes usar:
-
-```bash
-npm run dev:up
-```
-
-Para apagar contenedores:
-
-```bash
-npm run dev:down
-```
-
-Notas:
-
-- `front` corre con `next dev` y recarga en caliente.
-- `back` corre con `tsx watch` y recompila automáticamente.
-- En Docker dev, `front` usa `webpack` (sin Turbopack) para evitar errores intermitentes de `Next.js package not found`.
-- Si cambias dependencias (`package.json`), ejecuta de nuevo con `--build`.
-- Si PowerShell bloquea `npm`, usa `npm.cmd run dev:build` (igual para `dev:up` y `dev:down`).
 
 ## Paso a paso en otro PC (o instalación desde cero)
 
@@ -84,41 +36,95 @@ cd nexstore
 2) Crea el archivo de entorno:
 
 ```bash
-copy .env.template .env
+copy .env.template .env       # Windows
+cp .env.template .env         # Linux/Mac
 ```
 
-3) Levanta el proyecto en modo desarrollo (Docker + hot reload):
+3) Edita `.env` y cambia `JWT_SECRET` por un valor seguro:
+
+```bash
+# Genera un secreto aleatorio (Linux/Mac):
+openssl rand -hex 64
+```
+
+4) Levanta el proyecto en modo desarrollo (Docker + hot reload):
 
 ```bash
 npm run dev:build
 ```
 
-4) Abre:
+5) Abre:
 
 - Frontend: `http://localhost:3000`
-- Backend health: `http://localhost:4000/api/health`
+- Backend API: `http://localhost:4000/api/health`
+- Swagger docs: `http://localhost:4000/api/docs`
 
-## Si apagas el PC o quieres volver a ejecutar luego
+6) (Opcional) Ejecutar seed de datos de prueba:
+
+```bash
+docker exec -it nexstore_back sh -c "npx prisma db seed"
+```
+
+## Si apagas el PC o quieres volver a ejecutar
 
 Desde la raíz del proyecto:
 
-1) Levantar nuevamente:
+1) Levantar nuevamente (sin reconstruir):
 
 ```bash
 npm run dev:up
 ```
 
-2) Si cambiaste dependencias o Dockerfile:
+2) Si cambiaste dependencias o Dockerfile (reconstruir):
 
 ```bash
 npm run dev:build
 ```
 
-3) Para detener todo:
+3) Si hay problemas con volúmenes o dependencias (limpieza total + rebuild):
+
+```bash
+npm run dev:clean
+```
+
+4) Para detener todo:
 
 ```bash
 npm run dev:down
 ```
+
+## Comandos disponibles
+
+| Comando | Descripción |
+|---|---|
+| `npm run dev:build` | Reconstruye imágenes y levanta en modo desarrollo |
+| `npm run dev:up` | Levanta sin reconstruir (rápido) |
+| `npm run dev:down` | Detiene todos los contenedores |
+| `npm run dev:clean` | Borra volúmenes, reconstruye e inicia (soluciona problemas de deps) |
+
+## Desarrollo con hot reload
+
+- `front` corre con `next dev --webpack` y recarga en caliente.
+- `back` corre con `tsx watch` y recompila automáticamente.
+- En Docker dev, `front` usa `webpack` (sin Turbopack) para evitar errores intermitentes.
+- Si PowerShell bloquea `npm`, usa `npm.cmd run dev:build`.
+
+## URLs de referencia
+
+| Servicio | URL |
+|---|---|
+| Frontend | `http://localhost:3000` |
+| Backend API | `http://localhost:4000/api` |
+| Swagger Docs | `http://localhost:4000/api/docs` |
+| Health check | `http://localhost:4000/api/health` |
+| PostgreSQL | `localhost:5432` |
+
+## Usuarios de prueba
+
+| Rol | Email | Contraseña |
+|---|---|---|
+| Admin | admin@nexstore.com | Qwert.12345 |
+| Cliente | cliente@nexstore.com | Qwert.12345 |
 
 ## Desarrollo local sin Docker
 
@@ -143,4 +149,12 @@ Comandos útiles:
 npm run prisma:generate -w back
 npm run prisma:migrate:dev -w back
 npm run prisma:seed -w back
+```
+
+## Tests (backend)
+
+```bash
+npm run test -w back          # ejecutar tests
+npm run test:watch -w back    # modo watch
+npm run test:cov -w back      # con cobertura
 ```

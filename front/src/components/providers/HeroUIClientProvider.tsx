@@ -1,6 +1,6 @@
 'use client';
 
-import { HeroUIProvider } from '@heroui/react';
+import { HeroUIProvider } from '@heroui/system';
 
 type HeroUIClientProviderProps = {
   children: React.ReactNode;

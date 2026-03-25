@@ -50,7 +50,7 @@ export function Header() {
 					</Link>
 				</div>
 
-				<div className='hidden items-center justify-center gap-12 sm:flex'>
+				<div className='hidden items-center justify-center gap-8 sm:flex'>
 					{menuItems.map((item, index) => {
 						const url = itemToUrlMap[item as keyof ItemToUrlMap]; // Type assertion here
 

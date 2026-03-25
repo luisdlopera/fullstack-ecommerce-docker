@@ -43,6 +43,8 @@ export class AuthService {
       role: user.role
     });
 
+    await this.storeRefreshToken(user.id, tokens.refreshToken);
+
     return {
       user: {
         id: user.id,
@@ -69,6 +71,8 @@ export class AuthService {
       role: user.role
     });
 
+    await this.storeRefreshToken(user.id, tokens.refreshToken);
+
     return {
       user: {
         id: user.id,
@@ -80,7 +84,7 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string): Promise<AuthTokens> {
+  async refresh(refreshToken: string): Promise<AuthTokens & { user: { id: string; name: string; email: string; role: Role } }> {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new UnauthorizedException('Missing JWT_SECRET');
 
@@ -90,12 +94,35 @@ export class AuthService {
         throw new UnauthorizedException('Invalid token type');
       }
 
-      return this.signTokens({
-        sub: payload.sub,
-        email: payload.email,
-        role: payload.role
+      const stored = await this.prisma.refreshToken.findUnique({
+        where: { token: refreshToken }
       });
-    } catch {
+
+      if (!stored || stored.expiresAt < new Date()) {
+        if (stored) await this.prisma.refreshToken.delete({ where: { id: stored.id } });
+        throw new UnauthorizedException('Refresh token expired or revoked');
+      }
+
+      await this.prisma.refreshToken.delete({ where: { id: stored.id } });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, name: true, email: true, role: true }
+      });
+
+      if (!user) throw new UnauthorizedException('User not found');
+
+      const tokens = await this.signTokens({
+        sub: user.id,
+        email: user.email,
+        role: user.role
+      });
+
+      await this.storeRefreshToken(user.id, tokens.refreshToken);
+
+      return { ...tokens, user };
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
@@ -113,6 +140,42 @@ export class AuthService {
 
     if (!user) throw new UnauthorizedException('User not found');
     return user;
+  }
+
+  async logout(userId: string, refreshToken?: string) {
+    if (refreshToken) {
+      await this.prisma.refreshToken.deleteMany({
+        where: { token: refreshToken }
+      });
+    } else {
+      await this.prisma.refreshToken.deleteMany({
+        where: { userId }
+      });
+    }
+    return { ok: true };
+  }
+
+  private async storeRefreshToken(userId: string, token: string) {
+    const ttl = process.env.JWT_REFRESH_TTL ?? '7d';
+    const ms = this.parseTtlToMs(ttl);
+    const expiresAt = new Date(Date.now() + ms);
+
+    await this.prisma.refreshToken.create({
+      data: { token, userId, expiresAt }
+    });
+
+    await this.prisma.refreshToken.deleteMany({
+      where: { userId, expiresAt: { lt: new Date() } }
+    });
+  }
+
+  private parseTtlToMs(ttl: string): number {
+    const match = ttl.match(/^(\d+)([smhd])$/);
+    if (!match) return 7 * 24 * 60 * 60 * 1000;
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+    const multipliers: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
+    return value * (multipliers[unit] ?? 86400000);
   }
 
   private async signTokens(basePayload: Omit<JwtPayload, 'type'>): Promise<AuthTokens> {

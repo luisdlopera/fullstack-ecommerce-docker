@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 const run = (command, args) =>
   new Promise((resolve, reject) => {
@@ -16,7 +17,10 @@ const boot = async () => {
   await run('npx', ['prisma', 'generate']);
   await run('npx', ['prisma', 'migrate', 'deploy']);
   await run('npx', ['prisma', 'db', 'seed']);
-  await run('node', ['dist/main.js']);
+
+  // Support both dist layouts depending on TypeScript rootDir resolution.
+  const entry = existsSync('dist/main.js') ? 'dist/main.js' : 'dist/src/main.js';
+  await run('node', [entry]);
 };
 
 boot().catch((error) => {

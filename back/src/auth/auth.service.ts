@@ -2,6 +2,7 @@ import { ConflictException, Inject, Injectable, UnauthorizedException } from '@n
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -194,13 +195,16 @@ export class AuthService {
     const accessPayload: JwtPayload = { ...basePayload, type: 'access' };
     const refreshPayload: JwtPayload = { ...basePayload, type: 'refresh' };
 
+    // Unique jti so RefreshToken.token is never duplicated (same user + same iat produced identical JWTs before).
     const accessToken = await this.jwtService.signAsync(accessPayload, {
       secret,
-      expiresIn: (process.env.JWT_ACCESS_TTL ?? '15m') as never
+      expiresIn: (process.env.JWT_ACCESS_TTL ?? '15m') as never,
+      jwtid: randomUUID()
     });
     const refreshToken = await this.jwtService.signAsync(refreshPayload, {
       secret,
-      expiresIn: (process.env.JWT_REFRESH_TTL ?? '7d') as never
+      expiresIn: (process.env.JWT_REFRESH_TTL ?? '7d') as never,
+      jwtid: randomUUID()
     });
 
     return { accessToken, refreshToken };

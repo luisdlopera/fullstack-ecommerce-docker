@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Header } from '@/components/shared/Header';
-import { Footer } from '@/components/shared/Footer';
 import { HeroUIClientProvider } from '@/components/providers/HeroUIClientProvider';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 import { CartProvider } from '@/contexts/CartContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { FavoritesProvider } from '@/contexts/FavoritesContext';
+import { LayoutShell } from '@/components/shared/LayoutShell';
 
 export const metadata: Metadata = {
 	title: 'Nexstore',
@@ -20,13 +21,15 @@ export default function RootLayout({
 		<html lang='en'>
 			<body className='relative flex min-h-screen flex-col bg-white antialiased'>
 				<HeroUIClientProvider>
-					<AuthProvider>
-						<CartProvider>
-							<Header />
-							{children}
-							<Footer />
-						</CartProvider>
-					</AuthProvider>
+					<QueryProvider>
+						<AuthProvider>
+							<FavoritesProvider>
+								<CartProvider>
+									<LayoutShell>{children}</LayoutShell>
+								</CartProvider>
+							</FavoritesProvider>
+						</AuthProvider>
+					</QueryProvider>
 				</HeroUIClientProvider>
 			</body>
 		</html>

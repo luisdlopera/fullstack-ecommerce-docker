@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "nexstore-back",
   "version": "1.0.0",
   "private": true,
@@ -16,7 +16,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "docker:start": "node scripts/docker-start.mjs"
+    "docker:start": "node scripts/docker-start.mjs",
+    "prisma:seed:catalog": "tsx prisma/run-catalog-only.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

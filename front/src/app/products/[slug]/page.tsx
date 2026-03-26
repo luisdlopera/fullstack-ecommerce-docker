@@ -99,7 +99,8 @@ export default function ProductDetailPage() {
 			setRelatedProducts(product.similarProducts);
 			return;
 		}
-		if (!product.gender) {
+		const gender = product.gender;
+		if (!gender) {
 			setRelatedProducts([]);
 			return;
 		}
@@ -108,7 +109,7 @@ export default function ProductDetailPage() {
 		(async () => {
 			try {
 				const res = await fetch(
-					`${getClientApiUrl()}/products?gender=${encodeURIComponent(product.gender)}&limit=12`
+					`${getClientApiUrl()}/products?gender=${encodeURIComponent(gender)}&limit=12`
 				);
 				if (!res.ok || cancelled) return;
 				const body = (await res.json()) as { data: Product[] };

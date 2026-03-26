@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
 			},
 		],
 	},
+	async redirects() {
+		return [{ source: '/woman', destination: '/women', permanent: true }];
+	},
 };
 
 export default nextConfig;

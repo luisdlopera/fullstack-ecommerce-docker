@@ -14,6 +14,7 @@ export type Product = {
   description: string;
   inStock: number;
   price: number;
+  comparePrice?: number | null;
   sizes: string[];
   slug: string;
   tags: string[];

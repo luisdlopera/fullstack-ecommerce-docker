@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import bcryptjs from 'bcryptjs';
 import { Gender, OrderStatus, PrismaClient, Role, Size } from '@prisma/client';
+import { seedCatalog } from './seed-catalog';
 
 // Monorepo: allow `npm run prisma:seed -w back` with `.env` at repo root.
 config({ path: resolve(process.cwd(), '..', '.env') });
@@ -20,14 +21,14 @@ async function main() {
     { id: 'CL', name: 'Chile', isoCode: 'CL', currency: 'CLP', priority: 7 },
     { id: 'PE', name: 'Perú', isoCode: 'PE', currency: 'PEN', priority: 6 },
     { id: 'US', name: 'United States', isoCode: 'US', currency: 'USD', priority: 5 },
-    { id: 'ES', name: 'España', isoCode: 'ES', currency: 'EUR', priority: 4 }
+    { id: 'ES', name: 'España', isoCode: 'ES', currency: 'EUR', priority: 4 },
   ];
 
   for (const country of countries) {
     await prisma.country.upsert({
       where: { id: country.id },
       update: { name: country.name, isoCode: country.isoCode, currency: country.currency, priority: country.priority },
-      create: country
+      create: country,
     });
   }
 
@@ -38,7 +39,7 @@ async function main() {
     { name: 'Pantalones', slug: 'pantalones', description: 'Pantalones y joggers', sortOrder: 3 },
     { name: 'Vestidos', slug: 'vestidos', description: 'Vestidos para mujer', sortOrder: 4 },
     { name: 'Chaquetas', slug: 'chaquetas', description: 'Chaquetas y abrigos', sortOrder: 5 },
-    { name: 'Accesorios', slug: 'accesorios', description: 'Gorras, bolsos y más', sortOrder: 6 }
+    { name: 'Accesorios', slug: 'accesorios', description: 'Gorras, bolsos y más', sortOrder: 6 },
   ];
 
   const categoryMap = new Map<string, string>();
@@ -46,7 +47,7 @@ async function main() {
     const category = await prisma.category.upsert({
       where: { slug: cat.slug },
       update: { name: cat.name, description: cat.description, sortOrder: cat.sortOrder },
-      create: cat
+      create: cat,
     });
     categoryMap.set(cat.slug, category.id);
   }
@@ -80,7 +81,7 @@ async function main() {
       tags: ['hombre', 'casual', 'algodon'],
       images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
       categorySlug: 'camisetas',
-      featured: true
+      featured: true,
     },
     {
       title: 'Hoodie Hombre Urban',
@@ -93,7 +94,7 @@ async function main() {
       gender: Gender.men,
       tags: ['hombre', 'hoodie', 'urbano'],
       images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'hoodies'
+      categorySlug: 'hoodies',
     },
     {
       title: 'Jogger Hombre Sport',
@@ -106,7 +107,7 @@ async function main() {
       gender: Gender.men,
       tags: ['hombre', 'sport', 'jogger'],
       images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'pantalones'
+      categorySlug: 'pantalones',
     },
     {
       title: 'Blusa Mujer Minimal',
@@ -121,7 +122,7 @@ async function main() {
       tags: ['mujer', 'blusa', 'minimal'],
       images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
       categorySlug: 'camisetas',
-      featured: true
+      featured: true,
     },
     {
       title: 'Vestido Mujer Breeze',
@@ -134,7 +135,7 @@ async function main() {
       gender: Gender.women,
       tags: ['mujer', 'vestido', 'verano'],
       images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'vestidos'
+      categorySlug: 'vestidos',
     },
     {
       title: 'Chaqueta Mujer Denim',
@@ -147,7 +148,7 @@ async function main() {
       gender: Gender.women,
       tags: ['mujer', 'denim', 'chaqueta'],
       images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'chaquetas'
+      categorySlug: 'chaquetas',
     },
     {
       title: 'Camiseta Niño Fun',
@@ -160,7 +161,7 @@ async function main() {
       gender: Gender.kid,
       tags: ['nino', 'camiseta', 'kids'],
       images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'camisetas'
+      categorySlug: 'camisetas',
     },
     {
       title: 'Sudadera Niño Active',
@@ -173,7 +174,7 @@ async function main() {
       gender: Gender.kid,
       tags: ['nino', 'sudadera', 'active'],
       images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'hoodies'
+      categorySlug: 'hoodies',
     },
     {
       title: 'Pantalón Niño Play',
@@ -186,7 +187,7 @@ async function main() {
       gender: Gender.kid,
       tags: ['nino', 'pantalon', 'play'],
       images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'pantalones'
+      categorySlug: 'pantalones',
     },
     {
       title: 'Colección Eclipse',
@@ -201,7 +202,7 @@ async function main() {
       tags: ['nuevo', 'edicion', 'unisex'],
       images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
       categorySlug: 'camisetas',
-      featured: true
+      featured: true,
     },
     {
       title: 'Colección Nova',
@@ -214,8 +215,8 @@ async function main() {
       gender: Gender.unisex,
       tags: ['nuevo', 'coleccion', 'trend'],
       images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'camisetas'
-    }
+      categorySlug: 'camisetas',
+    },
   ];
 
   for (const productData of productsToSeed) {
@@ -235,7 +236,7 @@ async function main() {
         tags: productData.tags.map((tag) => tag.toLowerCase()),
         gender: productData.gender,
         categoryId: catId,
-        featured: productData.featured ?? false
+        featured: productData.featured ?? false,
       },
       create: {
         title: productData.title,
@@ -249,8 +250,8 @@ async function main() {
         tags: productData.tags.map((tag) => tag.toLowerCase()),
         gender: productData.gender,
         categoryId: catId,
-        featured: productData.featured ?? false
-      }
+        featured: productData.featured ?? false,
+      },
     });
 
     await prisma.productImage.deleteMany({ where: { productId: product.id } });
@@ -258,8 +259,8 @@ async function main() {
       data: productData.images.map((url, i) => ({
         url,
         productId: product.id,
-        sortOrder: i
-      }))
+        sortOrder: i,
+      })),
     });
   }
 
@@ -271,7 +272,7 @@ async function main() {
     { email: 'support@nexstore.com', name: 'Support', role: Role.SUPPORT },
     { email: 'cliente@nexstore.com', name: 'Cliente Demo', role: Role.USER },
     { email: 'maria@nexstore.com', name: 'María García', role: Role.USER },
-    { email: 'carlos@nexstore.com', name: 'Carlos López', role: Role.USER }
+    { email: 'carlos@nexstore.com', name: 'Carlos López', role: Role.USER },
   ];
 
   for (const u of users) {
@@ -282,8 +283,8 @@ async function main() {
         email: u.email,
         name: u.name,
         password: bcryptjs.hashSync('Qwert.12345', 10),
-        role: u.role
-      }
+        role: u.role,
+      },
     });
   }
 
@@ -309,8 +310,8 @@ async function main() {
           OrderItem: {
             create: [
               { productId: products[0].id, quantity: 1, price: products[0].price, size: Size.M },
-              { productId: products[1].id, quantity: 1, price: products[1].price, size: Size.L }
-            ]
+              { productId: products[1].id, quantity: 1, price: products[1].price, size: Size.L },
+            ],
           },
           OrderAddress: {
             create: {
@@ -320,10 +321,10 @@ async function main() {
               postalCode: '110111',
               city: 'Bogotá',
               phone: '+573001234567',
-              countryId: 'CO'
-            }
-          }
-        }
+              countryId: 'CO',
+            },
+          },
+        },
       });
 
       await prisma.order.create({
@@ -336,9 +337,7 @@ async function main() {
           status: OrderStatus.PENDING,
           paymentStatus: 'PENDING',
           OrderItem: {
-            create: [
-              { productId: products[0].id, quantity: 1, price: products[0].price, size: Size.S }
-            ]
+            create: [{ productId: products[0].id, quantity: 1, price: products[0].price, size: Size.S }],
           },
           OrderAddress: {
             create: {
@@ -348,10 +347,10 @@ async function main() {
               postalCode: '110111',
               city: 'Bogotá',
               phone: '+573001234567',
-              countryId: 'CO'
-            }
-          }
-        }
+              countryId: 'CO',
+            },
+          },
+        },
       });
     }
   }
@@ -373,8 +372,8 @@ async function main() {
           OrderItem: {
             create: [
               { productId: products[2].id, quantity: 2, price: products[2].price, size: Size.M },
-              { productId: products[3].id, quantity: 1, price: products[3].price, size: Size.S }
-            ]
+              { productId: products[3].id, quantity: 1, price: products[3].price, size: Size.S },
+            ],
           },
           OrderAddress: {
             create: {
@@ -384,14 +383,15 @@ async function main() {
               postalCode: '06600',
               city: 'CDMX',
               phone: '+525512345678',
-              countryId: 'MX'
-            }
-          }
-        }
+              countryId: 'MX',
+            },
+          },
+        },
       });
     }
   }
 
+  await seedCatalog(prisma);
   console.log('Seed completed.');
 }
 

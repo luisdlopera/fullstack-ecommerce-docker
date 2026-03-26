@@ -65,7 +65,12 @@ export default function OrdersPage() {
 				Mi cuenta
 			</Button>
 
-			<h1 className='mb-8 text-3xl font-bold'>Mis Pedidos</h1>
+			<div className='mb-8'>
+				<h1 className='text-3xl font-bold'>Mis Pedidos</h1>
+				{user.role === 'USER' && (
+					<p className='mt-1 text-sm text-gray-600'>Área cliente: historial de compras en la tienda.</p>
+				)}
+			</div>
 
 			{loading && (
 				<div className='flex justify-center py-20'>

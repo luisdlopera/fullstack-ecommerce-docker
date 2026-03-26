@@ -7,6 +7,7 @@ import { LogOut, Package, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getClientApiUrl, type Country } from '@/lib/api';
+import { isAdminRole } from '@/types/admin';
 
 type UserAddress = {
 	id: string;
@@ -112,7 +113,14 @@ export default function AccountPage() {
 	return (
 		<main className='mx-auto mt-28 w-11/12 max-w-4xl pb-16 text-black'>
 			<div className='mb-8 flex items-center justify-between'>
-				<h1 className='text-3xl font-bold'>Mi Cuenta</h1>
+				<div>
+					<h1 className='text-3xl font-bold'>Mi Cuenta</h1>
+					{user.role === 'USER' && (
+						<p className='mt-1 text-sm text-gray-600'>
+							Área cliente: compra en la tienda, revisa tus pedidos y actualiza tu perfil.
+						</p>
+					)}
+				</div>
 				<Button
 					variant='light'
 					color='danger'
@@ -137,8 +145,8 @@ export default function AccountPage() {
 					</p>
 					<p>
 						<span className='font-semibold'>Rol:</span>{' '}
-						<Chip size='sm' color={user.role !== 'USER' ? 'primary' : 'default'}>
-							{user.role}
+						<Chip size='sm' color={isAdminRole(user.role) ? 'primary' : 'default'}>
+							{user.role === 'USER' ? 'CUSTOMER' : user.role}
 						</Chip>
 					</p>
 				</div>

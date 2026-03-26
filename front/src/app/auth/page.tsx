@@ -5,6 +5,18 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
+const DEMO_PASSWORD = 'Qwert.12345';
+
+const SEED_TEST_USERS: { label: string; email: string; badgeClass: string }[] = [
+	{ label: 'SUPER_ADMIN', email: 'superadmin@nexstore.com', badgeClass: 'bg-violet-100 text-violet-800' },
+	{ label: 'ADMIN', email: 'admin@nexstore.com', badgeClass: 'bg-blue-100 text-blue-700' },
+	{ label: 'MANAGER', email: 'manager@nexstore.com', badgeClass: 'bg-amber-100 text-amber-800' },
+	{ label: 'SUPPORT', email: 'support@nexstore.com', badgeClass: 'bg-teal-100 text-teal-800' },
+	{ label: 'CUSTOMER', email: 'cliente@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
+	{ label: 'CUSTOMER', email: 'maria@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
+	{ label: 'CUSTOMER', email: 'carlos@nexstore.com', badgeClass: 'bg-green-100 text-green-700' }
+];
+
 export default function AuthPage() {
 	const { login, register, user } = useAuth();
 	const router = useRouter();
@@ -78,24 +90,19 @@ export default function AuthPage() {
 				</Form>
 
 				<div className='rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700'>
-					<p className='mb-3 font-bold text-gray-900'>Usuarios de prueba</p>
-					<div className='mb-2 flex items-center justify-between'>
-						<div>
-							<span className='rounded bg-blue-100 px-1.5 py-0.5 text-xs font-semibold text-blue-700'>
-								Admin
-							</span>
-							<span className='ml-2'>admin@nexstore.com</span>
-						</div>
-						<span className='font-mono text-xs text-gray-500'>Qwert.12345</span>
-					</div>
-					<div className='flex items-center justify-between'>
-						<div>
-							<span className='rounded bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-700'>
-								Cliente
-							</span>
-							<span className='ml-2'>cliente@nexstore.com</span>
-						</div>
-						<span className='font-mono text-xs text-gray-500'>Qwert.12345</span>
+					<p className='mb-1 font-bold text-gray-900'>Usuarios de prueba</p>
+					<p className='mb-3 text-xs text-gray-500'>
+						Contraseña para todos: <span className='font-mono'>{DEMO_PASSWORD}</span>
+					</p>
+					<div className='max-h-64 space-y-2 overflow-y-auto pr-1'>
+						{SEED_TEST_USERS.map((u) => (
+							<div key={u.email} className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'>
+								<div className='min-w-0 flex-1'>
+									<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>{u.label}</span>
+									<span className='ml-2 break-all'>{u.email}</span>
+								</div>
+							</div>
+						))}
 					</div>
 				</div>
 			</div>

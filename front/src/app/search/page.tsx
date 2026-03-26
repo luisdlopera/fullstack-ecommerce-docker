@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, Suspense, useState } from 'react';
+import { FormEvent, Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Input, Spinner } from '@heroui/react';
 import { Search } from 'lucide-react';
@@ -10,12 +10,31 @@ function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get('q') ?? '';
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
   const [query, setQuery] = useState(currentQuery);
+
+  useEffect(() => {
+    setQuery(currentQuery);
+  }, [currentQuery]);
+
+  const setPage = useCallback(
+    (p: number) => {
+      const sp = new URLSearchParams();
+      if (currentQuery) sp.set('q', currentQuery);
+      if (p > 1) sp.set('page', String(p));
+      const qs = sp.toString();
+      router.push(qs ? `/search?${qs}` : '/search');
+    },
+    [currentQuery, router]
+  );
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const q = query.trim();
-    router.push(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+    const sp = new URLSearchParams();
+    if (q) sp.set('q', q);
+    const qs = sp.toString();
+    router.push(qs ? `/search?${qs}` : '/search');
   };
 
   return (
@@ -34,7 +53,13 @@ function SearchContent() {
         </Button>
       </form>
 
-      <ProductGrid title={currentQuery ? `Resultados para "${currentQuery}"` : 'Todos los productos'} query={currentQuery || undefined} />
+      <ProductGrid
+        embedded
+        title={currentQuery ? `Resultados para "${currentQuery}"` : 'Todos los productos'}
+        query={currentQuery || undefined}
+        page={page}
+        onPageChange={setPage}
+      />
     </main>
   );
 }

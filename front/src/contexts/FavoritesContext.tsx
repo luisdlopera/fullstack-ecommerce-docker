@@ -35,12 +35,18 @@ function saveFavorites(items: FavoriteItem[]) {
 }
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<FavoriteItem[]>(() => loadFavorites());
-  const [loaded] = useState(true);
+  const [items, setItems] = useState<FavoriteItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (loaded) saveFavorites(items);
-  }, [items, loaded]);
+    setItems(loadFavorites());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    saveFavorites(items);
+  }, [items, hydrated]);
 
   const isFavorite = useCallback(
     (slug: string) => items.some((item) => item.slug === slug),

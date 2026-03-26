@@ -26,23 +26,20 @@ const REFRESH_KEY = 'nexstore-refresh';
 const USER_KEY = 'nexstore-user';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const storedUser = localStorage.getItem(USER_KEY);
-    if (!storedUser) return null;
-    try {
-      return JSON.parse(storedUser) as AuthUser;
-    } catch {
-      return null;
-    }
-  });
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(TOKEN_KEY);
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem(USER_KEY);
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser) as AuthUser);
+      } catch {
+        /* ignore */
+      }
+    }
+    setToken(localStorage.getItem(TOKEN_KEY));
     setLoading(false);
   }, []);
 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 
 type ProductFilters = {
@@ -6,6 +6,7 @@ type ProductFilters = {
   limit?: number;
   query?: string;
   category?: string;
+  tag?: string;
   gender?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -14,7 +15,7 @@ type ProductFilters = {
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getFeatured(limit = 8) {
     return this.prisma.product.findMany({
@@ -42,6 +43,11 @@ export class ProductsService {
               equals: filters.category,
               mode: 'insensitive' as const
             }
+          }
+        : undefined,
+      tags: filters.tag
+        ? {
+            has: filters.tag.toLowerCase()
           }
         : undefined,
       gender: filters.gender as 'men' | 'women' | 'kid' | 'unisex' | undefined,

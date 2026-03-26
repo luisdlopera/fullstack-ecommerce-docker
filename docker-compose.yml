@@ -26,10 +26,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       PORT: 4000
       DATABASE_URL: postgresql://${POSTGRES_USER:-nexstore}:${POSTGRES_PASSWORD:-nexstore}@postgres:5432/${POSTGRES_DB:-nexstore}?schema=public
       CORS_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
     ports:
       - '4000:4000'
     healthcheck:

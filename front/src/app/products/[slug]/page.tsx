@@ -1,195 +1,236 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Image, Chip, Spinner } from '@heroui/react';
-import { ArrowLeft, Heart, Minus, Plus, ShoppingCart } from 'lucide-react';
-import { getClientApiUrl, type Product } from '@/lib/api';
+import { Button, Spinner } from '@heroui/react';
+import {
+	ProductAccordion,
+	ProductGallery,
+	ProductInfo,
+	SimilarProductsSection,
+} from '@/components/product-detail';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { mapApiProductToProductDetail, mapProductToSimilarProduct } from '@/lib/adapters/product-detail';
+import { getClientApiUrl } from '@/lib/api';
+import { getMockProductDetail } from '@/lib/mocks/product-detail';
+import type { Product } from '@/lib/api';
+import type { ProductAccordionItem, ProductDetail, SimilarProduct } from '@/types/product-detail';
+
+/**
+ * `false` = solo mocks (`getMockProductDetail`), sin llamadas al API (demo camiseta negra).
+ * `true` = carga `/products/:slug` del API y usa `mapApiProductToProductDetail`.
+ */
+const LOAD_PRODUCT_FROM_API = true;
+
+function defaultSize(sizes: string[]): string | null {
+	if (sizes.length === 0) return null;
+	const m = sizes.find((s) => s === 'M');
+	return m ?? sizes[Math.floor(sizes.length / 2)] ?? sizes[0];
+}
+
+function defaultColorId(colors: ProductDetail['colors']): string | null {
+	if (colors.length === 0) return null;
+	const black = colors.find((c) => c.id === 'black');
+	return black?.id ?? colors[0].id;
+}
 
 export default function ProductDetailPage() {
 	const params = useParams<{ slug: string }>();
 	const router = useRouter();
 	const { addItem } = useCart();
+	const { isFavorite, toggleFavorite } = useFavorites();
 
-	const [product, setProduct] = useState<Product | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [selectedSize, setSelectedSize] = useState<string | null>(null);
+	const [product, setProduct] = useState<ProductDetail | null>(null);
+	const [relatedProducts, setRelatedProducts] = useState<SimilarProduct[]>([]);
+	const [loading, setLoading] = useState(LOAD_PRODUCT_FROM_API);
 	const [selectedImage, setSelectedImage] = useState(0);
+	const [selectedSize, setSelectedSize] = useState<string | null>(null);
+	const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
 	const [quantity, setQuantity] = useState(1);
-	const [added, setAdded] = useState(false);
+	const [addFeedback, setAddFeedback] = useState(false);
 
 	useEffect(() => {
-		const fetchProduct = async () => {
+		if (!LOAD_PRODUCT_FROM_API) {
+			const p = getMockProductDetail(params.slug);
+			setProduct(p);
+			setSelectedSize(defaultSize(p.sizes));
+			setSelectedColorId(defaultColorId(p.colors));
+			setLoading(false);
+			return;
+		}
+
+		let cancelled = false;
+		(async () => {
+			setLoading(true);
 			try {
-				const baseUrl = getClientApiUrl();
-				const res = await fetch(`${baseUrl}/products/${params.slug}`);
-				if (!res.ok) throw new Error('Not found');
-				const data = (await res.json()) as Product;
-				setProduct(data);
-				if (data.sizes.length === 1) setSelectedSize(data.sizes[0]);
+				const res = await fetch(`${getClientApiUrl()}/products/${params.slug}`);
+				if (res.ok) {
+					const data = (await res.json()) as Product;
+					const p = mapApiProductToProductDetail(data);
+					if (!cancelled) {
+						setProduct(p);
+						setSelectedSize(data.sizes.length === 1 ? data.sizes[0] : defaultSize(p.sizes));
+						setSelectedColorId(defaultColorId(p.colors));
+						setSelectedImage(0);
+						setQuantity(1);
+					}
+				} else if (!cancelled) {
+					setProduct(null);
+				}
 			} catch {
-				setProduct(null);
+				if (!cancelled) setProduct(null);
 			} finally {
-				setLoading(false);
+				if (!cancelled) setLoading(false);
 			}
+		})();
+
+		return () => {
+			cancelled = true;
 		};
-		fetchProduct();
 	}, [params.slug]);
 
-	const handleAddToCart = () => {
-		if (!product || !selectedSize) return;
-		const img =
-			product.ProductImage.length > 0
-				? product.ProductImage[0].url
-				: '/img/shirt/shirt-black-1.png';
+	useEffect(() => {
+		if (!product) {
+			setRelatedProducts([]);
+			return;
+		}
+		if (product.similarProducts.length > 0) {
+			setRelatedProducts(product.similarProducts);
+			return;
+		}
+		if (!product.gender) {
+			setRelatedProducts([]);
+			return;
+		}
 
+		let cancelled = false;
+		(async () => {
+			try {
+				const res = await fetch(
+					`${getClientApiUrl()}/products?gender=${encodeURIComponent(product.gender)}&limit=12`
+				);
+				if (!res.ok || cancelled) return;
+				const body = (await res.json()) as { data: Product[] };
+				const list = body.data ?? [];
+				const filtered = list.filter((p) => p.slug !== product.slug).slice(0, 4);
+				if (!cancelled) setRelatedProducts(filtered.map(mapProductToSimilarProduct));
+			} catch {
+				if (!cancelled) setRelatedProducts([]);
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [product]);
+
+	const accordionItems: ProductAccordionItem[] = useMemo(() => {
+		if (!product) return [];
+		return [
+			{ id: 'desc', title: 'Descripción', content: product.description },
+			{ id: 'rec', title: 'Recomendaciones', content: product.recommendations },
+		];
+	}, [product]);
+
+	const favorite = product ? isFavorite(product.slug) : false;
+
+	const handleToggleFavorite = () => {
+		if (!product) return;
+		const img = product.images[0] ?? '/img/shirt/shirt-black-1.png';
+		toggleFavorite({
+			productId: product.id,
+			slug: product.slug,
+			title: product.name,
+			price: product.price,
+			image: img,
+		});
+	};
+
+	const pushCartItem = () => {
+		if (!product || !selectedSize) return;
+		const img = product.images[selectedImage] ?? product.images[0] ?? '/img/shirt/shirt-black-1.png';
 		addItem({
 			productId: product.id,
 			slug: product.slug,
-			title: product.title,
+			title: product.name,
 			price: product.price,
 			size: selectedSize,
 			quantity,
 			image: img,
 		});
-		setAdded(true);
-		setTimeout(() => setAdded(false), 2000);
+	};
+
+	const handleAddToCart = () => {
+		pushCartItem();
+		setAddFeedback(true);
+		window.setTimeout(() => setAddFeedback(false), 2000);
+	};
+
+	const handleBuyNow = () => {
+		pushCartItem();
+		router.push('/checkout');
 	};
 
 	if (loading) {
 		return (
-			<main className='flex min-h-screen items-center justify-center'>
-				<Spinner size='lg' />
+			<main className='flex min-h-screen items-center justify-center bg-neutral-50'>
+				<Spinner size='lg' color='primary' />
 			</main>
 		);
 	}
 
 	if (!product) {
 		return (
-			<main className='mx-auto mt-32 flex w-11/12 flex-col items-center gap-4 text-black'>
-				<h1 className='text-2xl font-bold'>Producto no encontrado</h1>
-				<Button onPress={() => router.push('/')} color='primary'>
+			<main className='mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center gap-4 bg-neutral-50 px-4 pt-28 text-neutral-900'>
+				<h1 className='text-2xl font-semibold'>Producto no encontrado</h1>
+				<Button color='primary' onPress={() => router.push('/')}>
 					Volver al inicio
 				</Button>
 			</main>
 		);
 	}
 
-	const images = product.ProductImage.map((img) => img.url);
-	if (images.length === 0) images.push('/img/shirt/shirt-black-1.png');
-
 	return (
-		<main className='mx-auto mt-28 w-11/12 max-w-6xl pb-16 text-black'>
-			<Button
-				variant='light'
-				onPress={() => router.back()}
-				startContent={<ArrowLeft size={18} />}
-				className='mb-6 text-black'
-			>
-				Volver
-			</Button>
+		<div className='min-h-screen bg-neutral-50 text-neutral-900'>
+			<main className='mx-auto max-w-7xl px-4 pb-20 pt-28 md:px-8 lg:px-10'>
+				<section className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] lg:items-stretch lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]'>
+					<ProductGallery
+						className='lg:h-[640px]'
+						images={product.images}
+						selectedIndex={selectedImage}
+						onSelectIndex={setSelectedImage}
+						productName={product.name}
+						isNew={product.isNew}
+						isFavorite={favorite}
+						onToggleFavorite={handleToggleFavorite}
+					/>
 
-			<div className='grid grid-cols-1 gap-10 md:grid-cols-2'>
-				<div className='flex flex-col gap-4'>
-					<div className='flex h-[480px] items-center justify-center rounded-2xl bg-gray-100'>
-						<Image
-							src={images[selectedImage]}
-							alt={product.title}
-							className='h-[460px] w-full object-contain'
+					<div className='flex min-h-0 flex-col lg:h-[640px]'>
+						<ProductInfo
+							product={product}
+							selectedSize={selectedSize}
+							onSizeChange={setSelectedSize}
+							selectedColorId={selectedColorId}
+							onColorChange={setSelectedColorId}
+							quantity={quantity}
+							onQuantityChange={setQuantity}
+							onAddToCart={handleAddToCart}
+							onBuyNow={handleBuyNow}
+							onToggleFavorite={handleToggleFavorite}
+							isFavorite={favorite}
+							addToCartLabel={addFeedback ? '¡Agregado!' : 'Agregar al carrito'}
+							outOfStock={product.inStock <= 0}
 						/>
 					</div>
-					{images.length > 1 && (
-						<div className='flex gap-3'>
-							{images.map((img, idx) => (
-								<button
-									key={idx}
-									onClick={() => setSelectedImage(idx)}
-									className={`h-20 w-20 overflow-hidden rounded-xl border-2 ${idx === selectedImage ? 'border-primary' : 'border-transparent'}`}
-								>
-									<Image src={img} alt={`${product.title} ${idx + 1}`} className='h-full w-full object-cover' />
-								</button>
-							))}
-						</div>
-					)}
-				</div>
+				</section>
 
-				<div className='flex flex-col gap-5'>
-					<div>
-						<p className='text-sm uppercase text-gray-500'>{product.category?.name}</p>
-						<h1 className='text-3xl font-bold'>{product.title}</h1>
-					</div>
+				<section id='guia-tallas' className='mt-12 scroll-mt-28'>
+					<ProductAccordion items={accordionItems} />
+				</section>
 
-					<p className='text-3xl font-bold text-primary'>${product.price.toFixed(2)}</p>
-
-					<p className='leading-relaxed text-gray-600'>{product.description}</p>
-
-					<div>
-						<p className='mb-2 font-semibold'>Talla</p>
-						<div className='flex flex-wrap gap-2'>
-							{product.sizes.map((size) => (
-								<Chip
-									key={size}
-									variant={selectedSize === size ? 'solid' : 'bordered'}
-									color={selectedSize === size ? 'primary' : 'default'}
-									className='cursor-pointer'
-									onClick={() => setSelectedSize(size)}
-								>
-									{size}
-								</Chip>
-							))}
-						</div>
-					</div>
-
-					<div>
-						<p className='mb-2 font-semibold'>Cantidad</p>
-						<div className='flex items-center gap-3'>
-							<Button isIconOnly size='sm' variant='bordered' onPress={() => setQuantity(Math.max(1, quantity - 1))}>
-								<Minus size={16} />
-							</Button>
-							<span className='w-8 text-center text-lg font-semibold'>{quantity}</span>
-							<Button
-								isIconOnly
-								size='sm'
-								variant='bordered'
-								onPress={() => setQuantity(Math.min(product.inStock, quantity + 1))}
-							>
-								<Plus size={16} />
-							</Button>
-						</div>
-					</div>
-
-					<Chip variant='flat' color={product.inStock > 0 ? 'success' : 'danger'}>
-						{product.inStock > 0 ? `${product.inStock} disponibles` : 'Agotado'}
-					</Chip>
-
-					<div className='flex gap-3'>
-						<Button
-							color='primary'
-							size='lg'
-							className='flex-1 font-bold'
-							startContent={<ShoppingCart size={20} />}
-							isDisabled={!selectedSize || product.inStock === 0}
-							onPress={handleAddToCart}
-						>
-							{added ? 'Agregado!' : 'Agregar al carrito'}
-						</Button>
-						<Button isIconOnly size='lg' variant='bordered'>
-							<Heart size={20} />
-						</Button>
-					</div>
-
-					<div className='mt-2 rounded-xl bg-gray-50 p-4 text-sm text-gray-600'>
-						<p>
-							<span className='font-semibold'>Tags:</span> {product.tags.join(', ') || 'Sin tags'}
-						</p>
-						<p>
-							<span className='font-semibold'>Género:</span>{' '}
-							{product.gender === 'men' ? 'Hombre' : product.gender === 'women' ? 'Mujer' : product.gender === 'kid' ? 'Niños' : 'Unisex'}
-						</p>
-					</div>
-				</div>
-			</div>
-		</main>
+				<SimilarProductsSection products={relatedProducts} />
+			</main>
+		</div>
 	);
 }

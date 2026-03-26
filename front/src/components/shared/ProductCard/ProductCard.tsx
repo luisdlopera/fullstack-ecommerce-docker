@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { Button, Image, Tooltip } from '@heroui/react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useCart } from '@/contexts/CartContext';
+import { getClientApiUrl, type Product } from '@/lib/api';
 
 interface ProductCardProps {
 	id?: string;
@@ -30,8 +33,14 @@ export function ProductCard({
 	isSoldOut = false,
 }: ProductCardProps) {
 	const [hover, setHover] = useState<boolean>(false);
+	const [addingToCart, setAddingToCart] = useState(false);
+	const router = useRouter();
 	const { isFavorite, toggleFavorite } = useFavorites();
+	const { addItem, items: cartItems } = useCart();
 	const favorite = slug ? isFavorite(slug) : false;
+	const inCart = slug ? cartItems.some((i) => i.slug === slug) : false;
+
+	const productHref = slug ? `/products/${slug}` : '#';
 
 	const handleToggleFavorite = () => {
 		if (!slug) return;
@@ -42,6 +51,38 @@ export function ProductCard({
 			price,
 			image,
 		});
+	};
+
+	const handleAddToCart = async () => {
+		if (!slug || isSoldOut) return;
+		setAddingToCart(true);
+		try {
+			const res = await fetch(`${getClientApiUrl()}/products/${slug}`);
+			if (!res.ok) {
+				router.push(productHref);
+				return;
+			}
+			const product = (await res.json()) as Product;
+			if (product.inStock === 0 || product.sizes.length === 0) return;
+			const defaultSize =
+				product.sizes.find((s) => s === 'M') ??
+				product.sizes.find((s) => s === 'L') ??
+				product.sizes[Math.floor(product.sizes.length / 2)] ??
+				product.sizes[0];
+			const img =
+				product.ProductImage.length > 0 ? product.ProductImage[0].url : image;
+			addItem({
+				productId: product.id,
+				slug: product.slug,
+				title: product.title,
+				price: product.price,
+				size: defaultSize,
+				quantity: 1,
+				image: img,
+			});
+		} finally {
+			setAddingToCart(false);
+		}
 	};
 
 	const card = (
@@ -61,22 +102,41 @@ export function ProductCard({
 					)}
 				</div>
 
-				<div className='flex cursor-pointer justify-center'>
-					<Image
-						src={image}
-						alt={name}
-						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
-							hover ? 'absolute opacity-0' : 'opacity-100'
-						}`}
-					/>
-					<Image
-						src={image2 || image}
-						alt={name}
-						className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
-							hover ? 'opacity-100' : 'absolute opacity-0'
-						}`}
-					/>
-				</div>
+				{slug ? (
+					<Link href={productHref} className='flex cursor-pointer justify-center'>
+						<Image
+							src={image}
+							alt={name}
+							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+								hover ? 'absolute opacity-0' : 'opacity-100'
+							}`}
+						/>
+						<Image
+							src={image2 || image}
+							alt={name}
+							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+								hover ? 'opacity-100' : 'absolute opacity-0'
+							}`}
+						/>
+					</Link>
+				) : (
+					<div className='flex cursor-pointer justify-center'>
+						<Image
+							src={image}
+							alt={name}
+							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+								hover ? 'absolute opacity-0' : 'opacity-100'
+							}`}
+						/>
+						<Image
+							src={image2 || image}
+							alt={name}
+							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+								hover ? 'opacity-100' : 'absolute opacity-0'
+							}`}
+						/>
+					</div>
+				)}
 
 				{hover && (
 					<div className='absolute right-3 top-3 z-20 flex flex-col gap-2'>
@@ -89,21 +149,37 @@ export function ProductCard({
 								<Heart className={favorite ? 'text-red-500' : ''} fill={favorite ? 'currentColor' : 'none'} />
 							</Button>
 						</Tooltip>
-						<Tooltip content='Ver producto' className='text-black'>
-							<Button as={Link} href={slug ? `/products/${slug}` : '#'} isIconOnly className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'>
-								<ShoppingCart />
+						<Tooltip content={inCart ? 'En el carrito' : 'Agregar al carrito'} className='text-black'>
+							<Button
+								isIconOnly
+								className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
+								onPress={() => void handleAddToCart()}
+								isDisabled={!slug || isSoldOut}
+								isLoading={addingToCart}
+							>
+								<ShoppingCart
+									className={inCart ? 'text-primary' : ''}
+									fill={inCart ? 'currentColor' : 'none'}
+								/>
 							</Button>
 						</Tooltip>
 					</div>
 				)}
 			</div>
 
-			<div className='mt-4 text-center'>
-				<h3 className='mx-auto flex w-full text-lg font-semibold text-black'>{name}</h3>
-				<p className='text-black'>${price.toFixed(2)}</p>
-			</div>
+			{slug ? (
+				<Link href={productHref} className='mt-4 block text-center'>
+					<h3 className='mx-auto flex w-full text-lg font-semibold text-black'>{name}</h3>
+					<p className='text-black'>${price.toFixed(2)}</p>
+				</Link>
+			) : (
+				<div className='mt-4 text-center'>
+					<h3 className='mx-auto flex w-full text-lg font-semibold text-black'>{name}</h3>
+					<p className='text-black'>${price.toFixed(2)}</p>
+				</div>
+			)}
 		</div>
 	);
 
-	return slug ? <Link href={`/products/${slug}`}>{card}</Link> : card;
+	return card;
 }

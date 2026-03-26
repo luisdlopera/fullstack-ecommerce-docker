@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Pagination, Spinner } from '@heroui/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ProductCard } from '../ProductCard/ProductCard';
 import { getClientApiUrl, type Product, type ProductListResponse } from '@/lib/api';
 
@@ -10,12 +10,42 @@ type ProductGridProps = {
 	tag?: string;
 	query?: string;
 	title: string;
+	/** When true, render as <section> without outer page spacing (use inside a parent <main>). */
+	embedded?: boolean;
+	/** Controlled pagination (e.g. sync with URL on /search). */
+	page?: number;
+	onPageChange?: (page: number) => void;
 };
 
-export function ProductGrid({ gender, tag, query, title }: ProductGridProps) {
+export function ProductGrid({
+	gender,
+	tag,
+	query,
+	title,
+	embedded = false,
+	page: pageProp,
+	onPageChange,
+}: ProductGridProps) {
 	const [data, setData] = useState<ProductListResponse | null>(null);
-	const [page, setPage] = useState(1);
+	const [internalPage, setInternalPage] = useState(1);
+	const controlled = onPageChange != null;
+	const page = controlled ? Math.max(1, pageProp ?? 1) : internalPage;
+	const setPage = controlled ? onPageChange : setInternalPage;
+
 	const [loading, setLoading] = useState(true);
+	const filterKey = `${query ?? ''}|${gender ?? ''}|${tag ?? ''}`;
+	const prevFilterKey = useRef<string | null>(null);
+
+	useEffect(() => {
+		if (prevFilterKey.current === null) {
+			prevFilterKey.current = filterKey;
+			return;
+		}
+		if (prevFilterKey.current !== filterKey) {
+			prevFilterKey.current = filterKey;
+			setPage(1);
+		}
+	}, [filterKey, setPage]);
 
 	useEffect(() => {
 		const fetchProducts = async () => {
@@ -46,9 +76,16 @@ export function ProductGrid({ gender, tag, query, title }: ProductGridProps) {
 		return '/img/shirt/shirt-black-1.png';
 	};
 
+	const wrapperClass = embedded
+		? 'w-full text-black'
+		: 'mx-auto mt-28 w-11/12 max-w-7xl pb-16 text-black';
+
+	const Root = embedded ? 'section' : 'main';
+	const Heading = embedded ? 'h2' : 'h1';
+
 	return (
-		<main className='mx-auto mt-28 w-11/12 max-w-7xl pb-16 text-black'>
-			<h1 className='mb-8 text-3xl font-bold'>{title}</h1>
+		<Root className={wrapperClass}>
+			<Heading className='mb-8 text-3xl font-bold'>{title}</Heading>
 
 			{loading && (
 				<div className='flex justify-center py-20'>
@@ -95,6 +132,6 @@ export function ProductGrid({ gender, tag, query, title }: ProductGridProps) {
 					)}
 				</>
 			)}
-		</main>
+		</Root>
 	);
 }

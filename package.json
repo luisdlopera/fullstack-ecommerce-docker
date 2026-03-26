@@ -21,6 +21,7 @@
     "dc:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "dc:dev:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "dc:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
-    "lint": "npm run lint -w front && npm run lint -w back"
+    "lint": "npm run lint -w front && npm run lint -w back",
+    "format": "npm run format -w front && npm run format -w back"
   }
 }

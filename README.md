@@ -1,5 +1,9 @@
 # NexStore
 
+Si te gusta este proyecto, ¡deja una estrella en GitHub! ⭐ Ayuda a que más gente lo descubra.
+
+---
+
 NexStore es un e-commerce organizado como monorepo con separación clara entre frontend y backend:
 
 - `front/`: Next.js (UI)
@@ -59,11 +63,21 @@ npm run dev:build
 - Backend API: `http://localhost:4000/api/health`
 - Swagger docs: `http://localhost:4000/api/docs`
 
-6) (Opcional) Ejecutar seed de datos de prueba:
+6) Cargar datos de prueba (usuarios, productos, países, etc.):
+
+**Con el backend en local** (desde la raíz del repo, con PostgreSQL accesible y `DATABASE_URL` en `.env`):
 
 ```bash
-docker exec -it nexstore_back sh -c "npx prisma db seed"
+npm run prisma:seed -w back
 ```
+
+**Con Docker** (contenedor del API en ejecución):
+
+```bash
+docker exec -it nexstore_back npx prisma db seed
+```
+
+El seed define cuentas como `admin@nexstore.com` / `Qwert.12345` (ver sección *Usuarios de prueba*).
 
 ## Si apagas el PC o quieres volver a ejecutar
 
@@ -101,6 +115,7 @@ npm run dev:down
 | `npm run dev:up` | Levanta sin reconstruir (rápido) |
 | `npm run dev:down` | Detiene todos los contenedores |
 | `npm run dev:clean` | Borra volúmenes, reconstruye e inicia (soluciona problemas de deps) |
+| `npm run format` | Formatea `front/` y `back/` con Prettier |
 
 ## Desarrollo con hot reload
 
@@ -150,6 +165,23 @@ npm run prisma:generate -w back
 npm run prisma:migrate:dev -w back
 npm run prisma:seed -w back
 ```
+
+El seed también se puede ejecutar con `npx prisma db seed` dentro de `back/` (usa `prisma.seed` del `package.json` del backend).
+
+## Formato de código
+
+Desde la raíz del monorepo:
+
+```bash
+npm run format
+```
+
+Equivale a formatear el frontend (`prettier --write .` en `front/`) y el backend (`src` y `prisma` en `back/`). Comprobar sin escribir: `npm run format:check -w back` y `npm run prettier:check -w front`.
+
+## Problemas frecuentes
+
+- **Login responde 500:** Comprueba que el API tenga `JWT_SECRET` (en Docker, el `docker-compose.yml` carga `.env` y define JWT). Reinicia el contenedor o el proceso de Nest tras cambios en auth.
+- **Seed sin datos / sin usuarios:** Ejecuta `npm run prisma:seed -w back` o el `docker exec` indicado arriba con la base ya levantada.
 
 ## Tests (backend)
 

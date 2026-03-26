@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Put } from '@nestjs/common';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import type { JwtPayload } from '../common/auth/jwt-payload';
 import { UpsertAddressDto } from './dto/upsert-address.dto';
@@ -6,7 +6,7 @@ import { UsersService } from './users.service';
 
 @Controller('users/me')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
 
   @Get('address')
   getMyAddress(@CurrentUser() user: JwtPayload) {

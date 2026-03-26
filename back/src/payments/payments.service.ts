@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -18,7 +19,7 @@ type MercadoPagoPayment = {
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async verifyMercadoPagoPayment(paymentId: string) {
     const accessToken = process.env.MP_ACCESS_TOKEN;

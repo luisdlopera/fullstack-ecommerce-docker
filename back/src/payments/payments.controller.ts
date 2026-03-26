@@ -1,11 +1,11 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Inject, Post } from '@nestjs/common';
 import { Public } from '../common/auth/public.decorator';
 import { VerifyMercadoPagoDto } from './dto/verify-mercadopago.dto';
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Post('mercadopago/verify')
   verifyMercadoPago(@Body() dto: VerifyMercadoPagoDto) {

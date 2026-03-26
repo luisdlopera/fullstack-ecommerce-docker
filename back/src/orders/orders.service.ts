@@ -1,23 +1,28 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException
 } from '@nestjs/common';
 import { OrderStatus, Role } from '@prisma/client';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { CreateOrderDto, UpdateOrderPaymentDto } from './dto/create-order.dto';
+import { isAdminRole } from '../common/auth/permissions';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.pending]: [OrderStatus.shipped, OrderStatus.cancelled],
-  [OrderStatus.shipped]: [OrderStatus.delivered],
-  [OrderStatus.delivered]: [],
-  [OrderStatus.cancelled]: []
+  [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
+  [OrderStatus.PAID]: [OrderStatus.PROCESSING, OrderStatus.REFUNDED],
+  [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+  [OrderStatus.DELIVERED]: [OrderStatus.REFUNDED],
+  [OrderStatus.CANCELLED]: [],
+  [OrderStatus.REFUNDED]: []
 };
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateOrderDto) {
     const productIds = [...new Set(dto.items.map((item) => item.productId))];
@@ -69,7 +74,7 @@ export class OrdersService {
           tax,
           total,
           itemsInOrder,
-          status: OrderStatus.pending,
+          status: OrderStatus.PENDING,
           OrderItem: {
             create: dto.items.map((item) => {
               const product = productMap.get(item.productId)!;
@@ -128,7 +133,7 @@ export class OrdersService {
     });
 
     if (!order) throw new NotFoundException('Order not found');
-    if (role !== Role.admin && order.userId !== userId) {
+    if (!isAdminRole(role) && order.userId !== userId) {
       throw new ForbiddenException('You cannot access this order');
     }
 
@@ -139,11 +144,11 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Order not found');
 
-    if (newStatus === OrderStatus.cancelled) {
-      if (role !== Role.admin && order.userId !== userId) {
+    if (newStatus === OrderStatus.CANCELLED) {
+      if (!isAdminRole(role) && order.userId !== userId) {
         throw new ForbiddenException('You cannot cancel this order');
       }
-    } else if (role !== Role.admin) {
+    } else if (!isAdminRole(role)) {
       throw new ForbiddenException('Only admins can update order status');
     }
 
@@ -154,7 +159,7 @@ export class OrdersService {
       );
     }
 
-    if (newStatus === OrderStatus.cancelled && !order.isPaid) {
+    if (newStatus === OrderStatus.CANCELLED && !order.isPaid) {
       await this.restoreStock(orderId);
     }
 

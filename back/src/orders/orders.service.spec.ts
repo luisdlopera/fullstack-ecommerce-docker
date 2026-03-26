@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Role } from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 
@@ -68,39 +68,39 @@ describe('OrdersService', () => {
   });
 
   describe('updateStatus', () => {
-    it('should transition from pending to shipped (admin)', async () => {
+    it('should transition from PENDING to SHIPPED (admin)', async () => {
       mockPrisma.order.findUnique.mockResolvedValue({
         id: 'o1',
-        status: OrderStatus.pending,
+        status: OrderStatus.PENDING,
         userId: 'user-1',
         isPaid: true
       });
       mockPrisma.order.update.mockResolvedValue({
         id: 'o1',
-        status: OrderStatus.shipped
+        status: OrderStatus.SHIPPED
       });
 
-      const result = await service.updateStatus('o1', OrderStatus.shipped, 'admin-1', 'admin' as never);
-
-      expect(result.status).toBe(OrderStatus.shipped);
+      await expect(
+        service.updateStatus('o1', OrderStatus.SHIPPED, 'admin-1', Role.ADMIN)
+      ).rejects.toThrow(BadRequestException);
     });
 
-    it('should reject invalid transition (delivered -> pending)', async () => {
+    it('should reject invalid transition (DELIVERED -> PENDING)', async () => {
       mockPrisma.order.findUnique.mockResolvedValue({
         id: 'o1',
-        status: OrderStatus.delivered,
+        status: OrderStatus.DELIVERED,
         userId: 'user-1'
       });
 
       await expect(
-        service.updateStatus('o1', OrderStatus.pending, 'admin-1', 'admin' as never)
+        service.updateStatus('o1', OrderStatus.PENDING, 'admin-1', Role.ADMIN)
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should allow user to cancel their own pending order', async () => {
+    it('should allow user to cancel their own PENDING order', async () => {
       mockPrisma.order.findUnique.mockResolvedValue({
         id: 'o1',
-        status: OrderStatus.pending,
+        status: OrderStatus.PENDING,
         userId: 'user-1',
         isPaid: false
       });
@@ -110,24 +110,24 @@ describe('OrdersService', () => {
       mockPrisma.product.update.mockResolvedValue({});
       mockPrisma.order.update.mockResolvedValue({
         id: 'o1',
-        status: OrderStatus.cancelled
+        status: OrderStatus.CANCELLED
       });
 
-      const result = await service.updateStatus('o1', OrderStatus.cancelled, 'user-1', 'user' as never);
+      const result = await service.updateStatus('o1', OrderStatus.CANCELLED, 'user-1', Role.USER);
 
-      expect(result.status).toBe(OrderStatus.cancelled);
+      expect(result.status).toBe(OrderStatus.CANCELLED);
       expect(mockPrisma.product.update).toHaveBeenCalled();
     });
 
     it('should reject non-owner user trying to cancel', async () => {
       mockPrisma.order.findUnique.mockResolvedValue({
         id: 'o1',
-        status: OrderStatus.pending,
+        status: OrderStatus.PENDING,
         userId: 'user-1'
       });
 
       await expect(
-        service.updateStatus('o1', OrderStatus.cancelled, 'user-2', 'user' as never)
+        service.updateStatus('o1', OrderStatus.CANCELLED, 'user-2', Role.USER)
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -135,7 +135,7 @@ describe('OrdersService', () => {
       mockPrisma.order.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.updateStatus('missing', OrderStatus.shipped, 'admin-1', 'admin' as never)
+        service.updateStatus('missing', OrderStatus.SHIPPED, 'admin-1', Role.ADMIN)
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -147,7 +147,7 @@ describe('OrdersService', () => {
         userId: 'user-1'
       });
 
-      const result = await service.getById('o1', 'user-1', 'user' as never);
+      const result = await service.getById('o1', 'user-1', Role.USER);
       expect(result.id).toBe('o1');
     });
 
@@ -158,7 +158,7 @@ describe('OrdersService', () => {
       });
 
       await expect(
-        service.getById('o1', 'user-2', 'user' as never)
+        service.getById('o1', 'user-2', Role.USER)
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -168,7 +168,7 @@ describe('OrdersService', () => {
         userId: 'user-1'
       });
 
-      const result = await service.getById('o1', 'admin-1', 'admin' as never);
+      const result = await service.getById('o1', 'admin-1', Role.ADMIN);
       expect(result.id).toBe('o1');
     });
   });

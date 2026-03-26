@@ -1,15 +1,15 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Body, Controller, Get, Inject, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import type { JwtPayload } from '../common/auth/jwt-payload';
 import { Roles } from '../common/auth/roles.decorator';
+import { ADMIN_ROLES } from '../common/auth/permissions';
 import { CreateOrderDto, UpdateOrderPaymentDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(@Inject(OrdersService) private readonly ordersService: OrdersService) {}
 
   @Post()
   createOrder(@CurrentUser() user: JwtPayload, @Body() dto: CreateOrderDto) {
@@ -39,7 +39,7 @@ export class OrdersController {
     return this.ordersService.updateStatus(orderId, dto.status, user.sub, user.role);
   }
 
-  @Roles(Role.admin)
+  @Roles(...ADMIN_ROLES)
   @Patch(':id/payment')
   markOrderAsPaid(@Param('id') orderId: string, @Body() dto: UpdateOrderPaymentDto) {
     return this.ordersService.markAsPaid(orderId, dto);

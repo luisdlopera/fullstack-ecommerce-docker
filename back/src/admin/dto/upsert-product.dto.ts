@@ -2,6 +2,7 @@ import { Gender, Size } from '@prisma/client';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
@@ -17,6 +18,10 @@ export class UpsertProductDto {
   @IsString()
   description!: string;
 
+  @IsOptional()
+  @IsString()
+  sku?: string;
+
   @IsInt()
   @Min(0)
   inStock!: number;
@@ -24,6 +29,11 @@ export class UpsertProductDto {
   @IsNumber()
   @Min(0)
   price!: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  comparePrice?: number;
 
   @IsArray()
   @ArrayMinSize(1)
@@ -42,6 +52,14 @@ export class UpsertProductDto {
 
   @IsString()
   categoryId!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  featured?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @IsOptional()
   @IsArray()

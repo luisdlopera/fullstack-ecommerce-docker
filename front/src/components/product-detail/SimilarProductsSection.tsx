@@ -1,7 +1,7 @@
 'use client';
 
 import type { SimilarProduct } from '@/types/product-detail';
-import { ProductCard } from './ProductCard';
+import { SimilarProductCard } from './SimilarProductCard';
 
 type SimilarProductsSectionProps = {
 	products: SimilarProduct[];
@@ -24,7 +24,7 @@ export function SimilarProductsSection({
 			</div>
 			<div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
 				{products.map((p) => (
-					<ProductCard key={p.id} product={p} />
+					<SimilarProductCard key={p.id} product={p} />
 				))}
 			</div>
 		</section>

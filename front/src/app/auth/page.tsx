@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
+const showAuthDemoHints = process.env.NODE_ENV === 'development';
+
 const DEMO_PASSWORD = 'Qwert.12345';
 
 const SEED_TEST_USERS: { label: string; email: string; badgeClass: string }[] = [
@@ -89,22 +91,24 @@ export default function AuthPage() {
 					</Button>
 				</Form>
 
-				<div className='rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700'>
-					<p className='mb-1 font-bold text-gray-900'>Usuarios de prueba</p>
-					<p className='mb-3 text-xs text-gray-500'>
-						Contraseña para todos: <span className='font-mono'>{DEMO_PASSWORD}</span>
-					</p>
-					<div className='max-h-64 space-y-2 overflow-y-auto pr-1'>
-						{SEED_TEST_USERS.map((u) => (
-							<div key={u.email} className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'>
-								<div className='min-w-0 flex-1'>
-									<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>{u.label}</span>
-									<span className='ml-2 break-all'>{u.email}</span>
+				{showAuthDemoHints && (
+					<div className='rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700'>
+						<p className='mb-1 font-bold text-gray-900'>Usuarios de prueba (solo desarrollo)</p>
+						<p className='mb-3 text-xs text-gray-500'>
+							Contraseña para todos: <span className='font-mono'>{DEMO_PASSWORD}</span>
+						</p>
+						<div className='max-h-64 space-y-2 overflow-y-auto pr-1'>
+							{SEED_TEST_USERS.map((u) => (
+								<div key={u.email} className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'>
+									<div className='min-w-0 flex-1'>
+										<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>{u.label}</span>
+										<span className='ml-2 break-all'>{u.email}</span>
+									</div>
 								</div>
-							</div>
-						))}
+							))}
+						</div>
 					</div>
-				</div>
+				)}
 			</div>
 
 			<Form className='flex w-1/3 flex-col items-start gap-2 text-black' onSubmit={onRegister}>

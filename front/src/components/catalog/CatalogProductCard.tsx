@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { ProductBadge } from './ProductBadge';
 import type { CatalogProduct } from './types';
 
-type ProductCardProps = { product: CatalogProduct };
+type CatalogProductCardProps = { product: CatalogProduct };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function CatalogProductCard({ product }: CatalogProductCardProps) {
   const [hover, setHover] = useState(false);
   const href = `/products/${product.slug}`;
   const showSecond = Boolean(product.image2) && hover;

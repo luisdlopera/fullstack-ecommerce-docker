@@ -1,1 +1,1 @@
-export { ProductCard } from './ProductCard';
+export { ShopProductCard, type ShopProductCardProps } from './ShopProductCard';

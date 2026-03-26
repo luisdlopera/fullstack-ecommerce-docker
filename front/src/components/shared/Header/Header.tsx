@@ -10,13 +10,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { isAdminRole } from '@/types/admin';
 
-interface ItemToUrlMap {
-	Inicio: string;
-	Nuevo: string;
-	Hombre: string;
-	Mujer: string;
-	Niños: string;
-}
+/** Scroll offset (px) after which the header uses solid background — aligned with hero height. */
+const HEADER_SOLID_BG_SCROLL_Y = 648;
+
+const NAV_ITEMS = [
+	{ label: 'Inicio', path: '' },
+	{ label: 'Nuevo', path: 'new' },
+	{ label: 'Hombre', path: 'men' },
+	{ label: 'Mujer', path: 'women' },
+	{ label: 'Niños', path: 'kids' },
+] as const;
 
 export function Header() {
 	const pathname = usePathname();
@@ -24,25 +27,16 @@ export function Header() {
 	const { totalItems } = useCart();
 	const { items: favoriteItems } = useFavorites();
 	const { user, logout } = useAuth();
-	const menuItems = ['Inicio', 'Nuevo', 'Hombre', 'Mujer', 'Niños'];
 	const [scrolled, setScrolled] = useState(false);
 
 	useEffect(() => {
 		const handleScroll = () => {
-			setScrolled(window.scrollY > 648);
+			setScrolled(window.scrollY > HEADER_SOLID_BG_SCROLL_Y);
 		};
 
 		window.addEventListener('scroll', handleScroll);
 		return () => window.removeEventListener('scroll', handleScroll);
 	}, []);
-
-	const itemToUrlMap: ItemToUrlMap = {
-		Inicio: '',
-		Nuevo: 'new',
-		Hombre: 'men',
-		Mujer: 'women',
-		Niños: 'kids',
-	};
 
 	const handleLogout = () => {
 		logout();
@@ -64,16 +58,15 @@ export function Header() {
 				</div>
 
 				<div className='hidden items-center justify-center gap-3 sm:flex'>
-					{menuItems.map((item, index) => {
-						const url = itemToUrlMap[item as keyof ItemToUrlMap];
-						const isActive = pathname === `/${url}` || (pathname === '/' && url === '');
+					{NAV_ITEMS.map(({ label, path }) => {
+						const isActive = pathname === `/${path}` || (pathname === '/' && path === '');
 						return (
-							<div key={index}>
+							<div key={path || 'home'}>
 								<Link
-									href={`/${url}`}
+									href={path ? `/${path}` : '/'}
 									className={`text-black ${scrolled ? 'text-black' : pathname === '/' ? 'text-white' : 'text-black'} ${isActive ? 'rounded-xl bg-primary px-3 py-2 font-bold text-white' : 'rounded-xl px-3 py-2'} transition-colors duration-300 hover:bg-gray-200 hover:text-black`}
 								>
-									{item}
+									{label}
 								</Link>
 							</div>
 						);

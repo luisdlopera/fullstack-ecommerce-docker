@@ -1,8 +1,9 @@
 'use client';
 
 import { Tab, Tabs } from '@heroui/react';
-import { ProductCard } from '../shared/ProductCard';
+import { ShopProductCard } from '../shared/ProductCard';
 import { FeaturedProduct } from '@/lib/api';
+import { isNewFromTags } from '@/lib/product-flags';
 
 type TabsHomeProps = {
 	products: FeaturedProduct[];
@@ -28,7 +29,7 @@ export function TabsHome({ products }: TabsHomeProps) {
 				{list.map((product) => {
 					const imgs = product.images ?? [];
 					return (
-					<ProductCard
+					<ShopProductCard
 						key={product.id}
 						id={product.id}
 						name={product.title}
@@ -36,7 +37,7 @@ export function TabsHome({ products }: TabsHomeProps) {
 						image={imgs[0] || '/img/shirt/shirt-black-1.png'}
 						image2={imgs[1] || imgs[0] || '/img/shirt/shirt-black-2.png'}
 						slug={product.slug}
-						isNew
+						isNew={isNewFromTags(product.tags)}
 					/>
 					);
 				})}

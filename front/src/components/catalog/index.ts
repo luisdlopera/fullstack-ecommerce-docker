@@ -5,7 +5,7 @@ export { SizeFilter } from './SizeFilter';
 export { AvailabilityFilter } from './AvailabilityFilter';
 export { SearchBar } from './SearchBar';
 export { ProductGrid } from './ProductGrid';
-export { ProductCard } from './ProductCard';
+export { CatalogProductCard } from './CatalogProductCard';
 export { ProductBadge } from './ProductBadge';
 export { Pagination } from './Pagination';
 export { CollectionHeader } from './CollectionHeader';

@@ -2,8 +2,9 @@
 
 import { Button, Pagination, Spinner } from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
-import { ProductCard } from '../ProductCard/ProductCard';
+import { ShopProductCard } from '../ProductCard';
 import { getClientApiUrl, type Product, type ProductListResponse } from '@/lib/api';
+import { discountPercent, isNewFromTags } from '@/lib/product-flags';
 
 type ProductGridProps = {
 	gender?: string;
@@ -106,7 +107,7 @@ export function ProductGrid({
 				<>
 					<div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
 						{data.data.map((product) => (
-							<ProductCard
+							<ShopProductCard
 								key={product.id}
 								id={product.id}
 								name={product.title}
@@ -114,7 +115,9 @@ export function ProductGrid({
 								image={getImage(product, 0)}
 								image2={getImage(product, 1)}
 								slug={product.slug}
-								isNew
+								isNew={isNewFromTags(product.tags)}
+								discount={discountPercent(product.price, product.comparePrice)}
+								isSoldOut={product.inStock <= 0}
 							/>
 						))}
 					</div>

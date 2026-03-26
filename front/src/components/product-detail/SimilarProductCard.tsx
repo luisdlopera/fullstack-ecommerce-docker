@@ -5,15 +5,14 @@ import Link from 'next/link';
 import type { SimilarProduct } from '@/types/product-detail';
 import { formatCOP } from '@/lib/format-currency';
 
-export type ProductCardProps = {
+export type SimilarProductCardProps = {
 	product: SimilarProduct;
 };
 
 /**
- * Tarjeta de producto para la sección “similares” en la PDP.
- * (Distinta de `shared/ProductCard`, pensada para grid minimalista.)
+ * Tarjeta minimalista para la sección “similares” en la PDP.
  */
-export function ProductCard({ product }: ProductCardProps) {
+export function SimilarProductCard({ product }: SimilarProductCardProps) {
 	const href = `/products/${product.slug}`;
 
 	return (

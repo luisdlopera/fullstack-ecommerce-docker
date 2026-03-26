@@ -1,5 +1,5 @@
 import type { CatalogProduct } from './types';
-import { ProductCard } from './ProductCard';
+import { CatalogProductCard } from './CatalogProductCard';
 
 type ProductGridProps = { products: CatalogProduct[] };
 
@@ -15,7 +15,7 @@ export function ProductGrid({ products }: ProductGridProps) {
   return (
     <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
       {products.map((p) => (
-        <ProductCard key={p.id} product={p} />
+        <CatalogProductCard key={p.id} product={p} />
       ))}
     </div>
   );

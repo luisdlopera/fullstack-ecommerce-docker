@@ -12,22 +12,14 @@ import {
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { mapApiProductToProductDetail, mapProductToSimilarProduct } from '@/lib/adapters/product-detail';
-import { getClientApiUrl } from '@/lib/api';
+import { fetchProductsClient, getClientApiUrl } from '@/lib/api';
 import { getMockProductDetail } from '@/lib/mocks/product-detail';
+import { pickDefaultSize } from '@/lib/product-size';
 import type { Product } from '@/lib/api';
 import type { ProductAccordionItem, ProductDetail, SimilarProduct } from '@/types/product-detail';
 
-/**
- * `false` = solo mocks (`getMockProductDetail`), sin llamadas al API (demo camiseta negra).
- * `true` = carga `/products/:slug` del API y usa `mapApiProductToProductDetail`.
- */
-const LOAD_PRODUCT_FROM_API = true;
-
-function defaultSize(sizes: string[]): string | null {
-	if (sizes.length === 0) return null;
-	const m = sizes.find((s) => s === 'M');
-	return m ?? sizes[Math.floor(sizes.length / 2)] ?? sizes[0];
-}
+/** Set `NEXT_PUBLIC_PRODUCT_DETAIL_USE_MOCK=true` to use local mock PDP data (no API). */
+const USE_PRODUCT_DETAIL_MOCK = process.env.NEXT_PUBLIC_PRODUCT_DETAIL_USE_MOCK === 'true';
 
 function defaultColorId(colors: ProductDetail['colors']): string | null {
 	if (colors.length === 0) return null;
@@ -43,7 +35,7 @@ export default function ProductDetailPage() {
 
 	const [product, setProduct] = useState<ProductDetail | null>(null);
 	const [relatedProducts, setRelatedProducts] = useState<SimilarProduct[]>([]);
-	const [loading, setLoading] = useState(LOAD_PRODUCT_FROM_API);
+	const [loading, setLoading] = useState(!USE_PRODUCT_DETAIL_MOCK);
 	const [selectedImage, setSelectedImage] = useState(0);
 	const [selectedSize, setSelectedSize] = useState<string | null>(null);
 	const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
@@ -51,10 +43,10 @@ export default function ProductDetailPage() {
 	const [addFeedback, setAddFeedback] = useState(false);
 
 	useEffect(() => {
-		if (!LOAD_PRODUCT_FROM_API) {
+		if (USE_PRODUCT_DETAIL_MOCK) {
 			const p = getMockProductDetail(params.slug);
 			setProduct(p);
-			setSelectedSize(defaultSize(p.sizes));
+			setSelectedSize(pickDefaultSize(p.sizes));
 			setSelectedColorId(defaultColorId(p.colors));
 			setLoading(false);
 			return;
@@ -70,7 +62,9 @@ export default function ProductDetailPage() {
 					const p = mapApiProductToProductDetail(data);
 					if (!cancelled) {
 						setProduct(p);
-						setSelectedSize(data.sizes.length === 1 ? data.sizes[0] : defaultSize(p.sizes));
+						setSelectedSize(
+							data.sizes.length === 1 ? data.sizes[0] : pickDefaultSize(p.sizes),
+						);
 						setSelectedColorId(defaultColorId(p.colors));
 						setSelectedImage(0);
 						setQuantity(1);
@@ -108,11 +102,8 @@ export default function ProductDetailPage() {
 		let cancelled = false;
 		(async () => {
 			try {
-				const res = await fetch(
-					`${getClientApiUrl()}/products?gender=${encodeURIComponent(gender)}&limit=12`
-				);
-				if (!res.ok || cancelled) return;
-				const body = (await res.json()) as { data: Product[] };
+				const body = await fetchProductsClient({ gender, limit: 12 });
+				if (cancelled) return;
 				const list = body.data ?? [];
 				const filtered = list.filter((p) => p.slug !== product.slug).slice(0, 4);
 				if (!cancelled) setRelatedProducts(filtered.map(mapProductToSimilarProduct));

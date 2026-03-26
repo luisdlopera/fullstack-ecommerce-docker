@@ -8,8 +8,9 @@ import { useRouter } from 'next/navigation';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
 import { getClientApiUrl, type Product } from '@/lib/api';
+import { pickDefaultSize } from '@/lib/product-size';
 
-interface ProductCardProps {
+export interface ShopProductCardProps {
 	id?: string;
 	name: string;
 	price: number;
@@ -21,7 +22,7 @@ interface ProductCardProps {
 	isSoldOut?: boolean;
 }
 
-export function ProductCard({
+export function ShopProductCard({
 	id,
 	name,
 	price,
@@ -31,7 +32,7 @@ export function ProductCard({
 	isNew = false,
 	discount = 0,
 	isSoldOut = false,
-}: ProductCardProps) {
+}: ShopProductCardProps) {
 	const [hover, setHover] = useState<boolean>(false);
 	const [addingToCart, setAddingToCart] = useState(false);
 	const router = useRouter();
@@ -64,11 +65,8 @@ export function ProductCard({
 			}
 			const product = (await res.json()) as Product;
 			if (product.inStock === 0 || product.sizes.length === 0) return;
-			const defaultSize =
-				product.sizes.find((s) => s === 'M') ??
-				product.sizes.find((s) => s === 'L') ??
-				product.sizes[Math.floor(product.sizes.length / 2)] ??
-				product.sizes[0];
+			const defaultSize = pickDefaultSize(product.sizes);
+			if (!defaultSize) return;
 			const img =
 				product.ProductImage.length > 0 ? product.ProductImage[0].url : image;
 			addItem({

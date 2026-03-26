@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from '@heroui/react';
 import { Heart } from 'lucide-react';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { ProductCard } from '@/components/shared/ProductCard';
+import { ShopProductCard } from '@/components/shared/ProductCard';
 
 export default function FavoritesPage() {
   const { items } = useFavorites();
@@ -26,7 +26,7 @@ export default function FavoritesPage() {
       {items.length > 0 && (
         <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {items.map((item) => (
-            <ProductCard
+            <ShopProductCard
               key={item.slug}
               id={item.productId}
               name={item.title}
@@ -34,7 +34,6 @@ export default function FavoritesPage() {
               image={item.image}
               image2={item.image}
               slug={item.slug}
-              isNew
             />
           ))}
         </div>

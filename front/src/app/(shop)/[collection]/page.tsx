@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import { isCollectionSlug, ProductListingPage } from '@/components/catalog';
 
 type PageProps = { params: Promise<{ collection: string }> };
@@ -20,5 +21,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CollectionPage({ params }: PageProps) {
   const { collection } = await params;
   if (!isCollectionSlug(collection)) notFound();
-  return <ProductListingPage collection={collection} />;
+  return (
+    <Suspense
+      fallback={
+        <div className='mx-auto w-full max-w-7xl px-4 pb-16 pt-28 text-center text-neutral-500 md:px-6 lg:px-8'>
+          Cargando catálogo…
+        </div>
+      }
+    >
+      <ProductListingPage collection={collection} />
+    </Suspense>
+  );
 }

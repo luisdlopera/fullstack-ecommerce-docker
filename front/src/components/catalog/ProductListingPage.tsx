@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SlidersHorizontal, X } from 'lucide-react';
 import type { ActiveFilters, CatalogProduct, CollectionSlug, SidebarDraftFilters } from './types';
 import { collectionToApiParams, emptyDraftFilters } from './constants';
@@ -11,34 +12,68 @@ import { SearchBar } from './SearchBar';
 import { ProductFiltersSidebar } from './ProductFiltersSidebar';
 import { ProductGrid } from './ProductGrid';
 import { Pagination } from './Pagination';
-import { getClientApiUrl, type Product, type ProductListResponse } from '@/lib/api';
+import { fetchProductsClient, type Product } from '@/lib/api';
+
+const MOBILE_FILTERS_TITLE_ID = 'catalog-mobile-filters-title';
 
 type ProductListingPageProps = { collection: CollectionSlug };
 
+type QueryUpdates = { page?: number; q?: string | null };
+
 export function ProductListingPage({ collection }: ProductListingPageProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+  const searchQuery = (searchParams.get('q') ?? '').trim();
+
   const [raw, setRaw] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [draftFilters, setDraftFilters] = useState<SidebarDraftFilters>(emptyDraftFilters);
   const [appliedFilters, setAppliedFilters] = useState<SidebarDraftFilters>(emptyDraftFilters);
-  const [searchDraft, setSearchDraft] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
+  const [searchDraft, setSearchDraft] = useState(searchQuery);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    setSearchDraft(searchQuery);
+  }, [searchQuery]);
+
+  const replaceCatalogQuery = useCallback(
+    (updates: QueryUpdates) => {
+      const sp = new URLSearchParams(searchParams.toString());
+      const curPage = Math.max(1, parseInt(sp.get('page') || '1', 10) || 1);
+      const curQ = sp.get('q') ?? '';
+
+      const nextPage = updates.page ?? curPage;
+      const nextQ = updates.q !== undefined ? (updates.q ?? '') : curQ;
+
+      if (nextPage <= 1) sp.delete('page');
+      else sp.set('page', String(nextPage));
+
+      const trimmed = String(nextQ).trim();
+      if (!trimmed) sp.delete('q');
+      else sp.set('q', trimmed);
+
+      const qs = sp.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [router, pathname, searchParams],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const base = getClientApiUrl();
-      const params = new URLSearchParams({ page: '1', limit: '100' });
       const api = collectionToApiParams(collection);
-      if (api.gender) params.set('gender', api.gender);
-      if (api.tag) params.set('tag', api.tag);
-      const res = await fetch(`${base}/products?${params}`);
-      if (!res.ok) throw new Error('No se pudieron cargar los productos');
-      const json = (await res.json()) as ProductListResponse;
+      const json = await fetchProductsClient({
+        page: 1,
+        limit: 100,
+        ...(api.gender ? { gender: api.gender } : {}),
+        ...(api.tag ? { tag: api.tag } : {}),
+      });
       const mapped = json.data.map((p: Product) => mapProductToCatalog(p, collection));
       setRaw(mapped);
     } catch (e) {
@@ -56,9 +91,7 @@ export function ProductListingPage({ collection }: ProductListingPageProps) {
   useEffect(() => {
     setDraftFilters(emptyDraftFilters());
     setAppliedFilters(emptyDraftFilters());
-    setSearchDraft('');
-    setSearchQuery('');
-    setPage(1);
+    setMobileFiltersOpen(false);
   }, [collection]);
 
   const availability = useMemo(() => countAvailability(raw), [raw]);
@@ -83,18 +116,20 @@ export function ProductListingPage({ collection }: ProductListingPageProps) {
   );
 
   useEffect(() => {
-    setPage((p) => Math.min(p, totalPages));
-  }, [totalPages]);
+    if (loading || loadError) return;
+    if (page > totalPages) {
+      replaceCatalogQuery({ page: totalPages });
+    }
+  }, [loading, loadError, page, totalPages, replaceCatalogQuery]);
 
   const applySidebar = () => {
     setAppliedFilters(draftFilters);
-    setPage(1);
+    replaceCatalogQuery({ page: 1 });
     setMobileFiltersOpen(false);
   };
 
   const submitSearch = () => {
-    setSearchQuery(searchDraft.trim());
-    setPage(1);
+    replaceCatalogQuery({ page: 1, q: searchDraft.trim() || null });
   };
 
   const sidebar = (
@@ -152,21 +187,28 @@ export function ProductListingPage({ collection }: ProductListingPageProps) {
           {!loading && !loadError && (
             <>
               <ProductGrid products={pageItems} />
-              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              <Pagination page={page} totalPages={totalPages} onPageChange={(p) => replaceCatalogQuery({ page: p })} />
             </>
           )}
         </div>
       </div>
 
       {mobileFiltersOpen && (
-        <div className='fixed inset-0 z-50 flex flex-col bg-white lg:hidden' role='dialog' aria-modal>
+        <div
+          className='fixed inset-0 z-50 flex flex-col bg-white lg:hidden'
+          role='dialog'
+          aria-modal='true'
+          aria-labelledby={MOBILE_FILTERS_TITLE_ID}
+        >
           <div className='flex items-center justify-between border-b border-neutral-100 px-4 py-3'>
-            <span className='text-base font-bold'>Filtros</span>
+            <span id={MOBILE_FILTERS_TITLE_ID} className='text-base font-bold'>
+              Filtros
+            </span>
             <button
               type='button'
               className='rounded-lg p-2 text-neutral-600 hover:bg-neutral-100'
               onClick={() => setMobileFiltersOpen(false)}
-              aria-label='Cerrar'
+              aria-label='Cerrar filtros'
             >
               <X className='h-5 w-5' />
             </button>

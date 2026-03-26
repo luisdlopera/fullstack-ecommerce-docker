@@ -1,10 +1,6 @@
 import type { Product } from '@/lib/api';
+import { discountPercent, isNewFromTags } from '@/lib/product-flags';
 import type { CatalogProduct, CollectionSlug } from './types';
-
-function discountPercent(price: number, compare: number | null | undefined): number {
-  if (compare == null || compare <= price) return 0;
-  return Math.round(((compare - price) / compare) * 100);
-}
 
 function tagValues(prefix: string, tags: string[]): string[] {
   const p = `${prefix}:`;
@@ -13,7 +9,7 @@ function tagValues(prefix: string, tags: string[]): string[] {
 
 export function mapProductToCatalog(p: Product, collection: CollectionSlug): CatalogProduct {
   const tags = (p.tags ?? []).map((t) => t.toLowerCase());
-  const isNew = tags.includes('nuevo');
+  const isNew = isNewFromTags(p.tags ?? []);
   const isSoldOut = p.inStock <= 0;
   const compare = p.comparePrice ?? null;
   const imgs = p.ProductImage ?? [];

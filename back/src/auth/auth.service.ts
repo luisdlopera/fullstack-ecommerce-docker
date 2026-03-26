@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
@@ -15,8 +15,8 @@ type AuthTokens = {
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(JwtService) private readonly jwtService: JwtService
   ) {}
 
   async register(input: RegisterDto) {
@@ -33,7 +33,7 @@ export class AuthService {
         name: input.name,
         email: input.email.toLowerCase(),
         password: bcryptjs.hashSync(input.password, 10),
-        role: Role.user
+        role: Role.USER
       }
     });
 
@@ -64,6 +64,15 @@ export class AuthService {
     if (!user || !bcryptjs.compareSync(input.password, user.password)) {
       throw new UnauthorizedException('Invalid email or password');
     }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() }
+    });
 
     const tokens = await this.signTokens({
       sub: user.id,

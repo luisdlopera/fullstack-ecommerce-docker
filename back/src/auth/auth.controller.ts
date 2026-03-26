@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Post } from '@nestjs/common';
 import { Public } from '../common/auth/public.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import type { JwtPayload } from '../common/auth/jwt-payload';
@@ -9,7 +9,7 @@ import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   @Public()
   @Post('register')

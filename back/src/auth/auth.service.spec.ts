@@ -8,7 +8,8 @@ import { PrismaService } from '../infrastructure/prisma/prisma.service';
 const mockPrisma = {
   user: {
     findUnique: jest.fn(),
-    create: jest.fn()
+    create: jest.fn(),
+    update: jest.fn()
   },
   refreshToken: {
     create: jest.fn(),
@@ -85,8 +86,10 @@ describe('AuthService', () => {
         name: 'Test',
         email: 'test@test.com',
         password: bcryptjs.hashSync('password123', 10),
-        role: 'user'
+        role: 'USER',
+        isActive: true
       });
+      mockPrisma.user.update.mockResolvedValue({});
       mockPrisma.refreshToken.create.mockResolvedValue({});
       mockPrisma.refreshToken.deleteMany.mockResolvedValue({});
 

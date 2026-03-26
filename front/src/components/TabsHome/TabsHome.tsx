@@ -25,18 +25,21 @@ export function TabsHome({ products }: TabsHomeProps) {
 		}
 		return (
 			<div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-				{list.map((product) => (
+				{list.map((product) => {
+					const imgs = product.images ?? [];
+					return (
 					<ProductCard
 						key={product.id}
 						id={product.id}
 						name={product.title}
 						price={product.price}
-						image={product.images[0] || '/img/shirt/shirt-black-1.png'}
-						image2={product.images[1] || product.images[0] || '/img/shirt/shirt-black-2.png'}
+						image={imgs[0] || '/img/shirt/shirt-black-1.png'}
+						image2={imgs[1] || imgs[0] || '/img/shirt/shirt-black-2.png'}
 						slug={product.slug}
 						isNew
 					/>
-				))}
+					);
+				})}
 			</div>
 		);
 	};

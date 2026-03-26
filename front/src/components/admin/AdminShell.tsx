@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Spinner } from '@heroui/react';
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/types/admin';
 
 export function AdminShell({
   title,
@@ -17,12 +18,12 @@ export function AdminShell({
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'admin')) {
+    if (!loading && (!user || !isAdminRole(user.role))) {
       router.replace('/');
     }
   }, [loading, user, router]);
 
-  if (loading || !user || user.role !== 'admin') {
+  if (loading || !user || !isAdminRole(user.role)) {
     return (
       <main className='flex min-h-screen items-center justify-center'>
         <Spinner size='lg' />

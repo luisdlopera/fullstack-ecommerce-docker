@@ -3,6 +3,8 @@
 import { Link, Image } from '@heroui/react';
 
 export function Footer() {
+	const year = new Date().getFullYear();
+
 	return (
 		<footer className='mt-auto w-full bg-black py-8 text-center text-white'>
 			<div className='relative z-10 my-10 flex flex-col items-center gap-4'>
@@ -23,7 +25,11 @@ export function Footer() {
 					</Link>
 				</div>
 
-				<p className='text-xs text-gray-400'>©2024 Todos los derechos reservados a nexstore, open project</p>
+				<p className='text-sm text-gray-300'>Hecho con amor por Luis David Lopera</p>
+
+				<p className='text-xs text-gray-400'>
+					© {year} Todos los derechos reservados a Nexstore, open project
+				</p>
 			</div>
 
 			<div className='absolute bottom-0 mt-20 flex w-full justify-center gap-6 bg-primary py-2 text-xs text-white'>

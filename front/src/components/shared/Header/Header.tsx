@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Badge, Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
-import { Heart, LogOut, Package, Search, ShoppingCart, User } from 'lucide-react';
+import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
+import { Heart, LogOut, Package, Search, ShoppingBag, ShoppingCart, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { isAdminRole } from '@/types/admin';
 
 interface ItemToUrlMap {
 	Inicio: string;
@@ -62,7 +63,7 @@ export function Header() {
 					</Link>
 				</div>
 
-				<div className='hidden items-center justify-center gap-8 sm:flex'>
+				<div className='hidden items-center justify-center gap-3 sm:flex'>
 					{menuItems.map((item, index) => {
 						const url = itemToUrlMap[item as keyof ItemToUrlMap];
 						const isActive = pathname === `/${url}` || (pathname === '/' && url === '');
@@ -70,7 +71,7 @@ export function Header() {
 							<div key={index}>
 								<Link
 									href={`/${url}`}
-									className={`text-black ${scrolled ? 'text-black' : pathname === '/' ? 'text-white' : 'text-black'} ${isActive ? 'rounded-xl bg-primary px-5 py-2 font-bold text-white' : 'rounded-xl px-5 py-2'} transition-colors duration-300 hover:bg-gray-200 hover:text-black`}
+									className={`text-black ${scrolled ? 'text-black' : pathname === '/' ? 'text-white' : 'text-black'} ${isActive ? 'rounded-xl bg-primary px-3 py-2 font-bold text-white' : 'rounded-xl px-3 py-2'} transition-colors duration-300 hover:bg-gray-200 hover:text-black`}
 								>
 									{item}
 								</Link>
@@ -85,46 +86,76 @@ export function Header() {
 							<Search />
 						</Button>
 					</div>
-					<div className='hidden lg:flex'>
-						<Badge content={favoriteItems.length > 0 ? favoriteItems.length : undefined} color='danger' size='sm'>
+					<div className='hidden sm:flex'>
+						<div className='relative inline-flex'>
 							<Button as={Link} href='/favorites' isIconOnly aria-label='Like' color='default'>
 								<Heart />
 							</Button>
-						</Badge>
+							{favoriteItems.length > 0 && (
+								<span
+									className='pointer-events-none absolute -right-1 -top-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg border-2 border-white bg-danger px-1.5 text-xs font-bold tabular-nums leading-none text-white shadow-sm dark:border-neutral-900'
+									aria-hidden
+								>
+									{favoriteItems.length > 99 ? '99+' : favoriteItems.length}
+								</span>
+							)}
+						</div>
 					</div>
-					<div className='hidden lg:flex'>
-						<Badge content={totalItems > 0 ? totalItems : undefined} color='primary' size='sm'>
+					<div className='flex'>
+						<div className='relative inline-flex'>
 							<Button as={Link} href='/cart' isIconOnly aria-label='Cart' color='default'>
 								<ShoppingCart />
 							</Button>
-						</Badge>
+							{totalItems > 0 && (
+								<span
+									className='pointer-events-none absolute -right-1 -top-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg border-2 border-white bg-primary px-1.5 text-xs font-bold tabular-nums leading-none text-white shadow-sm dark:border-neutral-900'
+									aria-hidden
+								>
+									{totalItems > 99 ? '99+' : totalItems}
+								</span>
+							)}
+						</div>
 					</div>
 					<div className='hidden lg:flex'>
 						{user ? (
 							<Dropdown>
 								<DropdownTrigger>
-									<Button aria-label='User menu' color='default' className='flex items-center gap-2 font-bold'>
-										<User size={18} />
-										{user.name}
+									<Button
+										aria-label='User menu'
+										color='default'
+										className='flex h-auto min-h-10 flex-col items-stretch gap-0.5 py-1.5 font-bold'
+									>
+										<span className='flex items-center gap-2'>
+											<User size={18} />
+											{user.name}
+										</span>
+										{user.role === 'USER' && (
+											<span className='pl-7 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-500'>
+												Área cliente
+											</span>
+										)}
 									</Button>
 								</DropdownTrigger>
 							<DropdownMenu
 								aria-label='User actions'
 								items={[
+									{ key: 'shop', label: 'Comprar' },
 									{ key: 'account', label: 'Mi cuenta' },
 									{ key: 'orders', label: 'Mis pedidos' },
-									...(user.role !== 'USER' ? [{ key: 'admin', label: 'Panel admin' }] : []),
+									...(isAdminRole(user.role) ? [{ key: 'admin', label: 'Panel admin' }] : []),
 									{ key: 'logout', label: 'Cerrar sesión' }
 								]}
 							>
 								{(item) => {
 									const icons: Record<string, React.ReactNode> = {
+										shop: <ShoppingBag size={16} />,
 										account: <User size={16} />,
 										orders: <Package size={16} />,
 										admin: <Package size={16} />,
 										logout: <LogOut size={16} />
 									};
 									const actions: Record<string, () => void> = {
+										shop: () => router.push('/'),
 										account: () => router.push('/account'),
 										orders: () => router.push('/orders'),
 										admin: () => router.push('/admin'),

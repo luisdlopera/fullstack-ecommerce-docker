@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { Button, Image, Tooltip } from '@heroui/react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface ProductCardProps {
+	id?: string;
 	name: string;
 	price: number;
 	image: string;
@@ -17,6 +19,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
+	id,
 	name,
 	price,
 	image,
@@ -27,6 +30,19 @@ export function ProductCard({
 	isSoldOut = false,
 }: ProductCardProps) {
 	const [hover, setHover] = useState<boolean>(false);
+	const { isFavorite, toggleFavorite } = useFavorites();
+	const favorite = slug ? isFavorite(slug) : false;
+
+	const handleToggleFavorite = () => {
+		if (!slug) return;
+		toggleFavorite({
+			productId: id ?? slug,
+			slug,
+			title: name,
+			price,
+			image,
+		});
+	};
 
 	const card = (
 		<div className='flex flex-col items-center gap-4'>
@@ -65,12 +81,16 @@ export function ProductCard({
 				{hover && (
 					<div className='absolute right-3 top-3 z-20 flex flex-col gap-2'>
 						<Tooltip content='Agregar a favoritos' className='text-black'>
-							<Button isIconOnly className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'>
-								<Heart />
+							<Button
+								isIconOnly
+								className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
+								onPress={() => handleToggleFavorite()}
+							>
+								<Heart className={favorite ? 'text-red-500' : ''} fill={favorite ? 'currentColor' : 'none'} />
 							</Button>
 						</Tooltip>
 						<Tooltip content='Ver producto' className='text-black'>
-							<Button isIconOnly className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'>
+							<Button as={Link} href={slug ? `/products/${slug}` : '#'} isIconOnly className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'>
 								<ShoppingCart />
 							</Button>
 						</Tooltip>
@@ -85,9 +105,5 @@ export function ProductCard({
 		</div>
 	);
 
-	if (slug) {
-		return <Link href={`/products/${slug}`}>{card}</Link>;
-	}
-
-	return card;
+	return slug ? <Link href={`/products/${slug}`}>{card}</Link> : card;
 }

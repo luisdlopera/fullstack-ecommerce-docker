@@ -28,6 +28,7 @@ export function TabsHome({ products }: TabsHomeProps) {
 				{list.map((product) => (
 					<ProductCard
 						key={product.id}
+						id={product.id}
 						name={product.title}
 						price={product.price}
 						image={product.images[0] || '/img/shirt/shirt-black-1.png'}

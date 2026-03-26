@@ -30,6 +30,17 @@ export default function AccountPage() {
 	const [saving, setSaving] = useState(false);
 	const [message, setMessage] = useState('');
 
+	const safeJson = async <T,>(response: Response, fallback: T): Promise<T> => {
+		if (!response.ok) return fallback;
+		const text = await response.text();
+		if (!text) return fallback;
+		try {
+			return JSON.parse(text) as T;
+		} catch {
+			return fallback;
+		}
+	};
+
 	useEffect(() => {
 		if (!authLoading && !user) {
 			router.replace('/auth');
@@ -43,12 +54,12 @@ export default function AccountPage() {
 		Promise.all([
 			fetch(`${baseUrl}/users/me/address`, {
 				headers: { Authorization: `Bearer ${token}` },
-			}).then((r) => (r.ok ? r.json() : null)),
-			fetch(`${baseUrl}/countries`).then((r) => (r.ok ? r.json() : [])),
+			}).then((r) => safeJson<UserAddress | null>(r, null)),
+			fetch(`${baseUrl}/countries`).then((r) => safeJson<Country[]>(r, [])),
 		])
 			.then(([addr, ctrs]) => {
-				setAddress(addr as UserAddress | null);
-				setCountries(ctrs as Country[]);
+				setAddress(addr);
+				setCountries(ctrs);
 			})
 			.finally(() => setLoadingAddress(false));
 	}, [token]);
@@ -79,7 +90,8 @@ export default function AccountPage() {
 				body: JSON.stringify(body),
 			});
 			if (!res.ok) throw new Error('Error al guardar');
-			const data = (await res.json()) as UserAddress;
+			const data = await safeJson<UserAddress | null>(res, null);
+			if (!data) throw new Error('Error al guardar');
 			setAddress(data);
 			setMessage('Dirección guardada correctamente.');
 		} catch {
@@ -125,7 +137,7 @@ export default function AccountPage() {
 					</p>
 					<p>
 						<span className='font-semibold'>Rol:</span>{' '}
-						<Chip size='sm' color={user.role === 'admin' ? 'primary' : 'default'}>
+						<Chip size='sm' color={user.role !== 'USER' ? 'primary' : 'default'}>
 							{user.role}
 						</Chip>
 					</p>

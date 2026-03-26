@@ -7,10 +7,12 @@ import { getClientApiUrl, type Product, type ProductListResponse } from '@/lib/a
 
 type ProductGridProps = {
 	gender?: string;
+	tag?: string;
+	query?: string;
 	title: string;
 };
 
-export function ProductGrid({ gender, title }: ProductGridProps) {
+export function ProductGrid({ gender, tag, query, title }: ProductGridProps) {
 	const [data, setData] = useState<ProductListResponse | null>(null);
 	const [page, setPage] = useState(1);
 	const [loading, setLoading] = useState(true);
@@ -22,6 +24,8 @@ export function ProductGrid({ gender, title }: ProductGridProps) {
 				const baseUrl = getClientApiUrl();
 				const params = new URLSearchParams({ page: String(page), limit: '12' });
 				if (gender) params.set('gender', gender);
+				if (tag) params.set('tag', tag);
+				if (query) params.set('query', query);
 				const res = await fetch(`${baseUrl}/products?${params}`);
 				if (!res.ok) throw new Error('Failed');
 				const json = (await res.json()) as ProductListResponse;
@@ -33,7 +37,7 @@ export function ProductGrid({ gender, title }: ProductGridProps) {
 			}
 		};
 		fetchProducts();
-	}, [page, gender]);
+	}, [page, gender, tag, query]);
 
 	const getImage = (product: Product, index: number) => {
 		if (product.ProductImage && product.ProductImage.length > index) {
@@ -67,6 +71,7 @@ export function ProductGrid({ gender, title }: ProductGridProps) {
 						{data.data.map((product) => (
 							<ProductCard
 								key={product.id}
+								id={product.id}
 								name={product.title}
 								price={product.price}
 								image={getImage(product, 0)}

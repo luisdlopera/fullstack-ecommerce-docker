@@ -46,6 +46,7 @@ export type ProductFilters = {
   limit?: number;
   query?: string;
   category?: string;
+  tag?: string;
   gender?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -103,6 +104,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
   if (filters.limit) params.set('limit', String(filters.limit));
   if (filters.query) params.set('query', filters.query);
   if (filters.category) params.set('category', filters.category);
+  if (filters.tag) params.set('tag', filters.tag);
   if (filters.gender) params.set('gender', filters.gender);
   if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
   if (filters.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));

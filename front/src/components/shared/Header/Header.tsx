@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface ItemToUrlMap {
 	Inicio: string;
@@ -20,6 +21,7 @@ export function Header() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { totalItems } = useCart();
+	const { items: favoriteItems } = useFavorites();
 	const { user, logout } = useAuth();
 	const menuItems = ['Inicio', 'Nuevo', 'Hombre', 'Mujer', 'Niños'];
 	const [scrolled, setScrolled] = useState(false);
@@ -79,14 +81,16 @@ export function Header() {
 
 				<div className='flex gap-4'>
 					<div className='hidden lg:flex'>
-						<Button as={Link} href='#' isIconOnly aria-label='Search' color='default'>
+						<Button as={Link} href='/search' isIconOnly aria-label='Search' color='default'>
 							<Search />
 						</Button>
 					</div>
 					<div className='hidden lg:flex'>
-						<Button as={Link} href='#' isIconOnly aria-label='Like' color='default'>
-							<Heart />
-						</Button>
+						<Badge content={favoriteItems.length > 0 ? favoriteItems.length : undefined} color='danger' size='sm'>
+							<Button as={Link} href='/favorites' isIconOnly aria-label='Like' color='default'>
+								<Heart />
+							</Button>
+						</Badge>
 					</div>
 					<div className='hidden lg:flex'>
 						<Badge content={totalItems > 0 ? totalItems : undefined} color='primary' size='sm'>
@@ -104,17 +108,40 @@ export function Header() {
 										{user.name}
 									</Button>
 								</DropdownTrigger>
-								<DropdownMenu aria-label='User actions'>
-									<DropdownItem key='account' startContent={<User size={16} />} onPress={() => router.push('/account')}>
-										Mi cuenta
-									</DropdownItem>
-									<DropdownItem key='orders' startContent={<Package size={16} />} onPress={() => router.push('/orders')}>
-										Mis pedidos
-									</DropdownItem>
-									<DropdownItem key='logout' startContent={<LogOut size={16} />} color='danger' onPress={handleLogout}>
-										Cerrar sesión
-									</DropdownItem>
-								</DropdownMenu>
+							<DropdownMenu
+								aria-label='User actions'
+								items={[
+									{ key: 'account', label: 'Mi cuenta' },
+									{ key: 'orders', label: 'Mis pedidos' },
+									...(user.role !== 'USER' ? [{ key: 'admin', label: 'Panel admin' }] : []),
+									{ key: 'logout', label: 'Cerrar sesión' }
+								]}
+							>
+								{(item) => {
+									const icons: Record<string, React.ReactNode> = {
+										account: <User size={16} />,
+										orders: <Package size={16} />,
+										admin: <Package size={16} />,
+										logout: <LogOut size={16} />
+									};
+									const actions: Record<string, () => void> = {
+										account: () => router.push('/account'),
+										orders: () => router.push('/orders'),
+										admin: () => router.push('/admin'),
+										logout: handleLogout
+									};
+									return (
+										<DropdownItem
+											key={item.key}
+											startContent={icons[item.key]}
+											color={item.key === 'logout' ? 'danger' : 'default'}
+											onPress={actions[item.key]}
+										>
+											{item.label}
+										</DropdownItem>
+									);
+								}}
+							</DropdownMenu>
 							</Dropdown>
 						) : (
 							<Button

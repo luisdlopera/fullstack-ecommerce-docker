@@ -28,7 +28,7 @@ export type FeaturedProduct = {
   title: string;
   price: number;
   slug: string;
-  images: string[];
+  images?: string[];
 };
 
 export type ProductListResponse = {

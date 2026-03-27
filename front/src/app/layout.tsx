@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { HeroUIClientProvider } from '@/components/providers/HeroUIClientProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
-import { CartProvider } from '@/contexts/CartContext';
+import { CartProvider } from '@/features/cart';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
-import { LayoutShell } from '@/components/shared/LayoutShell';
+import { LayoutShell } from '@/components/layout/LayoutShell';
 
 export const metadata: Metadata = {
 	title: 'Nexstore',
@@ -18,7 +18,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang='es'>
+		<html lang='es' className='light' suppressHydrationWarning>
 			<body className='relative flex min-h-screen flex-col bg-white antialiased'>
 				<HeroUIClientProvider>
 					<QueryProvider>

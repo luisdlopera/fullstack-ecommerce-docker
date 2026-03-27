@@ -3,7 +3,7 @@
 import { Button, Image } from '@heroui/react';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/features/cart';
 
 export default function CartPage() {
 	const { items, removeItem, updateQuantity, clearCart, totalItems, totalPrice } = useCart();
@@ -49,7 +49,10 @@ export default function CartPage() {
 							</Link>
 							<div className='flex flex-1 flex-col justify-between'>
 								<div>
-									<Link href={`/products/${item.slug}`} className='text-lg font-semibold hover:underline'>
+									<Link
+										href={`/products/${item.slug}`}
+										className='text-lg font-semibold hover:underline'
+									>
 										{item.title}
 									</Link>
 									<p className='text-sm text-gray-500'>Talla: {item.size}</p>

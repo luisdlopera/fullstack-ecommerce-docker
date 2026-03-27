@@ -2,9 +2,7 @@ import { z } from 'zod';
 
 const schema = z.object({
 	email: z.string().email(),
-	password: z
-		.string()
-		.min(8, 'Password must be at least 8 characters'),
+	password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 export function validationErrors(formData: FormData) {

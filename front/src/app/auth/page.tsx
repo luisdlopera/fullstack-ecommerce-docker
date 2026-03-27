@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Form, Input } from '@heroui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,7 +16,7 @@ const SEED_TEST_USERS: { label: string; email: string; badgeClass: string }[] = 
 	{ label: 'SUPPORT', email: 'support@nexstore.com', badgeClass: 'bg-teal-100 text-teal-800' },
 	{ label: 'CUSTOMER', email: 'cliente@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
 	{ label: 'CUSTOMER', email: 'maria@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
-	{ label: 'CUSTOMER', email: 'carlos@nexstore.com', badgeClass: 'bg-green-100 text-green-700' }
+	{ label: 'CUSTOMER', email: 'carlos@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
 ];
 
 export default function AuthPage() {
@@ -29,8 +29,13 @@ export default function AuthPage() {
 	const [registerError, setRegisterError] = useState('');
 	const [registerLoading, setRegisterLoading] = useState(false);
 
+	useEffect(() => {
+		if (user) {
+			router.replace('/account');
+		}
+	}, [user, router]);
+
 	if (user) {
-		router.replace('/account');
 		return null;
 	}
 
@@ -86,7 +91,7 @@ export default function AuthPage() {
 						minLength={6}
 					/>
 					{loginError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{loginError}</p>}
-					<Button className='w-full bg-primary text-white' type='submit' isLoading={loginLoading}>
+					<Button className='bg-primary w-full text-white' type='submit' isLoading={loginLoading}>
 						Ingresar
 					</Button>
 				</Form>
@@ -99,9 +104,14 @@ export default function AuthPage() {
 						</p>
 						<div className='max-h-64 space-y-2 overflow-y-auto pr-1'>
 							{SEED_TEST_USERS.map((u) => (
-								<div key={u.email} className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'>
+								<div
+									key={u.email}
+									className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'
+								>
 									<div className='min-w-0 flex-1'>
-										<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>{u.label}</span>
+										<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>
+											{u.label}
+										</span>
 										<span className='ml-2 break-all'>{u.email}</span>
 									</div>
 								</div>
@@ -128,7 +138,7 @@ export default function AuthPage() {
 					Tu información se empleará para brindarte una experiencia personalizada, administrar tu cuenta y
 					cumplir con lo establecido en nuestra <span className='font-bold'>Política de Privacidad.</span>
 				</p>
-				<Button className='w-full bg-primary text-white' type='submit' isLoading={registerLoading}>
+				<Button className='bg-primary w-full text-white' type='submit' isLoading={registerLoading}>
 					Crear cuenta
 				</Button>
 			</Form>

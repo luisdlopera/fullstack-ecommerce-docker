@@ -6,7 +6,7 @@ import { Button, Chip, Spinner } from '@heroui/react';
 import { ArrowLeft, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getClientApiUrl } from '@/lib/api';
+import { shopFetch } from '@/lib/shop-api';
 
 type OrderSummary = {
 	id: string;
@@ -32,8 +32,7 @@ export default function OrdersPage() {
 		if (!token) return;
 		const fetchOrders = async () => {
 			try {
-				const baseUrl = getClientApiUrl();
-				const res = await fetch(`${baseUrl}/orders?limit=50`, {
+				const res = await shopFetch('/orders?limit=50', {
 					headers: { Authorization: `Bearer ${token}` },
 				});
 				if (res.ok) setOrders((await res.json()) as OrderSummary[]);

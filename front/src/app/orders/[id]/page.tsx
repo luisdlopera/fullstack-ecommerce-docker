@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button, Chip, Spinner } from '@heroui/react';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getClientApiUrl } from '@/lib/api';
+import { shopFetch } from '@/lib/shop-api';
 
 type OrderDetail = {
 	id: string;
@@ -52,8 +52,7 @@ export default function OrderDetailPage() {
 		if (!token) return;
 		const fetchOrder = async () => {
 			try {
-				const baseUrl = getClientApiUrl();
-				const res = await fetch(`${baseUrl}/orders/${params.id}`, {
+				const res = await shopFetch(`/orders/${params.id}`, {
 					headers: { Authorization: `Bearer ${token}` },
 				});
 				if (res.ok) setOrder((await res.json()) as OrderDetail);

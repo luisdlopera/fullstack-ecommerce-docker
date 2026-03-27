@@ -3,15 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input, Select, SelectItem } from '@heroui/react';
-import { useCart } from '@/contexts/CartContext';
-import { getClientApiUrl, type Country } from '@/lib/api';
+import { useCheckoutSubmit } from '@/features/checkout';
+import { type Country } from '@/lib/api';
+import { fetchCountriesClient } from '@/lib/shop-api';
 
 export default function CheckoutPage() {
 	const router = useRouter();
-	const { items, totalPrice, clearCart } = useCart();
+	const { submit, submitting, error, totalPrice, tax, total, items } = useCheckoutSubmit();
 	const [countries, setCountries] = useState<Country[]>([]);
-	const [submitting, setSubmitting] = useState(false);
-	const [error, setError] = useState('');
 
 	useEffect(() => {
 		if (items.length === 0) {
@@ -20,28 +19,20 @@ export default function CheckoutPage() {
 	}, [items.length, router]);
 
 	useEffect(() => {
-		const fetchCountries = async () => {
+		const run = async () => {
 			try {
-				const baseUrl = getClientApiUrl();
-				const res = await fetch(`${baseUrl}/countries`);
-				if (res.ok) setCountries((await res.json()) as Country[]);
+				setCountries(await fetchCountriesClient());
 			} catch {
 				/* ignore */
 			}
 		};
-		fetchCountries();
+		void run();
 	}, []);
-
-	const tax = totalPrice * 0.15;
-	const total = totalPrice + tax;
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setError('');
-		setSubmitting(true);
-
 		const form = new FormData(e.currentTarget);
-		const address = {
+		await submit({
 			firstName: form.get('firstName') as string,
 			lastName: form.get('lastName') as string,
 			address: form.get('address') as string,
@@ -50,46 +41,7 @@ export default function CheckoutPage() {
 			city: form.get('city') as string,
 			phone: form.get('phone') as string,
 			countryId: form.get('countryId') as string,
-		};
-
-		const orderItems = items.map((item) => ({
-			productId: item.productId,
-			quantity: item.quantity,
-			size: item.size,
-		}));
-
-		try {
-			const baseUrl = getClientApiUrl();
-			const token = typeof window !== 'undefined' ? localStorage.getItem('nexstore-token') : null;
-
-			if (!token) {
-				setError('Debes iniciar sesión para completar tu compra.');
-				setSubmitting(false);
-				return;
-			}
-
-			const res = await fetch(`${baseUrl}/orders`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({ items: orderItems, address }),
-			});
-
-			if (!res.ok) {
-				const body = await res.json().catch(() => ({}));
-				throw new Error((body as { message?: string }).message || 'Error al crear la orden');
-			}
-
-			const order = (await res.json()) as { id: string };
-			clearCart();
-			router.push(`/checkout/confirmation?orderId=${order.id}`);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Error inesperado');
-		} finally {
-			setSubmitting(false);
-		}
+		});
 	};
 
 	if (items.length === 0) return null;
@@ -98,7 +50,7 @@ export default function CheckoutPage() {
 		<main className='mx-auto mt-28 w-11/12 max-w-5xl pb-16 text-black'>
 			<h1 className='mb-8 text-3xl font-bold'>Checkout</h1>
 
-			<form onSubmit={handleSubmit} className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
+			<form onSubmit={(e) => void handleSubmit(e)} className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
 				<div className='flex flex-col gap-4 lg:col-span-2'>
 					<h2 className='text-xl font-bold'>Dirección de envío</h2>
 					<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>

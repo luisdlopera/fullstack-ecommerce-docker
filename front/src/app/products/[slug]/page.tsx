@@ -2,21 +2,25 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Spinner } from '@heroui/react';
+import { Button } from '@heroui/react';
 import {
+	mapApiProductToProductDetail,
+	mapProductToSimilarProduct,
 	ProductAccordion,
+	ProductDetailSkeleton,
 	ProductGallery,
 	ProductInfo,
 	SimilarProductsSection,
-} from '@/components/product-detail';
-import { useCart } from '@/contexts/CartContext';
+	type ProductAccordionItem,
+	type ProductDetail,
+	type SimilarProduct,
+} from '@/features/product-detail';
+import { useCart } from '@/features/cart';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { mapApiProductToProductDetail, mapProductToSimilarProduct } from '@/lib/adapters/product-detail';
-import { fetchProductsClient, getClientApiUrl } from '@/lib/api';
+import { fetchProductsClient } from '@/lib/api';
+import { fetchProductBySlugClient } from '@/lib/shop-api';
 import { getMockProductDetail } from '@/lib/mocks/product-detail';
 import { pickDefaultSize } from '@/lib/product-size';
-import type { Product } from '@/lib/api';
-import type { ProductAccordionItem, ProductDetail, SimilarProduct } from '@/types/product-detail';
 
 /** Set `NEXT_PUBLIC_PRODUCT_DETAIL_USE_MOCK=true` to use local mock PDP data (no API). */
 const USE_PRODUCT_DETAIL_MOCK = process.env.NEXT_PUBLIC_PRODUCT_DETAIL_USE_MOCK === 'true';
@@ -56,19 +60,14 @@ export default function ProductDetailPage() {
 		(async () => {
 			setLoading(true);
 			try {
-				const res = await fetch(`${getClientApiUrl()}/products/${params.slug}`);
-				if (res.ok) {
-					const data = (await res.json()) as Product;
+				const data = await fetchProductBySlugClient(params.slug);
+				if (data && !cancelled) {
 					const p = mapApiProductToProductDetail(data);
-					if (!cancelled) {
-						setProduct(p);
-						setSelectedSize(
-							data.sizes.length === 1 ? data.sizes[0] : pickDefaultSize(p.sizes),
-						);
-						setSelectedColorId(defaultColorId(p.colors));
-						setSelectedImage(0);
-						setQuantity(1);
-					}
+					setProduct(p);
+					setSelectedSize(data.sizes.length === 1 ? data.sizes[0] : pickDefaultSize(p.sizes));
+					setSelectedColorId(defaultColorId(p.colors));
+					setSelectedImage(0);
+					setQuantity(1);
 				} else if (!cancelled) {
 					setProduct(null);
 				}
@@ -165,11 +164,7 @@ export default function ProductDetailPage() {
 	};
 
 	if (loading) {
-		return (
-			<main className='flex min-h-screen items-center justify-center bg-neutral-50'>
-				<Spinner size='lg' color='primary' />
-			</main>
-		);
+		return <ProductDetailSkeleton />;
 	}
 
 	if (!product) {
@@ -185,7 +180,7 @@ export default function ProductDetailPage() {
 
 	return (
 		<div className='min-h-screen bg-neutral-50 text-neutral-900'>
-			<main className='mx-auto max-w-7xl px-4 pb-20 pt-28 md:px-8 lg:px-10'>
+			<main className='mx-auto max-w-7xl px-4 pt-28 pb-20 md:px-8 lg:px-10'>
 				<section className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] lg:items-stretch lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]'>
 					<ProductGallery
 						className='lg:h-[640px]'

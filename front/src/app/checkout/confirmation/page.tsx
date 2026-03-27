@@ -14,9 +14,7 @@ function ConfirmationContent() {
 		<main className='mx-auto mt-28 flex w-11/12 max-w-2xl flex-col items-center gap-6 pb-16 text-center text-black'>
 			<CheckCircle size={80} className='text-green-500' />
 			<h1 className='text-3xl font-bold'>Pedido confirmado</h1>
-			<p className='text-lg text-gray-600'>
-				Tu pedido ha sido creado exitosamente.
-			</p>
+			<p className='text-lg text-gray-600'>Tu pedido ha sido creado exitosamente.</p>
 
 			{orderId && (
 				<div className='rounded-xl bg-gray-50 px-6 py-4'>
@@ -25,9 +23,7 @@ function ConfirmationContent() {
 				</div>
 			)}
 
-			<p className='text-sm text-gray-500'>
-				Recibirás la confirmación de tu pedido por correo electrónico.
-			</p>
+			<p className='text-sm text-gray-500'>Recibirás la confirmación de tu pedido por correo electrónico.</p>
 
 			<div className='flex gap-4'>
 				<Button as={Link} href='/' color='primary' size='lg'>

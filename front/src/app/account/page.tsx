@@ -6,8 +6,9 @@ import { Button, Chip, Input, Select, SelectItem, Spinner } from '@heroui/react'
 import { LogOut, Package, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getClientApiUrl, type Country } from '@/lib/api';
-import { isAdminRole } from '@/types/admin';
+import { type Country } from '@/lib/api';
+import { safeParseJson, shopFetch } from '@/lib/shop-api';
+import { isAdminRole } from '@/features/admin';
 
 type UserAddress = {
 	id: string;
@@ -31,17 +32,6 @@ export default function AccountPage() {
 	const [saving, setSaving] = useState(false);
 	const [message, setMessage] = useState('');
 
-	const safeJson = async <T,>(response: Response, fallback: T): Promise<T> => {
-		if (!response.ok) return fallback;
-		const text = await response.text();
-		if (!text) return fallback;
-		try {
-			return JSON.parse(text) as T;
-		} catch {
-			return fallback;
-		}
-	};
-
 	useEffect(() => {
 		if (!authLoading && !user) {
 			router.replace('/auth');
@@ -50,13 +40,12 @@ export default function AccountPage() {
 
 	useEffect(() => {
 		if (!token) return;
-		const baseUrl = getClientApiUrl();
 
 		Promise.all([
-			fetch(`${baseUrl}/users/me/address`, {
+			shopFetch('/users/me/address', {
 				headers: { Authorization: `Bearer ${token}` },
-			}).then((r) => safeJson<UserAddress | null>(r, null)),
-			fetch(`${baseUrl}/countries`).then((r) => safeJson<Country[]>(r, [])),
+			}).then((r) => safeParseJson<UserAddress | null>(r, null)),
+			shopFetch('/countries').then((r) => safeParseJson<Country[]>(r, [])),
 		])
 			.then(([addr, ctrs]) => {
 				setAddress(addr);
@@ -84,14 +73,13 @@ export default function AccountPage() {
 		};
 
 		try {
-			const baseUrl = getClientApiUrl();
-			const res = await fetch(`${baseUrl}/users/me/address`, {
+			const res = await shopFetch('/users/me/address', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
 				body: JSON.stringify(body),
 			});
 			if (!res.ok) throw new Error('Error al guardar');
-			const data = await safeJson<UserAddress | null>(res, null);
+			const data = await safeParseJson<UserAddress | null>(res, null);
 			if (!data) throw new Error('Error al guardar');
 			setAddress(data);
 			setMessage('Dirección guardada correctamente.');
@@ -162,18 +150,8 @@ export default function AccountPage() {
 				) : (
 					<form onSubmit={handleSaveAddress} className='flex flex-col gap-4'>
 						<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-							<Input
-								isRequired
-								name='firstName'
-								label='Nombre'
-								defaultValue={address?.firstName ?? ''}
-							/>
-							<Input
-								isRequired
-								name='lastName'
-								label='Apellido'
-								defaultValue={address?.lastName ?? ''}
-							/>
+							<Input isRequired name='firstName' label='Nombre' defaultValue={address?.firstName ?? ''} />
+							<Input isRequired name='lastName' label='Apellido' defaultValue={address?.lastName ?? ''} />
 						</div>
 						<Input isRequired name='address' label='Dirección' defaultValue={address?.address ?? ''} />
 						<Input name='address2' label='Dirección 2 (opcional)' defaultValue={address?.address2 ?? ''} />

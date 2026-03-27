@@ -7,6 +7,7 @@ import { LogOut, Package, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { type Country } from '@/lib/api';
+import { bffFetch } from '@/lib/bff-fetch';
 import { safeParseJson, shopFetch } from '@/lib/shop-api';
 import { isAdminRole } from '@/features/admin';
 
@@ -24,7 +25,7 @@ type UserAddress = {
 };
 
 export default function AccountPage() {
-	const { user, token, logout, loading: authLoading } = useAuth();
+	const { user, logout, loading: authLoading } = useAuth();
 	const router = useRouter();
 	const [address, setAddress] = useState<UserAddress | null>(null);
 	const [countries, setCountries] = useState<Country[]>([]);
@@ -39,12 +40,10 @@ export default function AccountPage() {
 	}, [user, authLoading, router]);
 
 	useEffect(() => {
-		if (!token) return;
+		if (!user) return;
 
 		Promise.all([
-			shopFetch('/users/me/address', {
-				headers: { Authorization: `Bearer ${token}` },
-			}).then((r) => safeParseJson<UserAddress | null>(r, null)),
+			bffFetch('/users/me/address').then((r) => safeParseJson<UserAddress | null>(r, null)),
 			shopFetch('/countries').then((r) => safeParseJson<Country[]>(r, [])),
 		])
 			.then(([addr, ctrs]) => {
@@ -52,11 +51,11 @@ export default function AccountPage() {
 				setCountries(ctrs);
 			})
 			.finally(() => setLoadingAddress(false));
-	}, [token]);
+	}, [user]);
 
 	const handleSaveAddress = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (!token) return;
+		if (!user) return;
 		setSaving(true);
 		setMessage('');
 
@@ -73,9 +72,9 @@ export default function AccountPage() {
 		};
 
 		try {
-			const res = await shopFetch('/users/me/address', {
+			const res = await bffFetch('/users/me/address', {
 				method: 'PUT',
-				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body),
 			});
 			if (!res.ok) throw new Error('Error al guardar');
@@ -131,12 +130,12 @@ export default function AccountPage() {
 					<p>
 						<span className='font-semibold'>Correo:</span> {user.email}
 					</p>
-					<p>
-						<span className='font-semibold'>Rol:</span>{' '}
+					<div className='flex items-center gap-2'>
+						<span className='font-semibold'>Rol:</span>
 						<Chip size='sm' color={isAdminRole(user.role) ? 'primary' : 'default'}>
 							{user.role === 'USER' ? 'CUSTOMER' : user.role}
 						</Chip>
-					</p>
+					</div>
 				</div>
 			</div>
 

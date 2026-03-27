@@ -1,4 +1,4 @@
-/** Formato tipo tienda CO (ej. $85.000) */
+/** Moneda de tienda (CO): un solo formateador para listados, PDP y checkout. */
 export function formatCOP(amount: number): string {
-	return `$${amount.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
+	return `$${amount.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }

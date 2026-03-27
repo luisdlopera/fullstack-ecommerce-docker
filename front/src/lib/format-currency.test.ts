@@ -8,6 +8,10 @@ describe('formatCOP', () => {
 		expect(s).toMatch(/85/);
 	});
 
+	it('keeps up to two decimal places when needed', () => {
+		expect(formatCOP(19.99)).toMatch(/19[.,]99/);
+	});
+
 	it('handles zero', () => {
 		expect(formatCOP(0)).toContain('0');
 	});

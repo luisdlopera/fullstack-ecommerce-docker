@@ -1,4 +1,4 @@
-import type { ProductDetail } from '@/types/product-detail';
+import type { ProductDetail } from '@/features/product-detail';
 
 const thumbs = [
 	'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80',
@@ -58,8 +58,7 @@ export const mockBlackTeeDetail: ProductDetail = {
 			slug: 'buzo-pullover-verde',
 			name: 'Buzo pullover verde',
 			price: 139000,
-			image:
-				'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=800&q=80',
+			image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=800&q=80',
 			badge: 'Agotado',
 			isSoldOut: true,
 		},
@@ -68,8 +67,7 @@ export const mockBlackTeeDetail: ProductDetail = {
 			slug: 'vestido-azul-texto',
 			name: 'Vestido azul texto',
 			price: 89000,
-			image:
-				'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
+			image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
 			badge: 'Nuevo',
 			discountLabel: '30%',
 		},
@@ -78,8 +76,7 @@ export const mockBlackTeeDetail: ProductDetail = {
 			slug: 'camisa-lino-natural',
 			name: 'Camisa lino natural',
 			price: 112000,
-			image:
-				'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+			image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
 			badge: 'Nuevo',
 			discountLabel: '30%',
 		},
@@ -88,8 +85,7 @@ export const mockBlackTeeDetail: ProductDetail = {
 			slug: 'top-minimal-arena',
 			name: 'Top minimal arena',
 			price: 69000,
-			image:
-				'https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=800&q=80',
+			image: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=800&q=80',
 			badge: 'Nuevo',
 			discountLabel: '30%',
 		},
@@ -97,6 +93,7 @@ export const mockBlackTeeDetail: ProductDetail = {
 };
 
 /** Devuelve el mock de detalle; más adelante: buscar por slug desde API. */
-export function getMockProductDetail(_slug: string): ProductDetail {
+export function getMockProductDetail(slug: string): ProductDetail {
+	void slug;
 	return mockBlackTeeDetail;
 }

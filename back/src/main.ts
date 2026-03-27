@@ -14,13 +14,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:3000'],
-    credentials: true
+    credentials: true,
   });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      transform: true
-    })
+      transform: true,
+    }),
   );
 
   const swaggerConfig = new DocumentBuilder()

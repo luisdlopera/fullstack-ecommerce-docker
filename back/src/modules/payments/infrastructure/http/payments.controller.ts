@@ -1,0 +1,20 @@
+import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
+import { VerifyMercadoPagoDto } from './dto/verify-mercadopago.dto';
+import { PaymentsService } from '../../application/payments.service';
+
+@Controller('payments')
+export class PaymentsController {
+  constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
+
+  @Post('mercadopago/verify')
+  verifyMercadoPago(@Body() dto: VerifyMercadoPagoDto) {
+    return this.paymentsService.verifyMercadoPagoPayment(dto.paymentId);
+  }
+
+  @Public()
+  @Post('mercadopago/webhook')
+  mercadoPagoWebhook(@Body() body: Record<string, unknown>) {
+    return this.paymentsService.handleWebhook(body);
+  }
+}

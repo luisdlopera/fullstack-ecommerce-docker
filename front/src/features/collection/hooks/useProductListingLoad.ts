@@ -1,10 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchProductsClient, type ProductListResponse } from '@/lib/api';
+import { fetchProductFacetsClient, fetchProductsClient, type ProductListResponse } from '@/lib/api';
 import { PAGE_SIZE } from '../constants';
 import { buildProductListFilters } from '../lib/catalog-api-filters';
-import { countAvailability } from '../lib/filterCatalog';
 import { mapProductToCatalog } from '../lib/mapApiProduct';
 import type { CatalogProduct, CollectionSlug, SidebarDraftFilters } from '../types';
 
@@ -24,7 +23,9 @@ export function useProductListingLoad({
 	replaceCatalogQuery,
 }: UseProductListingLoadArgs) {
 	const [serverPayload, setServerPayload] = useState<ProductListResponse | null>(null);
-	const [facetCatalog, setFacetCatalog] = useState<CatalogProduct[]>([]);
+	const [facets, setFacets] = useState<{ inStock: number; outOfStock: number; categoryNames: string[] } | null>(
+		null,
+	);
 	const [loading, setLoading] = useState(true);
 	const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -35,14 +36,18 @@ export function useProductListingLoad({
 			const filters = buildProductListFilters(collection, searchQuery, appliedFilters);
 			const [pageRes, facetRes] = await Promise.all([
 				fetchProductsClient({ ...filters, page, limit: PAGE_SIZE }),
-				fetchProductsClient({ ...filters, page: 1, limit: 100 }),
+				fetchProductFacetsClient(filters),
 			]);
 			setServerPayload(pageRes);
-			setFacetCatalog(facetRes.data.map((p) => mapProductToCatalog(p, collection)));
+			setFacets({
+				inStock: facetRes.inStockCount,
+				outOfStock: facetRes.outOfStockCount,
+				categoryNames: facetRes.categoryNames,
+			});
 		} catch (e) {
 			setLoadError(e instanceof Error ? e.message : 'Error de red');
 			setServerPayload(null);
-			setFacetCatalog([]);
+			setFacets(null);
 		} finally {
 			setLoading(false);
 		}
@@ -52,17 +57,12 @@ export function useProductListingLoad({
 		void loadServer();
 	}, [loadServer]);
 
-	const facetSource = facetCatalog;
+	const availability = useMemo(
+		() => facets ?? { inStock: 0, outOfStock: 0 },
+		[facets],
+	);
 
-	const availability = useMemo(() => countAvailability(facetSource), [facetSource]);
-
-	const categoryNames = useMemo(() => {
-		const s = new Set<string>();
-		for (const p of facetSource) {
-			if (p.categoryName) s.add(p.categoryName);
-		}
-		return [...s].sort((a, b) => a.localeCompare(b));
-	}, [facetSource]);
+	const categoryNames = useMemo(() => facets?.categoryNames ?? [], [facets]);
 
 	const { pageItems, totalPages } = useMemo(() => {
 		if (!serverPayload) {

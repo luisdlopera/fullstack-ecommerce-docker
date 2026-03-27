@@ -106,7 +106,7 @@ export default function CheckoutPage() {
 						className='mt-6 w-full font-bold'
 						isLoading={submitting}
 					>
-						Confirmar pedido
+						Ir a pagar
 					</Button>
 				</div>
 			</form>

@@ -6,7 +6,7 @@ import { Button, Chip, Spinner } from '@heroui/react';
 import { ArrowLeft, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { shopFetch } from '@/lib/shop-api';
+import { bffFetch } from '@/lib/bff-fetch';
 
 type OrderSummary = {
 	id: string;
@@ -17,7 +17,7 @@ type OrderSummary = {
 };
 
 export default function OrdersPage() {
-	const { user, token, loading: authLoading } = useAuth();
+	const { user, loading: authLoading } = useAuth();
 	const router = useRouter();
 	const [orders, setOrders] = useState<OrderSummary[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -29,12 +29,10 @@ export default function OrdersPage() {
 	}, [user, authLoading, router]);
 
 	useEffect(() => {
-		if (!token) return;
+		if (!user) return;
 		const fetchOrders = async () => {
 			try {
-				const res = await shopFetch('/orders?limit=50', {
-					headers: { Authorization: `Bearer ${token}` },
-				});
+				const res = await bffFetch('/orders?limit=50');
 				if (res.ok) setOrders((await res.json()) as OrderSummary[]);
 			} catch {
 				/* ignore */
@@ -43,7 +41,7 @@ export default function OrdersPage() {
 			}
 		};
 		fetchOrders();
-	}, [token]);
+	}, [user]);
 
 	if (authLoading || !user) {
 		return (

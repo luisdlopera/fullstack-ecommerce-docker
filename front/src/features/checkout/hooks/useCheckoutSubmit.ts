@@ -3,7 +3,8 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/features/cart';
-import { shopFetch } from '@/lib/shop-api';
+import { useAuth } from '@/contexts/AuthContext';
+import { bffFetch } from '@/lib/bff-fetch';
 
 export type CheckoutAddressPayload = {
 	firstName: string;
@@ -18,6 +19,7 @@ export type CheckoutAddressPayload = {
 
 export function useCheckoutSubmit() {
 	const router = useRouter();
+	const { user } = useAuth();
 	const { items, totalPrice, clearCart } = useCart();
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState('');
@@ -37,37 +39,73 @@ export function useCheckoutSubmit() {
 			}));
 
 			try {
-				const token = typeof window !== 'undefined' ? localStorage.getItem('nexstore-token') : null;
-
-				if (!token) {
+				if (!user) {
 					setError('Debes iniciar sesión para completar tu compra.');
 					return;
 				}
 
-				const res = await shopFetch('/orders', {
+				const res = await bffFetch('/orders', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
 					},
 					body: JSON.stringify({ items: orderItems, address }),
 				});
 
 				if (!res.ok) {
 					const body = await res.json().catch(() => ({}));
-					throw new Error((body as { message?: string }).message || 'Error al crear la orden');
+					const msg = (body as { message?: string | string[] }).message;
+					const text =
+						typeof msg === 'string' ? msg : Array.isArray(msg) ? msg.join('. ') : 'Error al crear la orden';
+					throw new Error(text);
 				}
 
 				const order = (await res.json()) as { id: string };
+
+				const initPaymentRes = await bffFetch('/payments/mercadopago/init', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ orderId: order.id }),
+				});
+
+				if (!initPaymentRes.ok) {
+					const body = await initPaymentRes.json().catch(() => ({}));
+					const msg = (body as { message?: string | string[] }).message;
+					const text =
+						typeof msg === 'string'
+							? msg
+							: Array.isArray(msg)
+								? msg.join('. ')
+								: 'Error al inicializar el pago';
+					throw new Error(text);
+				}
+
+				const initPayment = (await initPaymentRes.json()) as {
+					checkoutUrl?: string;
+					alreadyPaid?: boolean;
+				};
+
+				if (initPayment.alreadyPaid) {
+					clearCart();
+					router.push(`/checkout/confirmation?orderId=${order.id}&status=approved`);
+					return;
+				}
+
+				if (!initPayment.checkoutUrl) {
+					throw new Error('Mercado Pago no devolvió URL de checkout');
+				}
+
 				clearCart();
-				router.push(`/checkout/confirmation?orderId=${order.id}`);
+				window.location.assign(initPayment.checkoutUrl);
 			} catch (err) {
 				setError(err instanceof Error ? err.message : 'Error inesperado');
 			} finally {
 				setSubmitting(false);
 			}
 		},
-		[items, clearCart, router],
+		[items, clearCart, router, user],
 	);
 
 	return { submit, submitting, error, totalPrice, tax, total, items };

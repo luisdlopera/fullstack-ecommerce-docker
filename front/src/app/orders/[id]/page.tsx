@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button, Chip, Spinner } from '@heroui/react';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { shopFetch } from '@/lib/shop-api';
+import { bffFetch } from '@/lib/bff-fetch';
 
 type OrderDetail = {
 	id: string;
@@ -38,7 +38,7 @@ type OrderDetail = {
 export default function OrderDetailPage() {
 	const params = useParams<{ id: string }>();
 	const router = useRouter();
-	const { user, token, loading: authLoading } = useAuth();
+	const { user, loading: authLoading } = useAuth();
 	const [order, setOrder] = useState<OrderDetail | null>(null);
 	const [loading, setLoading] = useState(true);
 
@@ -49,12 +49,10 @@ export default function OrderDetailPage() {
 	}, [user, authLoading, router]);
 
 	useEffect(() => {
-		if (!token) return;
+		if (!user) return;
 		const fetchOrder = async () => {
 			try {
-				const res = await shopFetch(`/orders/${params.id}`, {
-					headers: { Authorization: `Bearer ${token}` },
-				});
+				const res = await bffFetch(`/orders/${params.id}`);
 				if (res.ok) setOrder((await res.json()) as OrderDetail);
 			} catch {
 				/* ignore */
@@ -63,7 +61,7 @@ export default function OrderDetailPage() {
 			}
 		};
 		fetchOrder();
-	}, [token, params.id]);
+	}, [user, params.id]);
 
 	if (authLoading || loading) {
 		return (

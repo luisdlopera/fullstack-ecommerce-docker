@@ -8,14 +8,15 @@ NexStore es un e-commerce organizado como monorepo con separación clara entre f
 
 - `front/`: Next.js (UI)
 - `back/`: NestJS con arquitectura hexagonal + Prisma
-- `docker-compose.yml`: orquestación completa (`front`, `back`, `postgres`)
+- `docker-compose.yml`: servicios Docker (en desarrollo local se usa solo `postgres`)
 
 ## Stack
 
 - Next.js (`latest`) + React (`latest`) en `front/`
 - NestJS (`latest`) en `back/`
 - Prisma + PostgreSQL
-- Docker Compose para levantar todo con un comando
+- npm workspaces para correr `front` y `back` en local
+- Docker Compose para base de datos PostgreSQL
 
 ## Estructura
 
@@ -23,8 +24,8 @@ NexStore es un e-commerce organizado como monorepo con separación clara entre f
 nexstore/
   front/                  # Next.js app
   back/                   # NestJS API + Prisma
-  docker-compose.yml      # postgres + back + front
-  docker-compose.dev.yml  # overrides para desarrollo con hot reload
+  docker-compose.yml      # servicios Docker (en local: postgres)
+  docker-compose.dev.yml  # overrides legacy
   .env.template
 ```
 
@@ -51,10 +52,10 @@ cp .env.template .env         # Linux/Mac
 openssl rand -hex 64
 ```
 
-4) Levanta el proyecto en modo desarrollo (Docker + hot reload):
+4) Levanta todo por primera vez (DB en Docker + apps locales):
 
 ```bash
-npm run dev:build
+npm run dev:stack
 ```
 
 5) Abre:
@@ -79,29 +80,31 @@ docker exec -it nexstore_back npx prisma db seed
 
 El seed define cuentas como `admin@nexstore.com` / `Qwert.12345` (ver sección *Usuarios de prueba*).
 
-## Si apagas el PC o quieres volver a ejecutar
+## Flujo de desarrollo recomendado
 
 Desde la raíz del proyecto:
 
-1) Levantar nuevamente (sin reconstruir):
+1) Primera ejecución del día (si la DB no está arriba):
 
 ```bash
-npm run dev:up
+npm run dev:stack
 ```
 
-2) Si cambiaste dependencias o Dockerfile (reconstruir):
+2) Día a día (DB ya arriba, solo apps locales):
 
 ```bash
-npm run dev:build
+npm run dev:apps
 ```
 
-3) Si hay problemas con volúmenes o dependencias (limpieza total + rebuild):
+Si `3000` o `4000` están ocupados, `dev:apps` elige automáticamente el siguiente puerto libre.
+
+3) Levantar solo PostgreSQL:
 
 ```bash
-npm run dev:clean
+npm run dev:db
 ```
 
-4) Para detener todo:
+4) Apagar contenedores Docker:
 
 ```bash
 npm run dev:down
@@ -111,18 +114,33 @@ npm run dev:down
 
 | Comando | Descripción |
 |---|---|
-| `npm run dev:build` | Reconstruye imágenes y levanta en modo desarrollo |
-| `npm run dev:up` | Levanta sin reconstruir (rápido) |
-| `npm run dev:down` | Detiene todos los contenedores |
-| `npm run dev:clean` | Borra volúmenes, reconstruye e inicia (soluciona problemas de deps) |
+| `npm run dev:stack` | Levanta DB (`postgres`) y ejecuta `back` + `front` en paralelo |
+| `npm run dev:apps` | Ejecuta `back` + `front` en paralelo usando npm workspaces |
+| `npm run dev:db` | Levanta solo PostgreSQL con Docker Compose |
+| `npm run dev:down` | Apaga contenedores Docker del proyecto |
+| `npm run dev:front` | Ejecuta solo frontend |
+| `npm run dev:back` | Ejecuta solo backend |
 | `npm run format` | Formatea `front/` y `back/` con Prettier |
 
 ## Desarrollo con hot reload
 
-- `front` corre con `next dev --webpack` y recarga en caliente.
+- `front` corre con `next dev` y recarga en caliente.
 - `back` corre con `tsx watch` y recompila automáticamente.
-- En Docker dev, `front` usa `webpack` (sin Turbopack) para evitar errores intermitentes.
-- Si PowerShell bloquea `npm`, usa `npm.cmd run dev:build`.
+- Frontend y backend corren localmente vía npm workspaces.
+- Si PowerShell bloquea `npm`, usa `npm.cmd run dev:stack`.
+
+### Puertos en desarrollo
+
+- Puertos por defecto: `front=3000`, `back=4000`.
+- Si están ocupados, `npm run dev:apps` hace fallback automático al siguiente puerto libre.
+- Puedes forzar puertos base con variables de entorno:
+
+```bash
+# PowerShell
+$env:FRONT_PORT=3010
+$env:BACK_PORT=4010
+npm run dev:apps
+```
 
 ## URLs de referencia
 
@@ -141,7 +159,7 @@ npm run dev:down
 | Admin | admin@nexstore.com | Qwert.12345 |
 | Cliente | cliente@nexstore.com | Qwert.12345 |
 
-## Desarrollo local sin Docker
+## Desarrollo local
 
 Instala dependencias en raíz (workspaces):
 
@@ -149,11 +167,11 @@ Instala dependencias en raíz (workspaces):
 npm install
 ```
 
-Luego ejecuta:
+Luego ejecuta uno de estos flujos:
 
 ```bash
-npm run dev:front
-npm run dev:back
+npm run dev:stack   # DB + apps
+npm run dev:apps    # solo apps (DB ya levantada)
 ```
 
 ## Prisma (backend)

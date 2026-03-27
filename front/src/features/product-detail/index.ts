@@ -1,0 +1,13 @@
+export { ProductDetailSkeleton } from './components/ProductDetailSkeleton';
+export { ColorSelector } from './components/ColorSelector';
+export { ProductAccordion } from './components/ProductAccordion';
+export { ProductBenefits } from './components/ProductBenefits';
+export { SimilarProductCard } from './components/SimilarProductCard';
+export { ProductGallery } from './components/ProductGallery';
+export { ProductInfo } from './components/ProductInfo';
+export { QuantitySelector } from './components/QuantitySelector';
+export { SimilarProductsSection } from './components/SimilarProductsSection';
+export { SizeSelector } from './components/SizeSelector';
+export type { SimilarProductCardProps } from './components/SimilarProductCard';
+export type { ProductAccordionItem, ProductBenefit, ProductColorOption, ProductDetail, SimilarProduct } from './types';
+export { mapApiProductToProductDetail, mapProductToSimilarProduct } from './lib/product-detail-adapter';

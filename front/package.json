@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev -p 3000",
+		"dev": "next dev",
 		"build": "next build",
 		"start": "next start -p 3000",
 		"test": "vitest run",
@@ -16,6 +16,7 @@
 		"prettier:check": "prettier --check ."
 	},
 	"dependencies": {
+		"@nexstore/api-types": "*",
 		"@fontsource/urbanist": "^5.2.7",
 		"@heroui/react": "^2.6.14",
 		"@heroui/system": "^2.4.27",

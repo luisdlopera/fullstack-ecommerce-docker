@@ -1,28 +1,12 @@
-export type ProductImage = {
-	id: number;
-	url: string;
-};
-
-export type Category = {
-	id: string;
-	name: string;
-};
-
-export type Product = {
-	id: string;
-	title: string;
-	description: string;
-	inStock: number;
-	price: number;
-	comparePrice?: number | null;
-	sizes: string[];
-	slug: string;
-	tags: string[];
-	gender: string;
-	categoryId: string;
-	ProductImage: ProductImage[];
-	category: Category;
-};
+export type {
+	ProductImage,
+	Category,
+	Product,
+	ProductListResponse,
+	ProductFacets,
+	ProductFilters,
+	Country,
+} from '@nexstore/api-types';
 
 export type FeaturedProduct = {
 	id: string;
@@ -35,42 +19,7 @@ export type FeaturedProduct = {
 	tags?: string[];
 };
 
-export type ProductListResponse = {
-	data: Product[];
-	meta: {
-		page: number;
-		limit: number;
-		total: number;
-		totalPages: number;
-	};
-};
-
-export type ProductFilters = {
-	page?: number;
-	limit?: number;
-	query?: string;
-	category?: string;
-	/** @deprecated Prefer mustTag from collection filters */
-	tag?: string;
-	mustTag?: string;
-	anyTags?: string[];
-	gender?: string;
-	minPrice?: number;
-	maxPrice?: number;
-	inStock?: boolean;
-	/** Maps to backend `avail` (in | out). */
-	avail?: 'in' | 'out';
-	sizes?: string[];
-	colors?: string[];
-	categories?: string[];
-	colSlugs?: string[];
-	classifications?: string[];
-};
-
-export type Country = {
-	id: string;
-	name: string;
-};
+import type { Product, ProductImage, ProductListResponse, ProductFacets, ProductFilters, Category, Country } from '@nexstore/api-types';
 
 const getBaseApiUrl = () => {
 	if (typeof window === 'undefined') {
@@ -118,10 +67,24 @@ export async function getFeaturedProducts(limit = 8): Promise<FeaturedProduct[]>
 
 export async function getProductBySlug(slug: string): Promise<Product> {
 	const baseUrl = getBaseApiUrl();
-	const response = await fetch(`${baseUrl}/products/${slug}`, {
+	const response = await fetch(`${baseUrl}/products/${encodeURIComponent(slug)}`, {
 		next: { revalidate: 60 },
 	});
 
+	if (!response.ok) {
+		throw new Error(`Failed to fetch product: ${response.status}`);
+	}
+
+	return response.json() as Promise<Product>;
+}
+
+export async function getProductBySlugOrNull(slug: string): Promise<Product | null> {
+	const baseUrl = getBaseApiUrl();
+	const response = await fetch(`${baseUrl}/products/${encodeURIComponent(slug)}`, {
+		next: { revalidate: 60 },
+	});
+
+	if (response.status === 404) return null;
 	if (!response.ok) {
 		throw new Error(`Failed to fetch product: ${response.status}`);
 	}
@@ -180,6 +143,22 @@ export async function fetchProductsClient(filters: ProductFilters = {}): Promise
 	}
 
 	return response.json() as Promise<ProductListResponse>;
+}
+
+/** Facet counts for PLP sidebar (same filter semantics as list, no extra product page fetch). */
+export async function fetchProductFacetsClient(filters: ProductFilters = {}): Promise<ProductFacets> {
+	const baseUrl = getClientApiUrl();
+	const params = new URLSearchParams();
+	const { page: _p, limit: _l, ...rest } = filters;
+	appendProductFiltersToSearchParams(params, rest);
+	const qs = params.toString();
+	const response = await fetch(`${baseUrl}/products/facets${qs ? `?${qs}` : ''}`, { cache: 'no-store' });
+
+	if (!response.ok) {
+		throw new Error(`Failed to fetch product facets: ${response.status}`);
+	}
+
+	return response.json() as Promise<ProductFacets>;
 }
 
 export async function getCategories(): Promise<Category[]> {

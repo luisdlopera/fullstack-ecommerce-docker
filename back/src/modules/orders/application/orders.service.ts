@@ -1,8 +1,14 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { OrderStatus, Role } from '@prisma/client';
-import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
 import { CreateOrderDto, UpdateOrderPaymentDto } from '../infrastructure/http/dto/create-order.dto';
 import { isAdminRole } from '../../../shared/infrastructure/auth/permissions';
+import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../domain/ports/orders-repository.port';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
@@ -16,14 +22,11 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 @Injectable()
 export class OrdersService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(@Inject(ORDERS_REPOSITORY) private readonly ordersRepository: OrdersRepositoryPort) {}
 
   async create(userId: string, dto: CreateOrderDto) {
     const productIds = [...new Set(dto.items.map((item) => item.productId))];
-    const products = await this.prisma.product.findMany({
-      where: { id: { in: productIds } },
-      select: { id: true, price: true, inStock: true, sizes: true },
-    });
+    const products = await this.ordersRepository.findProductsByIds(productIds);
 
     if (products.length !== productIds.length) {
       throw new BadRequestException('One or more products do not exist');
@@ -50,57 +53,15 @@ export class OrdersService {
     const tax = Number((subTotal * taxRate).toFixed(2));
     const total = Number((subTotal + tax).toFixed(2));
 
-    return this.prisma.$transaction(async (tx) => {
-      for (const item of dto.items) {
-        const updated = await tx.product.updateMany({
-          where: { id: item.productId, inStock: { gte: item.quantity } },
-          data: { inStock: { decrement: item.quantity } },
-        });
-        if (updated.count === 0) {
-          throw new BadRequestException(`Stock changed while processing product: ${item.productId}`);
-        }
-      }
-
-      const order = await tx.order.create({
-        data: {
-          userId,
-          subTotal,
-          tax,
-          total,
-          itemsInOrder,
-          status: OrderStatus.PENDING,
-          OrderItem: {
-            create: dto.items.map((item) => {
-              const product = productMap.get(item.productId)!;
-              return {
-                productId: item.productId,
-                quantity: item.quantity,
-                size: item.size,
-                price: product.price,
-              };
-            }),
-          },
-          OrderAddress: {
-            create: {
-              firstName: dto.address.firstName,
-              lastName: dto.address.lastName,
-              address: dto.address.address,
-              address2: dto.address.address2,
-              postalCode: dto.address.postalCode,
-              city: dto.address.city,
-              phone: dto.address.phone,
-              countryId: dto.address.countryId,
-            },
-          },
-        },
-        include: {
-          OrderItem: true,
-          OrderAddress: true,
-        },
-      });
-
-      return order;
-    });
+    return this.ordersRepository.createOrderWithStockTx(
+      userId,
+      dto,
+      productMap,
+      subTotal,
+      tax,
+      total,
+      itemsInOrder,
+    );
   }
 
   getMyOrders(userId: string, page = 1, limit = 10) {
@@ -108,23 +69,11 @@ export class OrdersService {
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const skip = (safePage - 1) * safeLimit;
 
-    return this.prisma.order.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: safeLimit,
-      include: { OrderItem: true, OrderAddress: true },
-    });
+    return this.ordersRepository.findOrdersForUser(userId, skip, safeLimit);
   }
 
   async getById(orderId: string, userId: string, role: Role) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        OrderItem: { include: { product: true } },
-        OrderAddress: { include: { country: true } },
-      },
-    });
+    const order = await this.ordersRepository.findOrderDetailById(orderId);
 
     if (!order) throw new NotFoundException('Order not found');
     if (!isAdminRole(role) && order.userId !== userId) {
@@ -135,7 +84,7 @@ export class OrdersService {
   }
 
   async updateStatus(orderId: string, newStatus: OrderStatus, userId: string, role: Role) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    const order = await this.ordersRepository.findOrderBasic(orderId);
     if (!order) throw new NotFoundException('Order not found');
 
     if (newStatus === OrderStatus.CANCELLED) {
@@ -155,15 +104,11 @@ export class OrdersService {
       await this.restoreStock(orderId);
     }
 
-    return this.prisma.order.update({
-      where: { id: orderId },
-      data: { status: newStatus },
-      include: { OrderItem: true, OrderAddress: true },
-    });
+    return this.ordersRepository.updateOrderById(orderId, { status: newStatus });
   }
 
   async markAsPaid(orderId: string, dto: UpdateOrderPaymentDto) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    const order = await this.ordersRepository.findOrderBasic(orderId);
     if (!order) throw new NotFoundException('Order not found');
 
     if (order.isPaid && order.transactionId === dto.transactionId) {
@@ -174,26 +119,14 @@ export class OrdersService {
       throw new BadRequestException('Order is already paid with another transaction');
     }
 
-    return this.prisma.order.update({
-      where: { id: orderId },
-      data: {
-        isPaid: true,
-        paidAt: new Date(),
-        transactionId: dto.transactionId,
-      },
-    });
+    return this.ordersRepository.markOrderPaid(orderId, dto);
   }
 
   private async restoreStock(orderId: string) {
-    const items = await this.prisma.orderItem.findMany({
-      where: { orderId },
-    });
+    const items = await this.ordersRepository.listOrderItemsForStock(orderId);
 
     for (const item of items) {
-      await this.prisma.product.update({
-        where: { id: item.productId },
-        data: { inStock: { increment: item.quantity } },
-      });
+      await this.ordersRepository.incrementProductStock(item.productId, item.quantity);
     }
   }
 }

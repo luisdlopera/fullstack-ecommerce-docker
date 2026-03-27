@@ -2,31 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { OrderStatus, Role } from '@prisma/client';
 import { OrdersService } from './orders.service';
-import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
+import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../domain/ports/orders-repository.port';
 
-const mockTx = {
-  product: {
-    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-  },
-  order: {
-    create: jest.fn(),
-  },
-};
-
-const mockPrisma = {
-  product: {
-    findMany: jest.fn(),
-    update: jest.fn(),
-  },
-  order: {
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-  },
-  orderItem: {
-    findMany: jest.fn(),
-  },
-  $transaction: jest.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
+const mockRepo: jest.Mocked<OrdersRepositoryPort> = {
+  findProductsByIds: jest.fn(),
+  createOrderWithStockTx: jest.fn(),
+  findOrdersForUser: jest.fn(),
+  findOrderDetailById: jest.fn(),
+  findOrderBasic: jest.fn(),
+  updateOrderById: jest.fn(),
+  markOrderPaid: jest.fn(),
+  listOrderItemsForStock: jest.fn(),
+  incrementProductStock: jest.fn(),
 };
 
 describe('OrdersService', () => {
@@ -36,7 +23,7 @@ describe('OrdersService', () => {
     process.env.TAX_RATE = '0.15';
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [OrdersService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [OrdersService, { provide: ORDERS_REPOSITORY, useValue: mockRepo }],
     }).compile();
 
     service = module.get<OrdersService>(OrdersService);
@@ -45,7 +32,7 @@ describe('OrdersService', () => {
 
   describe('create', () => {
     it('should throw if product does not exist', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([]);
+      mockRepo.findProductsByIds.mockResolvedValue([]);
 
       await expect(
         service.create('user-1', {
@@ -66,16 +53,21 @@ describe('OrdersService', () => {
 
   describe('updateStatus', () => {
     it('should transition from PENDING to SHIPPED (admin)', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue({
+      mockRepo.findOrderBasic.mockResolvedValue({
         id: 'o1',
         status: OrderStatus.PENDING,
         userId: 'user-1',
         isPaid: true,
-      });
-      mockPrisma.order.update.mockResolvedValue({
-        id: 'o1',
-        status: OrderStatus.SHIPPED,
-      });
+        subTotal: 0,
+        tax: 0,
+        total: 0,
+        itemsInOrder: 0,
+        paidAt: null,
+        paymentStatus: 'PENDING' as never,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId_dup: 'user-1',
+      } as never);
 
       await expect(service.updateStatus('o1', OrderStatus.SHIPPED, 'admin-1', Role.ADMIN)).rejects.toThrow(
         BadRequestException,
@@ -83,11 +75,20 @@ describe('OrdersService', () => {
     });
 
     it('should reject invalid transition (DELIVERED -> PENDING)', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue({
+      mockRepo.findOrderBasic.mockResolvedValue({
         id: 'o1',
         status: OrderStatus.DELIVERED,
         userId: 'user-1',
-      });
+        isPaid: true,
+        subTotal: 0,
+        tax: 0,
+        total: 0,
+        itemsInOrder: 0,
+        paidAt: null,
+        paymentStatus: 'PAID' as never,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as never);
 
       await expect(service.updateStatus('o1', OrderStatus.PENDING, 'admin-1', Role.ADMIN)).rejects.toThrow(
         BadRequestException,
@@ -95,31 +96,50 @@ describe('OrdersService', () => {
     });
 
     it('should allow user to cancel their own PENDING order', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue({
+      mockRepo.findOrderBasic.mockResolvedValue({
         id: 'o1',
         status: OrderStatus.PENDING,
         userId: 'user-1',
         isPaid: false,
-      });
-      mockPrisma.orderItem.findMany.mockResolvedValue([{ productId: 'p1', quantity: 2 }]);
-      mockPrisma.product.update.mockResolvedValue({});
-      mockPrisma.order.update.mockResolvedValue({
+        subTotal: 0,
+        tax: 0,
+        total: 0,
+        itemsInOrder: 0,
+        paidAt: null,
+        paymentStatus: 'PENDING' as never,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as never);
+      mockRepo.listOrderItemsForStock.mockResolvedValue([{ productId: 'p1', quantity: 2 }]);
+      mockRepo.incrementProductStock.mockResolvedValue(undefined);
+      mockRepo.updateOrderById.mockResolvedValue({
         id: 'o1',
         status: OrderStatus.CANCELLED,
-      });
+        OrderItem: [],
+        OrderAddress: null,
+      } as never);
 
       const result = await service.updateStatus('o1', OrderStatus.CANCELLED, 'user-1', Role.USER);
 
       expect(result.status).toBe(OrderStatus.CANCELLED);
-      expect(mockPrisma.product.update).toHaveBeenCalled();
+      expect(mockRepo.incrementProductStock).toHaveBeenCalledWith('p1', 2);
     });
 
     it('should reject non-owner user trying to cancel', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue({
+      mockRepo.findOrderBasic.mockResolvedValue({
         id: 'o1',
         status: OrderStatus.PENDING,
         userId: 'user-1',
-      });
+        isPaid: false,
+        subTotal: 0,
+        tax: 0,
+        total: 0,
+        itemsInOrder: 0,
+        paidAt: null,
+        paymentStatus: 'PENDING' as never,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as never);
 
       await expect(service.updateStatus('o1', OrderStatus.CANCELLED, 'user-2', Role.USER)).rejects.toThrow(
         ForbiddenException,
@@ -127,7 +147,7 @@ describe('OrdersService', () => {
     });
 
     it('should throw NotFoundException for missing order', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue(null);
+      mockRepo.findOrderBasic.mockResolvedValue(null);
 
       await expect(service.updateStatus('missing', OrderStatus.SHIPPED, 'admin-1', Role.ADMIN)).rejects.toThrow(
         NotFoundException,
@@ -137,29 +157,29 @@ describe('OrdersService', () => {
 
   describe('getById', () => {
     it('should return order for owner', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue({
+      mockRepo.findOrderDetailById.mockResolvedValue({
         id: 'o1',
         userId: 'user-1',
-      });
+      } as never);
 
       const result = await service.getById('o1', 'user-1', Role.USER);
       expect(result.id).toBe('o1');
     });
 
     it('should throw ForbiddenException for non-owner non-admin', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue({
+      mockRepo.findOrderDetailById.mockResolvedValue({
         id: 'o1',
         userId: 'user-1',
-      });
+      } as never);
 
       await expect(service.getById('o1', 'user-2', Role.USER)).rejects.toThrow(ForbiddenException);
     });
 
     it('should allow admin to access any order', async () => {
-      mockPrisma.order.findUnique.mockResolvedValue({
+      mockRepo.findOrderDetailById.mockResolvedValue({
         id: 'o1',
         userId: 'user-1',
-      });
+      } as never);
 
       const result = await service.getById('o1', 'admin-1', Role.ADMIN);
       expect(result.id).toBe('o1');

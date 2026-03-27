@@ -1,4 +1,3 @@
-import { getClientApiUrl } from '@/lib/api';
 import type {
 	AdminCategory,
 	AdminCountry,
@@ -11,27 +10,29 @@ import type {
 	TopProduct,
 } from '../types';
 
-function getToken(): string | null {
-	if (typeof window === 'undefined') return null;
-	return localStorage.getItem('nexstore-token');
+function readNestErrorMessage(body: unknown, fallback: string): string {
+	if (!body || typeof body !== 'object') return fallback;
+	const msg = (body as { message?: unknown }).message;
+	if (typeof msg === 'string') return msg;
+	if (Array.isArray(msg) && msg.every((x) => typeof x === 'string')) return msg.join('. ');
+	return fallback;
 }
 
+/** Proxied to Nest with httpOnly JWT (see `/api/bff`). */
 async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-	const baseUrl = getClientApiUrl();
-	const token = getToken();
-
-	const res = await fetch(`${baseUrl}${path}`, {
+	const p = path.startsWith('/') ? path : `/${path}`;
+	const res = await fetch(`/api/bff${p}`, {
 		...options,
+		credentials: 'include',
 		headers: {
 			'Content-Type': 'application/json',
-			...(token ? { Authorization: `Bearer ${token}` } : {}),
 			...options.headers,
 		},
 	});
 
 	if (!res.ok) {
 		const body = await res.json().catch(() => ({ message: 'Request failed' }));
-		throw new Error((body as { message?: string }).message ?? `Error ${res.status}`);
+		throw new Error(readNestErrorMessage(body, `Error ${res.status}`));
 	}
 
 	return res.json() as Promise<T>;

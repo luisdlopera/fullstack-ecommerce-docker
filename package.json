@@ -4,23 +4,18 @@
   "private": true,
   "workspaces": [
     "front",
-    "back"
+    "back",
+    "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w front",
+    "dev": "npm run dev:apps",
     "dev:front": "npm run dev -w front",
     "dev:back": "npm run start:dev -w back",
+    "dev:db": "docker compose up -d postgres",
+    "dev:apps": "node scripts/dev-apps.mjs",
+    "dev:stack": "npm run dev:db && npm run dev:apps",
+    "dev:down": "docker compose down",
     "build": "npm run build -w front && npm run build -w back",
-    "start": "docker compose up --build",
-    "docker:up": "docker compose up --build",
-    "docker:down": "docker compose down",
-    "dev:up": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
-    "dev:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
-    "dev:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
-    "dev:clean": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v && docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
-    "dc:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
-    "dc:dev:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
-    "dc:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
     "db:seed": "npm run prisma:seed -w back",
     "lint": "npm run lint -w front && npm run lint -w back",
     "format": "npm run format -w front && npm run format -w back"

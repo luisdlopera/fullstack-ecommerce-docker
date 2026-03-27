@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { SharedModule } from './shared/shared.module';
 import { JwtAuthGuard } from './shared/infrastructure/auth/jwt-auth.guard';
 import { RolesGuard } from './shared/infrastructure/auth/roles.guard';
@@ -15,6 +16,7 @@ import { HealthModule } from './modules/health/health.module';
 @Module({
   imports: [
     SharedModule,
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 400 }] }),
     JwtModule.register({}),
     HealthModule,
     ProductsModule,

@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { config as loadEnv } from 'dotenv';
 import { resolve } from 'node:path';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './shared/infrastructure/filters/http-exception.filter';
 
 async function bootstrap() {
   loadEnv({ path: resolve(process.cwd(), '.env') });
@@ -11,6 +12,7 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:3000'],

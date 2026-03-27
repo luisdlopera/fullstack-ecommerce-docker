@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma, Size } from '@prisma/client';
+import { Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type {
   CategoryRecord,
   CountryRecord,
   FeaturedProductRecord,
+  ProductFacetsResult,
   ProductListFilters,
   ProductListItem,
   ProductListResult,
@@ -11,26 +12,7 @@ import type {
   ProductStockRecord,
 } from '../../domain/ports/product-repository.port';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
-
-function parseCsv(v?: string): string[] {
-  return v?.split(',').map((s) => s.trim()).filter(Boolean) ?? [];
-}
-
-function mapUiSizeToPrismaSize(s: string): Size | null {
-  const key = s.trim();
-  const upper = key.toUpperCase();
-  const map: Record<string, Size> = {
-    XS: Size.XS,
-    S: Size.S,
-    M: Size.M,
-    L: Size.L,
-    XL: Size.XL,
-    XXL: Size.XXL,
-    XXXL: Size.XXXL,
-    '2X': Size.XXL,
-  };
-  return map[key] ?? map[upper] ?? null;
-}
+import { buildProductListWhere } from './build-product-list-where';
 
 function mapImages(
   imgs: Array<{ id: number; url: string; sortOrder?: number }>,
@@ -64,13 +46,20 @@ function mapListItem(
 
 @Injectable()
 export class PrismaProductRepository implements ProductRepositoryPort {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findFeatured(limit: number): Promise<FeaturedProductRecord[]> {
     const rows = await this.prisma.product.findMany({
+      where: {
+        featured: true,
+        isActive: true,
+        deletedAt: null,
+      },
       take: limit,
       orderBy: { title: 'asc' },
-      include: { ProductImage: true },
+      include: {
+        ProductImage: { orderBy: { sortOrder: 'asc' } },
+      },
     });
     return rows.map((row) => ({
       id: row.id,
@@ -88,86 +77,7 @@ export class PrismaProductRepository implements ProductRepositoryPort {
     const limit = Math.min(Math.max(filters.limit ?? 12, 1), 100);
     const skip = (page - 1) * limit;
 
-    const andParts: Prisma.ProductWhereInput[] = [{ deletedAt: null }, { isActive: true }];
-
-    if (filters.query) {
-      andParts.push({
-        title: { contains: filters.query, mode: 'insensitive' },
-      });
-    }
-
-    const mustTag = filters.mustTag ?? filters.tag;
-    if (mustTag) {
-      andParts.push({ tags: { has: mustTag.toLowerCase() } });
-    }
-
-    const anyTagList = parseCsv(filters.anyTags);
-    if (anyTagList.length > 0) {
-      andParts.push({
-        OR: anyTagList.map((t) => ({ tags: { has: t.toLowerCase() } })),
-      });
-    }
-
-    if (filters.gender) {
-      andParts.push({ gender: filters.gender as 'men' | 'women' | 'kid' | 'unisex' });
-    }
-
-    const categories = parseCsv(filters.categories);
-    if (filters.category) {
-      categories.push(filters.category);
-    }
-    if (categories.length > 0) {
-      const uniq = [...new Set(categories)];
-      andParts.push({
-        OR: uniq.map((name) => ({
-          category: { name: { equals: name, mode: 'insensitive' } },
-        })),
-      });
-    }
-
-    const priceFilter: Prisma.FloatFilter = {};
-    if (filters.minPrice != null) priceFilter.gte = filters.minPrice;
-    if (filters.maxPrice != null) priceFilter.lte = filters.maxPrice;
-    if (Object.keys(priceFilter).length > 0) {
-      andParts.push({ price: priceFilter });
-    }
-
-    if (filters.outOfStockOnly) {
-      andParts.push({ inStock: 0 });
-    } else if (filters.inStock) {
-      andParts.push({ inStock: { gt: 0 } });
-    }
-
-    const sizes = parseCsv(filters.sizes);
-    const sizeEnums = sizes.map(mapUiSizeToPrismaSize).filter((x): x is Size => x != null);
-    if (sizeEnums.length > 0) {
-      andParts.push({
-        OR: sizeEnums.map((sz) => ({ sizes: { has: sz } })),
-      });
-    }
-
-    const colors = parseCsv(filters.colors);
-    if (colors.length > 0) {
-      andParts.push({
-        OR: colors.map((c) => ({ tags: { has: `c:${c.toLowerCase()}` } })),
-      });
-    }
-
-    const colSlugs = parseCsv(filters.colSlugs);
-    if (colSlugs.length > 0) {
-      andParts.push({
-        OR: colSlugs.map((slug) => ({ tags: { has: `col:${slug.toLowerCase()}` } })),
-      });
-    }
-
-    const classifications = parseCsv(filters.classifications);
-    if (classifications.length > 0) {
-      andParts.push({
-        OR: classifications.map((slug) => ({ tags: { has: `class:${slug.toLowerCase()}` } })),
-      });
-    }
-
-    const where: Prisma.ProductWhereInput = { AND: andParts };
+    const where = buildProductListWhere(filters);
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
@@ -175,7 +85,10 @@ export class PrismaProductRepository implements ProductRepositoryPort {
         skip,
         take: limit,
         orderBy: { title: 'asc' },
-        include: { ProductImage: true, category: true },
+        include: {
+          ProductImage: { orderBy: { sortOrder: 'asc' } },
+          category: true,
+        },
       }),
       this.prisma.product.count({ where }),
     ]);
@@ -191,17 +104,44 @@ export class PrismaProductRepository implements ProductRepositoryPort {
     };
   }
 
+  async facets(filters: ProductListFilters): Promise<ProductFacetsResult> {
+    const baseWhere = buildProductListWhere(filters);
+
+    const [inStockCount, outOfStockCount, categoryRows] = await this.prisma.$transaction([
+      this.prisma.product.count({
+        where: { AND: [baseWhere, { inStock: { gt: 0 } }] },
+      }),
+      this.prisma.product.count({
+        where: { AND: [baseWhere, { inStock: 0 }] },
+      }),
+      this.prisma.product.findMany({
+        where: baseWhere,
+        distinct: ['categoryId'],
+        select: { category: { select: { name: true } } },
+      }),
+    ]);
+
+    const categoryNames = [...new Set(categoryRows.map((r) => r.category.name))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    return { inStockCount, outOfStockCount, categoryNames };
+  }
+
   async findBySlug(slug: string): Promise<ProductListItem | null> {
-    const row = await this.prisma.product.findUnique({
-      where: { slug },
-      include: { ProductImage: true, category: true },
+    const row = await this.prisma.product.findFirst({
+      where: { slug, deletedAt: null, isActive: true },
+      include: {
+        ProductImage: { orderBy: { sortOrder: 'asc' } },
+        category: true,
+      },
     });
     return row ? mapListItem(row) : null;
   }
 
   async findStockBySlug(slug: string): Promise<ProductStockRecord | null> {
-    const row = await this.prisma.product.findUnique({
-      where: { slug },
+    const row = await this.prisma.product.findFirst({
+      where: { slug, deletedAt: null, isActive: true },
       select: { id: true, slug: true, inStock: true },
     });
     return row;

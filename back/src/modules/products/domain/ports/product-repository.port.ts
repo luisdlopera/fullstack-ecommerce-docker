@@ -72,6 +72,12 @@ export type ProductStockRecord = {
   inStock: number;
 };
 
+export type ProductFacetsResult = {
+  inStockCount: number;
+  outOfStockCount: number;
+  categoryNames: string[];
+};
+
 export type CountryRecord = {
   id: string;
   name: string;
@@ -85,6 +91,7 @@ export type CountryRecord = {
 export interface ProductRepositoryPort {
   findFeatured(limit: number): Promise<FeaturedProductRecord[]>;
   list(filters: ProductListFilters): Promise<ProductListResult>;
+  facets(filters: ProductListFilters): Promise<ProductFacetsResult>;
   findBySlug(slug: string): Promise<ProductListItem | null>;
   findStockBySlug(slug: string): Promise<ProductStockRecord | null>;
   findAllCategories(): Promise<CategoryRecord[]>;

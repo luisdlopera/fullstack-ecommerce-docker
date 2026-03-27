@@ -1,9 +1,21 @@
-import { Controller, Get, Inject, Param, ParseBoolPipe, ParseFloatPipe, ParseIntPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Inject,
+  NotFoundException,
+  Param,
+  ParseBoolPipe,
+  ParseFloatPipe,
+  ParseIntPipe,
+  Query,
+} from '@nestjs/common';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { GetFeaturedProductsUseCase } from '../../application/use-cases/get-featured-products.use-case';
 import { GetProductBySlugUseCase } from '../../application/use-cases/get-product-by-slug.use-case';
+import { GetProductFacetsUseCase } from '../../application/use-cases/get-product-facets.use-case';
 import { GetProductStockBySlugUseCase } from '../../application/use-cases/get-product-stock-by-slug.use-case';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
+import { toProductListFilters } from './product-list-query.util';
 
 @Public()
 @Controller('products')
@@ -13,6 +25,8 @@ export class ProductsController {
     private readonly getFeaturedProducts: GetFeaturedProductsUseCase,
     @Inject(ListProductsUseCase)
     private readonly listProducts: ListProductsUseCase,
+    @Inject(GetProductFacetsUseCase)
+    private readonly getProductFacets: GetProductFacetsUseCase,
     @Inject(GetProductBySlugUseCase)
     private readonly getProductBySlug: GetProductBySlugUseCase,
     @Inject(GetProductStockBySlugUseCase)
@@ -23,6 +37,49 @@ export class ProductsController {
   getFeatured(@Query('limit') limit?: string) {
     const parsedLimit = Number(limit ?? 8);
     return this.getFeaturedProducts.execute(Number.isNaN(parsedLimit) ? 8 : parsedLimit);
+  }
+
+  @Get('facets')
+  facets(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('query') query?: string,
+    @Query('category') category?: string,
+    @Query('tag') tag?: string,
+    @Query('mustTag') mustTag?: string,
+    @Query('anyTags') anyTags?: string,
+    @Query('gender') gender?: string,
+    @Query('minPrice', new ParseFloatPipe({ optional: true })) minPrice?: number,
+    @Query('maxPrice', new ParseFloatPipe({ optional: true })) maxPrice?: number,
+    @Query('inStock', new ParseBoolPipe({ optional: true })) inStock?: boolean,
+    @Query('sizes') sizes?: string,
+    @Query('colors') colors?: string,
+    @Query('categories') categories?: string,
+    @Query('colSlugs') colSlugs?: string,
+    @Query('classifications') classifications?: string,
+    @Query('avail') avail?: string,
+  ) {
+    return this.getProductFacets.execute(
+      toProductListFilters({
+        page,
+        limit,
+        query,
+        category,
+        tag,
+        mustTag,
+        anyTags,
+        gender,
+        minPrice,
+        maxPrice,
+        inStock,
+        sizes,
+        colors,
+        categories,
+        colSlugs,
+        classifications,
+        avail,
+      }),
+    );
   }
 
   @Get()
@@ -45,34 +102,27 @@ export class ProductsController {
     @Query('classifications') classifications?: string,
     @Query('avail') avail?: string,
   ) {
-    let inStockF = inStock;
-    let outOfStockOnly = false;
-    if (avail === 'out') {
-      outOfStockOnly = true;
-      inStockF = undefined;
-    } else if (avail === 'in') {
-      inStockF = true;
-    }
-
-    return this.listProducts.execute({
-      page,
-      limit,
-      query,
-      category,
-      tag,
-      mustTag,
-      anyTags,
-      gender,
-      minPrice,
-      maxPrice,
-      inStock: inStockF,
-      outOfStockOnly,
-      sizes,
-      colors,
-      categories,
-      colSlugs,
-      classifications,
-    });
+    return this.listProducts.execute(
+      toProductListFilters({
+        page,
+        limit,
+        query,
+        category,
+        tag,
+        mustTag,
+        anyTags,
+        gender,
+        minPrice,
+        maxPrice,
+        inStock,
+        sizes,
+        colors,
+        categories,
+        colSlugs,
+        classifications,
+        avail,
+      }),
+    );
   }
 
   @Get(':slug/stock')
@@ -81,7 +131,11 @@ export class ProductsController {
   }
 
   @Get(':slug')
-  getBySlug(@Param('slug') slug: string) {
-    return this.getProductBySlug.execute(slug);
+  async getBySlug(@Param('slug') slug: string) {
+    const product = await this.getProductBySlug.execute(slug);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return product;
   }
 }

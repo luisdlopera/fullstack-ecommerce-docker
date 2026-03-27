@@ -6,19 +6,26 @@ import { GetProductBySlugUseCase } from './application/use-cases/get-product-by-
 import { GetProductStockBySlugUseCase } from './application/use-cases/get-product-stock-by-slug.use-case';
 import { ListCategoriesUseCase } from './application/use-cases/list-categories.use-case';
 import { ListCountriesUseCase } from './application/use-cases/list-countries.use-case';
+import { GetProductFacetsUseCase } from './application/use-cases/get-product-facets.use-case';
 import { ListProductsUseCase } from './application/use-cases/list-products.use-case';
 import { CategoriesController } from './infrastructure/http/categories.controller';
 import { CountriesController } from './infrastructure/http/countries.controller';
 import { ProductsController } from './infrastructure/http/products.controller';
 import { PrismaProductRepository } from './infrastructure/persistence/prisma-product.repository';
+import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
 
 @Module({
   imports: [SharedModule],
   controllers: [ProductsController, CategoriesController, CountriesController],
   providers: [
-    { provide: PRODUCT_REPOSITORY, useClass: PrismaProductRepository },
+    {
+      provide: PRODUCT_REPOSITORY,
+      useFactory: (prisma: PrismaService) => new PrismaProductRepository(prisma),
+      inject: [PrismaService],
+    },
     GetFeaturedProductsUseCase,
     ListProductsUseCase,
+    GetProductFacetsUseCase,
     GetProductBySlugUseCase,
     GetProductStockBySlugUseCase,
     ListCategoriesUseCase,

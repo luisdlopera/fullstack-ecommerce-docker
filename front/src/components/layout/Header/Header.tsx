@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
 import { Heart, LogOut, Package, Search, ShoppingBag, ShoppingCart, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -22,16 +22,32 @@ export function Header() {
 	const { items: favoriteItems } = useFavorites();
 	const { user, logout } = useAuth();
 	const [scrolled, setScrolled] = useState(false);
+	const [headerVisible, setHeaderVisible] = useState(true);
 	const [mobileOpen, setMobileOpen] = useState(false);
+	const lastScrollY = useRef(0);
 
 	const isHome = pathname === '/';
 
 	useEffect(() => {
+		const scrollDelta = 8;
+		const topRevealPx = 72;
+
 		const handleScroll = () => {
-			setScrolled(window.scrollY > HEADER_SOLID_BG_SCROLL_Y);
+			const y = window.scrollY;
+			setScrolled(y > HEADER_SOLID_BG_SCROLL_Y);
+
+			if (y < topRevealPx) {
+				setHeaderVisible(true);
+			} else if (y > lastScrollY.current + scrollDelta) {
+				setHeaderVisible(false);
+			} else if (y < lastScrollY.current - scrollDelta) {
+				setHeaderVisible(true);
+			}
+			lastScrollY.current = y;
 		};
 
-		window.addEventListener('scroll', handleScroll);
+		lastScrollY.current = window.scrollY;
+		window.addEventListener('scroll', handleScroll, { passive: true });
 		return () => window.removeEventListener('scroll', handleScroll);
 	}, []);
 
@@ -51,10 +67,10 @@ export function Header() {
 
 	return (
 		<header
-			className={`fixed top-0 z-50 mx-auto flex h-[84px] w-full items-center justify-center transition-all ${scrolled ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
+			className={`fixed top-0 z-50 mx-auto flex h-[84px] w-full items-center justify-center transition-all duration-300 ease-out will-change-transform ${headerVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'} ${scrolled ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
 		>
-			<div className='mx-auto flex w-[90%] items-center justify-between'>
-				<div>
+			<div className='relative mx-auto flex h-full w-[90%] max-w-[1920px] items-center'>
+				<div className='shrink-0'>
 					<Link
 						href='/'
 						className={`text-2xl font-bold ${scrolled || !isHome ? 'text-black' : 'text-white'}`}
@@ -63,7 +79,7 @@ export function Header() {
 					</Link>
 				</div>
 
-				<div className='hidden items-center justify-center gap-3 lg:flex'>
+				<div className='absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-3 lg:flex'>
 					{HEADER_NAV_ITEMS.map(({ label, path }) => {
 						const isActive = pathname === `/${path}` || (pathname === '/' && path === '');
 						return (
@@ -79,7 +95,7 @@ export function Header() {
 					})}
 				</div>
 
-				<div className='flex items-center gap-2 md:gap-4'>
+				<div className='ml-auto flex shrink-0 items-center gap-2 md:gap-4'>
 					<HeaderMenuTrigger
 						onOpen={() => setMobileOpen(true)}
 						scrolled={scrolled}
@@ -97,7 +113,7 @@ export function Header() {
 							</Button>
 							{favoriteItems.length > 0 && (
 								<span
-									className='bg-danger pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums shadow-sm ring-1 ring-black/15'
+									className='bg-danger pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums ring-1 ring-black/15'
 									aria-hidden
 								>
 									{favoriteItems.length > 99 ? '99+' : favoriteItems.length}
@@ -112,7 +128,7 @@ export function Header() {
 							</Button>
 							{totalItems > 0 && (
 								<span
-									className='bg-primary pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums shadow-sm ring-1 ring-black/15'
+									className='bg-primary pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums ring-1 ring-black/15'
 									aria-hidden
 								>
 									{totalItems > 99 ? '99+' : totalItems}

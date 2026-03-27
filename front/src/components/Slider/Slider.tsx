@@ -11,7 +11,7 @@ import { Button, Link } from '@heroui/react';
 
 export function Slider() {
 	return (
-		<div className='relative h-screen w-full'>
+		<div className='relative w-full'>
 			<Swiper
 				modules={[Navigation, Scrollbar, Autoplay]}
 				loop={true}
@@ -41,7 +41,10 @@ export function Slider() {
 								<Button className='bg-primary text-white' endContent={<ArrowUpRight />}>
 									Nuevas colecciones
 								</Button>
-								<Button className='' variant='bordered'>
+								<Button
+									className='border-white text-white data-[hover=true]:bg-white/15 data-[hover=true]:text-white'
+									variant='bordered'
+								>
 									Accesorios
 								</Button>
 							</div>

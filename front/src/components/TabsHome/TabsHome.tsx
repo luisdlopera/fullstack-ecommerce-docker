@@ -34,8 +34,15 @@ export function TabsHome({ products }: TabsHomeProps) {
 	};
 
 	return (
-		<section className='mx-auto flex w-11/12 flex-col'>
-			<Tabs aria-label='Options' className='flex w-full justify-center'>
+		<section className='relative z-10 mx-auto mt-2 flex w-11/12 flex-col'>
+			<Tabs
+				aria-label='Options'
+				className='flex w-full flex-col justify-center'
+				classNames={{
+					base: 'flex w-full flex-col gap-3',
+					tabList: 'z-10 w-full shrink-0 flex-nowrap justify-center',
+				}}
+			>
 				<Tab key='new' title='Nuevas colecciones' className='p-7 text-xl'>
 					{renderGrid(products)}
 				</Tab>

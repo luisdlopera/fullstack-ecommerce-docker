@@ -1,20 +1,15 @@
 'use client';
 
 import { Tab, Tabs } from '@heroui/react';
-import { ShopProductCard } from '../shared/ProductCard';
-import { FeaturedProduct } from '@/lib/api';
-import { isNewFromTags } from '@/lib/product-flags';
+import { ProductCard, featuredProductToCardModel } from '@/features/product';
+import type { FeaturedProduct } from '@/lib/api';
 
 type TabsHomeProps = {
 	products: FeaturedProduct[];
 };
 
 export function TabsHome({ products }: TabsHomeProps) {
-	const getGenderProducts = (gender: string) =>
-		products.filter((p) => {
-			const tags = (p as unknown as { gender?: string }).gender;
-			return tags === gender;
-		});
+	const getGenderProducts = (gender: string) => products.filter((p) => p.gender === gender);
 
 	const menProducts = getGenderProducts('men');
 	const womenProducts = getGenderProducts('women');
@@ -26,21 +21,14 @@ export function TabsHome({ products }: TabsHomeProps) {
 		}
 		return (
 			<div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-				{list.map((product) => {
-					const imgs = product.images ?? [];
-					return (
-					<ShopProductCard
+				{list.map((product) => (
+					<ProductCard
 						key={product.id}
-						id={product.id}
-						name={product.title}
-						price={product.price}
-						image={imgs[0] || '/img/shirt/shirt-black-1.png'}
-						image2={imgs[1] || imgs[0] || '/img/shirt/shirt-black-2.png'}
-						slug={product.slug}
-						isNew={isNewFromTags(product.tags)}
+						variant='shop'
+						model={featuredProductToCardModel(product)}
+						showActions
 					/>
-					);
-				})}
+				))}
 			</div>
 		);
 	};

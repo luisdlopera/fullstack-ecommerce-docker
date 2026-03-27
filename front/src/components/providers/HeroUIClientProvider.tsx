@@ -3,9 +3,9 @@
 import { HeroUIProvider } from '@heroui/system';
 
 type HeroUIClientProviderProps = {
-  children: React.ReactNode;
+	children: React.ReactNode;
 };
 
 export function HeroUIClientProvider({ children }: HeroUIClientProviderProps) {
-  return <HeroUIProvider>{children}</HeroUIProvider>;
+	return <HeroUIProvider>{children}</HeroUIProvider>;
 }

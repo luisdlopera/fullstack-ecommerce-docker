@@ -32,7 +32,7 @@ export function Slider() {
 							height={702}
 							className='h-full w-full object-cover'
 						/>
-						<div className='absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-white'>
+						<div className='bg-opacity-50 absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center bg-black p-4 text-white'>
 							<h2 className='mb-4 text-5xl font-bold'>Tu outfit soñado, ahora con oferta.</h2>
 							<p className='mb-6 text-lg'>
 								Hasta 60% de descuento en ropa de mujer y hombre. ¡Corre antes de que se agoten!
@@ -57,7 +57,7 @@ export function Slider() {
 							height={702}
 							className='h-full w-full object-cover'
 						/>
-						<div className='absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-white'>
+						<div className='bg-opacity-50 absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center bg-black p-4 text-white'>
 							<h2 className='mb-4 text-5xl font-bold'> El look que deseas, al mejor precio.</h2>
 							<p className='mb-6 text-lg'>
 								Encuentra las tendencias más exclusivas con descuentos irresistibles. ¡Solo por tiempo
@@ -80,7 +80,7 @@ export function Slider() {
 							height={702}
 							className='h-full w-full object-cover'
 						/>
-						<div className='absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-white'>
+						<div className='bg-opacity-50 absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center bg-black p-4 text-white'>
 							<h2 className='mb-4 text-5xl font-bold'>
 								La moda que te define, a precios que te encantan.
 							</h2>
@@ -96,10 +96,10 @@ export function Slider() {
 			</Swiper>
 
 			{/* Botones de navegación personalizados */}
-			<Link className='custom-prev absolute left-10 top-1/2 z-10 -translate-y-1/2 p-3 text-white'>
+			<Link className='custom-prev absolute top-1/2 left-10 z-10 -translate-y-1/2 p-3 text-white'>
 				<ChevronLeft size={30} />
 			</Link>
-			<Link className='custom-next absolute right-10 top-1/2 z-10 -translate-y-1/2 p-3 text-white'>
+			<Link className='custom-next absolute top-1/2 right-10 z-10 -translate-y-1/2 p-3 text-white'>
 				<ChevronRight size={30} />
 			</Link>
 			<Image className='relative -top-20 w-full' src='/Separator.svg' alt='' width={100} height={100} />

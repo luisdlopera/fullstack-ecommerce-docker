@@ -1,8 +1,9 @@
-@import "tailwindcss";
-@plugin "../hero.ts";
-@source "../../node_modules/@heroui/theme/dist/**/*.js";
-@import "@fontsource/urbanist/400.css";
-@import "@fontsource/urbanist/700.css";
+@import 'tailwindcss';
+@plugin "../hero.mjs";
+/* npm workspaces: @heroui/theme is hoisted to repo root, not front/node_modules */
+@source "../../../node_modules/@heroui/theme/dist/**/*.js";
+@import '@fontsource/urbanist/400.css';
+@import '@fontsource/urbanist/700.css';
 
 :root {
 	--background: #ffffff;

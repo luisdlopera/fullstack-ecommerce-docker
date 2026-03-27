@@ -1,1 +1,1 @@
-export { ProductGrid } from './ProductGrid';
+export { FetchedProductGrid, type FetchedProductGridProps } from './FetchedProductGrid';

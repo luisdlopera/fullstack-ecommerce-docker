@@ -27,12 +27,10 @@ export function Footer() {
 
 				<p className='text-sm text-gray-300'>Hecho con amor por Luis David Lopera</p>
 
-				<p className='text-xs text-gray-400'>
-					© {year} Todos los derechos reservados a Nexstore, open project
-				</p>
+				<p className='text-xs text-gray-400'>© {year} Todos los derechos reservados a Nexstore, open project</p>
 			</div>
 
-			<div className='absolute bottom-0 mt-20 flex w-full justify-center gap-6 bg-primary py-2 text-xs text-white'>
+			<div className='bg-primary absolute bottom-0 mt-20 flex w-full justify-center gap-6 py-2 text-xs text-white'>
 				<a href='#' className='hover:underline'>
 					Términos y condiciones
 				</a>

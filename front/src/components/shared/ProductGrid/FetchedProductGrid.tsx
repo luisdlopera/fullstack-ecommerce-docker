@@ -2,23 +2,20 @@
 
 import { Button, Pagination, Spinner } from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
-import { ShopProductCard } from '../ProductCard';
-import { getClientApiUrl, type Product, type ProductListResponse } from '@/lib/api';
-import { discountPercent, isNewFromTags } from '@/lib/product-flags';
+import { ProductCard, apiProductToCardModel } from '@/features/product';
+import { fetchProductsClient, type ProductListResponse } from '@/lib/api';
 
-type ProductGridProps = {
+export type FetchedProductGridProps = {
 	gender?: string;
 	tag?: string;
 	query?: string;
 	title: string;
-	/** When true, render as <section> without outer page spacing (use inside a parent <main>). */
 	embedded?: boolean;
-	/** Controlled pagination (e.g. sync with URL on /search). */
 	page?: number;
 	onPageChange?: (page: number) => void;
 };
 
-export function ProductGrid({
+export function FetchedProductGrid({
 	gender,
 	tag,
 	query,
@@ -26,7 +23,7 @@ export function ProductGrid({
 	embedded = false,
 	page: pageProp,
 	onPageChange,
-}: ProductGridProps) {
+}: FetchedProductGridProps) {
 	const [data, setData] = useState<ProductListResponse | null>(null);
 	const [internalPage, setInternalPage] = useState(1);
 	const controlled = onPageChange != null;
@@ -49,17 +46,16 @@ export function ProductGrid({
 	}, [filterKey, setPage]);
 
 	useEffect(() => {
-		const fetchProducts = async () => {
+		const run = async () => {
 			setLoading(true);
 			try {
-				const baseUrl = getClientApiUrl();
-				const params = new URLSearchParams({ page: String(page), limit: '12' });
-				if (gender) params.set('gender', gender);
-				if (tag) params.set('tag', tag);
-				if (query) params.set('query', query);
-				const res = await fetch(`${baseUrl}/products?${params}`);
-				if (!res.ok) throw new Error('Failed');
-				const json = (await res.json()) as ProductListResponse;
+				const json = await fetchProductsClient({
+					page,
+					limit: 12,
+					...(gender ? { gender } : {}),
+					...(tag ? { tag } : {}),
+					...(query ? { query } : {}),
+				});
 				setData(json);
 			} catch {
 				setData(null);
@@ -67,19 +63,10 @@ export function ProductGrid({
 				setLoading(false);
 			}
 		};
-		fetchProducts();
+		void run();
 	}, [page, gender, tag, query]);
 
-	const getImage = (product: Product, index: number) => {
-		if (product.ProductImage && product.ProductImage.length > index) {
-			return product.ProductImage[index].url;
-		}
-		return '/img/shirt/shirt-black-1.png';
-	};
-
-	const wrapperClass = embedded
-		? 'w-full text-black'
-		: 'mx-auto mt-28 w-11/12 max-w-7xl pb-16 text-black';
+	const wrapperClass = embedded ? 'w-full text-black' : 'mx-auto mt-28 w-11/12 max-w-7xl pb-16 text-black';
 
 	const Root = embedded ? 'section' : 'main';
 	const Heading = embedded ? 'h2' : 'h1';
@@ -107,17 +94,11 @@ export function ProductGrid({
 				<>
 					<div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
 						{data.data.map((product) => (
-							<ShopProductCard
+							<ProductCard
 								key={product.id}
-								id={product.id}
-								name={product.title}
-								price={product.price}
-								image={getImage(product, 0)}
-								image2={getImage(product, 1)}
-								slug={product.slug}
-								isNew={isNewFromTags(product.tags)}
-								discount={discountPercent(product.price, product.comparePrice)}
-								isSoldOut={product.inStock <= 0}
+								variant='shop'
+								model={apiProductToCardModel(product)}
+								showActions
 							/>
 						))}
 					</div>

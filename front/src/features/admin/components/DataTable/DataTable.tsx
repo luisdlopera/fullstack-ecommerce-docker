@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Pagination } from '@heroui/react';
 
 export type Column<T> = {
 	key: string;
@@ -108,26 +108,20 @@ export function DataTable<T>({
 			</div>
 
 			{onPageChange && totalPages > 1 && (
-				<div className='flex items-center justify-between border-t border-gray-200 px-6 py-3'>
+				<div className='flex flex-col items-stretch gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between'>
 					<p className='text-sm text-gray-500'>
 						Página {page} de {totalPages}
 						{total !== undefined && <span className='ml-1'>({total} resultados)</span>}
 					</p>
-					<div className='flex gap-1'>
-						<button
-							onClick={() => onPageChange(page - 1)}
-							disabled={page <= 1}
-							className='rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40'
-						>
-							<ChevronLeft size={16} />
-						</button>
-						<button
-							onClick={() => onPageChange(page + 1)}
-							disabled={page >= totalPages}
-							className='rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40'
-						>
-							<ChevronRight size={16} />
-						</button>
+					<div className='flex justify-center sm:justify-end'>
+						<Pagination
+							total={totalPages}
+							page={page}
+							onChange={onPageChange}
+							showControls
+							color='primary'
+							size='sm'
+						/>
 					</div>
 				</div>
 			)}

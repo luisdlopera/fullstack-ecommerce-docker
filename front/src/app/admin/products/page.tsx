@@ -1,12 +1,16 @@
 'use client';
 
+import { Checkbox, Select, SelectItem } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
 	AdminPageHeader,
 	categoriesApi,
+	canDeleteProduct,
+	canManageProductsWrite,
 	ConfirmDialog,
 	DataTable,
 	ErrorState,
@@ -44,6 +48,11 @@ function formatCurrency(v: number) {
 }
 
 export default function AdminProductsPage() {
+	const { user } = useAuth();
+	const role = user?.role ?? 'USER';
+	const canWrite = canManageProductsWrite(role);
+	const canDelete = canDeleteProduct(role);
+
 	const queryClient = useQueryClient();
 	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState('');
@@ -112,84 +121,93 @@ export default function AdminProductsPage() {
 	});
 
 	const columns: Column<AdminProduct>[] = [
-		{
-			key: 'product',
-			header: 'Producto',
-			render: (p) => (
-				<div className='flex items-center gap-3'>
-					{p.ProductImage?.[0]?.url ? (
-						<img src={p.ProductImage[0].url} alt='' className='h-10 w-10 rounded-lg object-cover' />
-					) : (
-						<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100'>
-							<ImageIcon size={16} className='text-gray-400' />
+			{
+				key: 'product',
+				header: 'Producto',
+				render: (p) => (
+					<div className='flex items-center gap-3'>
+						{p.ProductImage?.[0]?.url ? (
+							<img src={p.ProductImage[0].url} alt='' className='h-10 w-10 rounded-lg object-cover' />
+						) : (
+							<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100'>
+								<ImageIcon size={16} className='text-gray-400' />
+							</div>
+						)}
+						<div>
+							<p className='font-medium text-gray-900'>{p.title}</p>
+							<p className='text-xs text-gray-500'>{p.sku ?? p.slug}</p>
 						</div>
-					)}
-					<div>
-						<p className='font-medium text-gray-900'>{p.title}</p>
-						<p className='text-xs text-gray-500'>{p.sku ?? p.slug}</p>
 					</div>
-				</div>
-			),
-		},
-		{
-			key: 'category',
-			header: 'Categoría',
-			render: (p) => <span className='text-sm'>{p.category.name}</span>,
-		},
-		{
-			key: 'price',
-			header: 'Precio',
-			render: (p) => (
-				<div>
-					<span className='font-semibold'>{formatCurrency(p.price)}</span>
-					{p.comparePrice && (
-						<span className='ml-1 text-xs text-gray-400 line-through'>
-							{formatCurrency(p.comparePrice)}
-						</span>
-					)}
-				</div>
-			),
-		},
-		{
-			key: 'stock',
-			header: 'Stock',
-			render: (p) => (
-				<StatusBadge
-					value={p.inStock > 0 ? `${p.inStock} uds` : 'Agotado'}
-					variant={p.inStock > 10 ? 'green' : p.inStock > 0 ? 'yellow' : 'red'}
-				/>
-			),
-		},
-		{
-			key: 'status',
-			header: 'Estado',
-			render: (p) => (
-				<button onClick={() => toggleMutation.mutate({ id: p.id, isActive: !p.isActive })}>
-					<StatusBadge value={p.isActive ? 'Activo' : 'Inactivo'} variant={p.isActive ? 'green' : 'gray'} />
-				</button>
-			),
-		},
-		{
-			key: 'actions',
-			header: '',
-			className: 'text-right',
-			render: (p) => (
-				<div className='flex justify-end gap-2'>
-					<button
-						onClick={() => setEditProduct(p)}
-						className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
-					>
-						Editar
-					</button>
-					<button
-						onClick={() => setDeleteTarget(p)}
-						className='rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50'
-					>
-						Eliminar
-					</button>
-				</div>
-			),
-		},
+				),
+			},
+			{
+				key: 'category',
+				header: 'Categoría',
+				render: (p) => <span className='text-sm'>{p.category.name}</span>,
+			},
+			{
+				key: 'price',
+				header: 'Precio',
+				render: (p) => (
+					<div>
+						<span className='font-semibold'>{formatCurrency(p.price)}</span>
+						{p.comparePrice && (
+							<span className='ml-1 text-xs text-gray-400 line-through'>
+								{formatCurrency(p.comparePrice)}
+							</span>
+						)}
+					</div>
+				),
+			},
+			{
+				key: 'stock',
+				header: 'Stock',
+				render: (p) => (
+					<StatusBadge
+						value={p.inStock > 0 ? `${p.inStock} uds` : 'Agotado'}
+						variant={p.inStock > 10 ? 'green' : p.inStock > 0 ? 'yellow' : 'red'}
+					/>
+				),
+			},
+			{
+				key: 'status',
+				header: 'Estado',
+				render: (p) =>
+					canWrite ? (
+						<button type='button' onClick={() => toggleMutation.mutate({ id: p.id, isActive: !p.isActive })}>
+							<StatusBadge value={p.isActive ? 'Activo' : 'Inactivo'} variant={p.isActive ? 'green' : 'gray'} />
+						</button>
+					) : (
+						<StatusBadge value={p.isActive ? 'Activo' : 'Inactivo'} variant={p.isActive ? 'green' : 'gray'} />
+					),
+			},
+			{
+				key: 'actions',
+				header: '',
+				className: 'text-right',
+				render: (p) => (
+					<div className='flex justify-end gap-2'>
+						{canWrite && (
+							<button
+								type='button'
+								onClick={() => setEditProduct(p)}
+								className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
+							>
+								Editar
+							</button>
+						)}
+						{canDelete && (
+							<button
+								type='button'
+								onClick={() => setDeleteTarget(p)}
+								className='rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50'
+							>
+								Eliminar
+							</button>
+						)}
+					</div>
+				),
+			},
 	];
 
 	const categoryOptions = (categories ?? []).map((c: AdminCategory) => ({ value: c.id, label: c.name }));
@@ -209,12 +227,15 @@ export default function AdminProductsPage() {
 				title='Productos'
 				description='Administra el catálogo de productos'
 				actions={
-					<button
-						onClick={() => setCreateOpen(true)}
-						className='flex items-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800'
-					>
-						<Plus size={16} /> Nuevo producto
-					</button>
+					canWrite ? (
+						<button
+							type='button'
+							onClick={() => setCreateOpen(true)}
+							className='flex items-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800'
+						>
+							<Plus size={16} /> Nuevo producto
+						</button>
+					) : undefined
 				}
 			/>
 
@@ -267,16 +288,18 @@ export default function AdminProductsPage() {
 				emptyMessage='No se encontraron productos'
 			/>
 
-			<ProductFormModal
-				open={createOpen}
-				title='Crear producto'
-				categories={categories ?? []}
-				loading={createMutation.isPending}
-				onClose={() => setCreateOpen(false)}
-				onSubmit={(d) => createMutation.mutate(d)}
-			/>
+			{canWrite && (
+				<ProductFormModal
+					open={createOpen}
+					title='Crear producto'
+					categories={categories ?? []}
+					loading={createMutation.isPending}
+					onClose={() => setCreateOpen(false)}
+					onSubmit={(d) => createMutation.mutate(d)}
+				/>
+			)}
 
-			{editProduct && (
+			{canWrite && editProduct && (
 				<ProductFormModal
 					open
 					title='Editar producto'
@@ -289,7 +312,7 @@ export default function AdminProductsPage() {
 			)}
 
 			<ConfirmDialog
-				open={!!deleteTarget}
+				open={!!deleteTarget && canDelete}
 				title='Eliminar producto'
 				description={`¿Eliminar "${deleteTarget?.title}"? Se desactivará del catálogo.`}
 				confirmLabel='Eliminar'
@@ -300,6 +323,8 @@ export default function AdminProductsPage() {
 		</>
 	);
 }
+
+const CATEGORY_PLACEHOLDER_KEY = '_none';
 
 function ProductFormModal({
 	open,
@@ -318,10 +343,27 @@ function ProductFormModal({
 	onClose: () => void;
 	onSubmit: (data: Record<string, unknown>) => void;
 }) {
+	const [gender, setGender] = useState(initialData?.gender ?? 'unisex');
+	const [categoryId, setCategoryId] = useState(initialData?.categoryId ?? '');
 	const [selectedSizes, setSelectedSizes] = useState<string[]>(initialData?.sizes ?? ['S', 'M', 'L']);
+	const [featured, setFeatured] = useState(initialData?.featured ?? false);
+	const [isActive, setIsActive] = useState(initialData?.isActive ?? true);
+
+	useEffect(() => {
+		if (!open) return;
+		setGender(initialData?.gender ?? 'unisex');
+		setCategoryId(initialData?.categoryId ?? '');
+		setSelectedSizes(initialData?.sizes?.length ? initialData.sizes : ['S', 'M', 'L']);
+		setFeatured(initialData?.featured ?? false);
+		setIsActive(initialData?.isActive ?? true);
+	}, [open, initialData]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+		if (!categoryId) {
+			toast.error('Selecciona una categoría');
+			return;
+		}
 		const form = e.target as HTMLFormElement;
 		const fd = new FormData(form);
 
@@ -333,15 +375,15 @@ function ProductFormModal({
 			price: Number(fd.get('price')),
 			comparePrice: fd.get('comparePrice') ? Number(fd.get('comparePrice')) : undefined,
 			inStock: Number(fd.get('inStock')),
-			gender: fd.get('gender'),
-			categoryId: fd.get('categoryId'),
+			gender,
+			categoryId,
 			tags: (fd.get('tags') as string)
 				.split(',')
 				.map((t) => t.trim())
 				.filter(Boolean),
 			sizes: selectedSizes,
-			featured: fd.get('featured') === 'on',
-			isActive: fd.get('isActive') !== 'off',
+			featured,
+			isActive,
 		};
 
 		const imagesRaw = fd.get('images') as string;
@@ -355,6 +397,8 @@ function ProductFormModal({
 		onSubmit(data);
 	};
 
+	const categoryKey = categoryId || CATEGORY_PLACEHOLDER_KEY;
+
 	return (
 		<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading} size='lg'>
 			<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
@@ -363,6 +407,7 @@ function ProductFormModal({
 					<input
 						name='title'
 						defaultValue={initialData?.title}
+						key={initialData?.id ?? 'new-title'}
 						required
 						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
 					/>
@@ -372,6 +417,7 @@ function ProductFormModal({
 					<textarea
 						name='description'
 						defaultValue={initialData?.description}
+						key={initialData?.id ?? 'new-desc'}
 						required
 						rows={3}
 						className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black'
@@ -382,6 +428,7 @@ function ProductFormModal({
 					<input
 						name='slug'
 						defaultValue={initialData?.slug}
+						key={initialData?.id ?? 'new-slug'}
 						required
 						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
 					/>
@@ -391,6 +438,7 @@ function ProductFormModal({
 					<input
 						name='sku'
 						defaultValue={initialData?.sku ?? ''}
+						key={initialData?.id ?? 'new-sku'}
 						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
 					/>
 				</div>
@@ -402,6 +450,7 @@ function ProductFormModal({
 						step='0.01'
 						min='0'
 						defaultValue={initialData?.price ?? 0}
+						key={initialData?.id ?? 'new-price'}
 						required
 						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
 					/>
@@ -414,6 +463,7 @@ function ProductFormModal({
 						step='0.01'
 						min='0'
 						defaultValue={initialData?.comparePrice ?? ''}
+						key={initialData?.id ?? 'new-compare'}
 						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
 					/>
 				</div>
@@ -424,65 +474,77 @@ function ProductFormModal({
 						type='number'
 						min='0'
 						defaultValue={initialData?.inStock ?? 0}
+						key={initialData?.id ?? 'new-stock'}
 						required
 						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
 					/>
 				</div>
-				<div>
-					<label className='mb-1 block text-sm font-medium text-gray-700'>Género *</label>
-					<select
-						name='gender'
-						defaultValue={initialData?.gender ?? 'unisex'}
-						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
+				<div className='sm:col-span-2'>
+					<Select
+						label='Género'
+						size='sm'
+						variant='bordered'
+						selectedKeys={new Set([gender])}
+						onSelectionChange={(keys) => {
+							const k = Array.from(keys as Set<string>)[0];
+							if (k) setGender(String(k));
+						}}
 					>
 						{GENDER_OPTIONS.map((g) => (
-							<option key={g.value} value={g.value}>
+							<SelectItem key={g.value} textValue={g.label}>
 								{g.label}
-							</option>
+							</SelectItem>
 						))}
-					</select>
+					</Select>
 				</div>
-				<div>
-					<label className='mb-1 block text-sm font-medium text-gray-700'>Categoría *</label>
-					<select
-						name='categoryId'
-						defaultValue={initialData?.categoryId}
-						required
-						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
+				<div className='sm:col-span-2'>
+					<Select
+						label='Categoría'
+						size='sm'
+						variant='bordered'
+						placeholder='Seleccionar'
+						selectedKeys={new Set([categoryKey])}
+						onSelectionChange={(keys) => {
+							const k = Array.from(keys as Set<string>)[0];
+							setCategoryId(k === CATEGORY_PLACEHOLDER_KEY || !k ? '' : String(k));
+						}}
 					>
-						<option value=''>Seleccionar</option>
+						<SelectItem key={CATEGORY_PLACEHOLDER_KEY} textValue='Seleccionar'>
+							Seleccionar
+						</SelectItem>
 						{categories.map((c) => (
-							<option key={c.id} value={c.id}>
+							<SelectItem key={c.id} textValue={c.name}>
 								{c.name}
-							</option>
+							</SelectItem>
 						))}
-					</select>
+					</Select>
 				</div>
-				<div>
+				<div className='sm:col-span-2'>
 					<label className='mb-1 block text-sm font-medium text-gray-700'>Tags</label>
 					<input
 						name='tags'
 						defaultValue={initialData?.tags.join(', ') ?? ''}
+						key={initialData?.id ?? 'new-tags'}
 						placeholder='tag1, tag2'
 						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
 					/>
 				</div>
 				<div className='sm:col-span-2'>
-					<label className='mb-1 block text-sm font-medium text-gray-700'>Tallas</label>
-					<div className='flex flex-wrap gap-2'>
+					<p className='mb-2 text-sm font-medium text-gray-700'>Tallas</p>
+					<div className='flex flex-wrap gap-3'>
 						{SIZE_OPTIONS.map((s) => (
-							<label key={s} className='flex items-center gap-1.5'>
-								<input
-									type='checkbox'
-									checked={selectedSizes.includes(s)}
-									onChange={(e) => {
-										if (e.target.checked) setSelectedSizes((prev) => [...prev, s]);
-										else setSelectedSizes((prev) => prev.filter((x) => x !== s));
-									}}
-									className='rounded border-gray-300'
-								/>
-								<span className='text-sm'>{s}</span>
-							</label>
+							<Checkbox
+								key={s}
+								size='sm'
+								isSelected={selectedSizes.includes(s)}
+								onValueChange={(checked) => {
+									setSelectedSizes((prev) =>
+										checked ? [...prev, s] : prev.filter((x) => x !== s),
+									);
+								}}
+							>
+								{s}
+							</Checkbox>
 						))}
 					</div>
 				</div>
@@ -493,21 +555,19 @@ function ProductFormModal({
 					<textarea
 						name='images'
 						defaultValue={initialData?.ProductImage.map((i) => i.url).join('\n') ?? ''}
+						key={initialData?.id ?? 'new-images'}
 						rows={3}
 						placeholder='/img/product1.png'
 						className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black'
 					/>
 				</div>
-				<div className='flex items-center gap-4'>
-					<label className='flex items-center gap-2'>
-						<input
-							type='checkbox'
-							name='featured'
-							defaultChecked={initialData?.featured}
-							className='rounded border-gray-300'
-						/>
-						<span className='text-sm font-medium text-gray-700'>Destacado</span>
-					</label>
+				<div className='flex flex-wrap items-center gap-6 sm:col-span-2'>
+					<Checkbox size='sm' isSelected={featured} onValueChange={setFeatured}>
+						Destacado
+					</Checkbox>
+					<Checkbox size='sm' isSelected={isActive} onValueChange={setIsActive}>
+						Activo
+					</Checkbox>
 				</div>
 			</div>
 		</FormModal>

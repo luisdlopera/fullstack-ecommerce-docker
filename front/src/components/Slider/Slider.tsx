@@ -12,17 +12,18 @@ import { Button, Link } from '@heroui/react';
 export function Slider() {
 	return (
 		<div className='relative w-full'>
-			<Swiper
-				modules={[Navigation, Scrollbar, Autoplay]}
-				loop={true}
-				// autoplay={{ delay: 3000, disableOnInteraction: false }}
-				navigation={{
-					nextEl: '.custom-next',
-					prevEl: '.custom-prev',
-				}}
-				scrollbar={{ hide: true }}
-				className='mySwiper h-[700px] w-full'
-			>
+			<div className='relative h-[700px] w-full'>
+				<Swiper
+					modules={[Navigation, Scrollbar, Autoplay]}
+					loop={true}
+					// autoplay={{ delay: 3000, disableOnInteraction: false }}
+					navigation={{
+						nextEl: '.custom-next',
+						prevEl: '.custom-prev',
+					}}
+					scrollbar={{ hide: true }}
+					className='mySwiper h-full w-full'
+				>
 				<SwiperSlide>
 					<div className='relative h-full w-full'>
 						<Image
@@ -96,15 +97,15 @@ export function Slider() {
 						</div>
 					</div>
 				</SwiperSlide>
-			</Swiper>
+				</Swiper>
 
-			{/* Botones de navegación personalizados */}
-			<Link className='custom-prev absolute top-1/2 left-10 z-10 -translate-y-1/2 p-3 text-white'>
-				<ChevronLeft size={30} />
-			</Link>
-			<Link className='custom-next absolute top-1/2 right-10 z-10 -translate-y-1/2 p-3 text-white'>
-				<ChevronRight size={30} />
-			</Link>
+				<Link className='custom-prev absolute top-1/2 left-10 z-10 -translate-y-1/2 p-3 text-white'>
+					<ChevronLeft size={30} />
+				</Link>
+				<Link className='custom-next absolute top-1/2 right-10 z-10 -translate-y-1/2 p-3 text-white'>
+					<ChevronRight size={30} />
+				</Link>
+			</div>
 			<Image className='relative -top-20 w-full' src='/Separator.svg' alt='' width={100} height={100} />
 		</div>
 	);

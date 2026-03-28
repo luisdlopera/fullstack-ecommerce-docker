@@ -40,19 +40,21 @@ export function TabsHome({ products }: TabsHomeProps) {
 				className='flex w-full flex-col justify-center'
 				classNames={{
 					base: 'flex w-full flex-col gap-3',
-					tabList: 'z-10 w-full shrink-0 flex-nowrap justify-center',
+					tabList: 'z-10 grid w-full shrink-0 grid-cols-2 gap-1 sm:grid-cols-4',
+					tab: 'min-w-0 w-full justify-center text-center data-[selected=true]:font-semibold',
+					panel: 'w-full min-w-0 p-4 pt-6 sm:p-7 sm:text-lg',
 				}}
 			>
-				<Tab key='new' title='Nuevas colecciones' className='p-7 text-xl'>
+				<Tab key='new' title='Nuevas colecciones'>
 					{renderGrid(products)}
 				</Tab>
-				<Tab key='woman' title='Mujeres' className='w-60 p-7 text-xl'>
+				<Tab key='woman' title='Mujeres'>
 					{renderGrid(womenProducts.length > 0 ? womenProducts : products)}
 				</Tab>
-				<Tab key='men' title='Hombres' className='w-60 p-7 text-xl'>
+				<Tab key='men' title='Hombres'>
 					{renderGrid(menProducts.length > 0 ? menProducts : products)}
 				</Tab>
-				<Tab key='kid' title='Niños' className='w-60 p-7 text-xl'>
+				<Tab key='kid' title='Niños'>
 					{renderGrid(kidProducts.length > 0 ? kidProducts : products)}
 				</Tab>
 			</Tabs>

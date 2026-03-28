@@ -29,8 +29,5 @@ export type MercadoPagoInitCheckoutResult = {
 
 export interface MercadoPagoPaymentApiPort {
   fetchPaymentById(paymentId: string, accessToken: string): Promise<MercadoPagoPaymentRecord | null>;
-  initCheckout(
-    input: MercadoPagoInitCheckoutInput,
-    accessToken: string,
-  ): Promise<MercadoPagoInitCheckoutResult | null>;
+  initCheckout(input: MercadoPagoInitCheckoutInput, accessToken: string): Promise<MercadoPagoInitCheckoutResult | null>;
 }

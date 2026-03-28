@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, Role } from '@prisma/client';
 import { CreateOrderDto, UpdateOrderPaymentDto } from '../infrastructure/http/dto/create-order.dto';
 import { isAdminRole } from '../../../shared/infrastructure/auth/permissions';
@@ -53,15 +47,7 @@ export class OrdersService {
     const tax = Number((subTotal * taxRate).toFixed(2));
     const total = Number((subTotal + tax).toFixed(2));
 
-    return this.ordersRepository.createOrderWithStockTx(
-      userId,
-      dto,
-      productMap,
-      subTotal,
-      tax,
-      total,
-      itemsInOrder,
-    );
+    return this.ordersRepository.createOrderWithStockTx(userId, dto, productMap, subTotal, tax, total, itemsInOrder);
   }
 
   getMyOrders(userId: string, page = 1, limit = 10) {

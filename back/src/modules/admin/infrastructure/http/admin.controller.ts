@@ -16,11 +16,7 @@ import { IsString, MinLength } from 'class-validator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import { Roles } from '../../../../shared/infrastructure/auth/roles.decorator';
-import {
-  ADMIN_ROLES,
-  FULL_ACCESS_ROLES,
-  MANAGEMENT_ROLES,
-} from '../../../../shared/infrastructure/auth/permissions';
+import { ADMIN_ROLES, FULL_ACCESS_ROLES, MANAGEMENT_ROLES } from '../../../../shared/infrastructure/auth/permissions';
 import { AdminService } from '../../application/admin.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';

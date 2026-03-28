@@ -1,0 +1,69 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 10
+    groups:
+      root-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: /back
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:10"
+    open-pull-requests-limit: 10
+    groups:
+      back-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: /front
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:20"
+    open-pull-requests-limit: 10
+    groups:
+      front-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: /packages/api-types
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:40"
+
+  - package-ecosystem: docker
+    directory: /back
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:50"
+
+  - package-ecosystem: docker
+    directory: /front
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"

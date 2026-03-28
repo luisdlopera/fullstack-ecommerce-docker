@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { isAdminRole } from '@/features/admin';
+import { canAccessCountriesPath, isAdminRole } from '@/features/admin';
+import type { Role } from '@/features/admin';
 import {
 	LayoutDashboard,
 	Users,
@@ -23,13 +24,13 @@ const Toaster = dynamic(
 	{ ssr: false },
 );
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; requireFullAccess?: boolean }[] = [
 	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
 	{ href: '/admin/users', label: 'Usuarios', icon: Users },
 	{ href: '/admin/orders', label: 'Órdenes', icon: ShoppingCart },
 	{ href: '/admin/products', label: 'Productos', icon: Package },
 	{ href: '/admin/categories', label: 'Categorías', icon: FolderTree },
-	{ href: '/admin/countries', label: 'Países', icon: Globe },
+	{ href: '/admin/countries', label: 'Países', icon: Globe, requireFullAccess: true },
 ];
 
 function getBreadcrumbs(pathname: string) {
@@ -51,6 +52,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 			router.replace('/');
 		}
 	}, [loading, user, router]);
+
+	useEffect(() => {
+		if (loading || !user || !isAdminRole(user.role)) return;
+		if (pathname.startsWith('/admin/countries') && !canAccessCountriesPath(user.role)) {
+			router.replace('/admin');
+		}
+	}, [loading, user, pathname, router]);
 
 	if (loading || !user || !isAdminRole(user.role)) {
 		return (
@@ -86,7 +94,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 				</div>
 
 				<nav className='flex-1 space-y-1 overflow-y-auto px-3 py-4'>
-					{NAV_ITEMS.map((item) => {
+					{NAV_ITEMS.filter(
+						(item) => !item.requireFullAccess || canAccessCountriesPath(user.role as Role),
+					).map((item) => {
 						const isActive =
 							item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
 

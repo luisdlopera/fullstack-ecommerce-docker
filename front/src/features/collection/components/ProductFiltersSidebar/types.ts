@@ -7,4 +7,5 @@ export type ProductFiltersSidebarProps = {
 	inStockCount: number;
 	outOfStockCount: number;
 	onApply: () => void;
+	onClear: () => void;
 };

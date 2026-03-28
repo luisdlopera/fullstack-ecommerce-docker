@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
+import { emptyDraftFilters } from '../../constants';
 import { useCatalogUrlState } from '../../hooks/useCatalogUrlState';
 import { useProductListingLoad } from '../../hooks/useProductListingLoad';
 import type { SidebarDraftFilters } from '../../types';
@@ -58,6 +59,14 @@ export function ProductListingPage({ collection }: ProductListingPageProps) {
 		setMobileFiltersOpen(false);
 	};
 
+	const clearSidebar = () => {
+		const empty = emptyDraftFilters();
+		setDraftFilters(empty);
+		setAppliedFilters(empty);
+		replaceCatalogQuery({ page: 1, filters: empty });
+		setMobileFiltersOpen(false);
+	};
+
 	const submitSearch = () => {
 		replaceCatalogQuery({ page: 1, q: searchDraft.trim() || null });
 	};
@@ -70,6 +79,7 @@ export function ProductListingPage({ collection }: ProductListingPageProps) {
 			inStockCount={availability.inStock}
 			outOfStockCount={availability.outOfStock}
 			onApply={applySidebar}
+			onClear={clearSidebar}
 		/>
 	);
 

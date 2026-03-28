@@ -24,6 +24,7 @@ export function ProductFiltersSidebar({
 	inStockCount,
 	outOfStockCount,
 	onApply,
+	onClear,
 }: ProductFiltersSidebarProps) {
 	const set = (patch: Partial<SidebarDraftFilters>) => onDraftChange({ ...draft, ...patch });
 
@@ -166,13 +167,22 @@ export function ProductFiltersSidebar({
 				</FilterSection>
 			</div>
 
-			<button
-				type='button'
-				onClick={onApply}
-				className='mt-auto w-full rounded-xl bg-[#343DCB] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2f37b7]'
-			>
-				Aplicar filtros
-			</button>
+			<div className='mt-auto flex flex-col gap-2 sm:flex-row sm:items-stretch'>
+				<button
+					type='button'
+					onClick={onClear}
+					className='w-full rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50'
+				>
+					Limpiar filtros
+				</button>
+				<button
+					type='button'
+					onClick={onApply}
+					className='w-full rounded-xl bg-[#343DCB] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2f37b7] sm:flex-1'
+				>
+					Aplicar filtros
+				</button>
+			</div>
 		</aside>
 	);
 }

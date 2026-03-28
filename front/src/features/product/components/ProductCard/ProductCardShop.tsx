@@ -16,11 +16,13 @@ type ProductCardShopProps = {
 export function ProductCardShop({ model, showActions = true }: ProductCardShopProps) {
 	const [hover, setHover] = useState(false);
 	const actions = useProductCardActions(model, { favorites: showActions, cart: showActions });
+	const favoriteTooltip = actions.favorite ? 'En favoritos' : 'Agregar a favoritos';
+	const favoriteAria = actions.favorite ? 'Producto en favoritos' : 'Agregar a favoritos';
 
 	return (
 		<div className='flex flex-col items-center gap-4'>
 			<div
-				className='relative h-[355px] w-[290px] rounded-3xl bg-gray-100'
+				className='relative h-[355px] w-[290px] overflow-hidden rounded-3xl bg-gray-100'
 				onMouseEnter={() => setHover(true)}
 				onMouseLeave={() => setHover(false)}
 			>
@@ -28,6 +30,8 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 					isNew={model.isNew}
 					discount={model.discountPercent}
 					isSoldOut={model.isSoldOut}
+					highlightBadge={model.highlightBadge}
+					discountBadge={model.discountBadge}
 				/>
 
 				{model.slug ? (
@@ -70,10 +74,15 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 
 				{showActions && hover && (
 					<div className='absolute top-3 right-3 z-20 flex flex-col gap-2'>
-						<Tooltip content='Agregar a favoritos' className='text-black'>
+						<Tooltip
+							key={actions.favorite ? 'fav-on' : 'fav-off'}
+							content={favoriteTooltip}
+							placement='bottom'
+							classNames={{ base: 'z-[200]' }}
+						>
 							<Button
 								isIconOnly
-								aria-label='Agregar a favoritos'
+								aria-label={favoriteAria}
 								className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
 								onPress={() => actions.handleToggleFavorite()}
 							>
@@ -83,7 +92,12 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 								/>
 							</Button>
 						</Tooltip>
-						<Tooltip content={actions.inCart ? 'En el carrito' : 'Agregar al carrito'} className='text-black'>
+						<Tooltip
+							key={actions.inCart ? 'cart-on' : 'cart-off'}
+							content={actions.inCart ? 'En el carrito' : 'Agregar al carrito'}
+							placement='bottom'
+							classNames={{ base: 'z-[200]' }}
+						>
 							<Button
 								isIconOnly
 								aria-label={actions.inCart ? 'Producto en el carrito' : 'Agregar al carrito'}

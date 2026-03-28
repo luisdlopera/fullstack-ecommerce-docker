@@ -125,7 +125,7 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 				const body = await fetchProductsClient({ gender, limit: 12 });
 				if (cancelled) return;
 				const list = body.data ?? [];
-				const filtered = list.filter((p) => p.slug !== product.slug).slice(0, 4);
+				const filtered = list.filter((p) => p.slug !== product.slug).slice(0, 12);
 				if (!cancelled) setRelatedProducts(filtered.map(mapProductToSimilarProduct));
 			} catch {
 				if (!cancelled) setRelatedProducts([]);

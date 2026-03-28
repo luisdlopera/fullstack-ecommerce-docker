@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useAuth } from './AuthContext';
+import { bffFetch } from '@/lib/bff-fetch';
 
 export type FavoriteItem = {
 	productId: string;
@@ -35,8 +37,11 @@ function saveFavorites(items: FavoriteItem[]) {
 }
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
+	const { user } = useAuth();
 	const [items, setItems] = useState<FavoriteItem[]>([]);
 	const [hydrated, setHydrated] = useState(false);
+	const [syncing, setSyncing] = useState(false);
+	const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
 
 	useEffect(() => {
 		queueMicrotask(() => {
@@ -46,21 +51,83 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		if (!hydrated) return;
+		if (!hydrated || user) return;
 		saveFavorites(items);
-	}, [items, hydrated]);
+	}, [items, hydrated, user]);
+
+	useEffect(() => {
+		if (!hydrated || !user || syncing || syncedUserId === user.id) return;
+
+		const syncWithServer = async () => {
+			setSyncing(true);
+			const localSnapshot = loadFavorites();
+			try {
+				if (localSnapshot.length > 0) {
+					await Promise.all(
+						localSnapshot.map((item) =>
+							bffFetch('/users/me/favorites', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ productId: item.productId }),
+							}).catch(() => null),
+						),
+					);
+				}
+
+				const res = await bffFetch('/users/me/favorites');
+				if (res.ok) {
+					setItems((await res.json()) as FavoriteItem[]);
+					saveFavorites([]);
+					setSyncedUserId(user.id);
+				}
+			} catch {
+				setItems(localSnapshot);
+			} finally {
+				setSyncedUserId(user.id);
+				setSyncing(false);
+			}
+		};
+
+		void syncWithServer();
+	}, [hydrated, user, syncing, syncedUserId]);
+
+	useEffect(() => {
+		if (!user) {
+			setSyncedUserId(null);
+		}
+	}, [user]);
 
 	const isFavorite = useCallback((slug: string) => items.some((item) => item.slug === slug), [items]);
 
-	const toggleFavorite = useCallback((item: FavoriteItem) => {
-		setItems((prev) => {
-			const exists = prev.some((fav) => fav.slug === item.slug);
-			if (exists) {
-				return prev.filter((fav) => fav.slug !== item.slug);
+	const toggleFavorite = useCallback(
+		(item: FavoriteItem) => {
+			if (user) {
+				setItems((prev) => {
+					const existing = prev.find((fav) => fav.slug === item.slug);
+					if (existing) {
+						void bffFetch(`/users/me/favorites/${existing.productId}`, { method: 'DELETE' });
+						return prev.filter((fav) => fav.slug !== item.slug);
+					}
+					void bffFetch('/users/me/favorites', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ productId: item.productId }),
+					});
+					return [item, ...prev];
+				});
+				return;
 			}
-			return [item, ...prev];
-		});
-	}, []);
+
+			setItems((prev) => {
+				const exists = prev.some((fav) => fav.slug === item.slug);
+				if (exists) {
+					return prev.filter((fav) => fav.slug !== item.slug);
+				}
+				return [item, ...prev];
+			});
+		},
+		[user],
+	);
 
 	const value = useMemo(() => ({ items, isFavorite, toggleFavorite }), [items, isFavorite, toggleFavorite]);
 

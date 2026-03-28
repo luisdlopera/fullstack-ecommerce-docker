@@ -23,9 +23,7 @@ export function useProductListingLoad({
 	replaceCatalogQuery,
 }: UseProductListingLoadArgs) {
 	const [serverPayload, setServerPayload] = useState<ProductListResponse | null>(null);
-	const [facets, setFacets] = useState<{ inStock: number; outOfStock: number; categoryNames: string[] } | null>(
-		null,
-	);
+	const [facets, setFacets] = useState<{ inStock: number; outOfStock: number; categoryNames: string[] } | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -57,10 +55,7 @@ export function useProductListingLoad({
 		void loadServer();
 	}, [loadServer]);
 
-	const availability = useMemo(
-		() => facets ?? { inStock: 0, outOfStock: 0 },
-		[facets],
-	);
+	const availability = useMemo(() => facets ?? { inStock: 0, outOfStock: 0 }, [facets]);
 
 	const categoryNames = useMemo(() => facets?.categoryNames ?? [], [facets]);
 

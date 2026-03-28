@@ -77,19 +77,16 @@ export function Header() {
 
 	return (
 		<header
-			className={`fixed top-0 z-50 mx-auto flex h-21 w-full items-center justify-center transition-all duration-300 ease-out will-change-transform ${headerVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'} ${solidAppearance ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
+			className={`fixed top-0 z-50 mx-auto flex h-21 w-full items-center justify-center transition-all duration-300 ease-out will-change-transform ${headerVisible ? 'translate-y-0' : 'pointer-events-none -translate-y-full'} ${solidAppearance ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
 		>
 			<div className={`relative flex h-full items-center ${LAYOUT_MAIN_INNER_WIDTH}`}>
 				<div className='shrink-0'>
-					<Link
-						href='/'
-						className={`text-2xl font-bold ${solidAppearance ? 'text-black' : 'text-white'}`}
-					>
+					<Link href='/' className={`text-2xl font-bold ${solidAppearance ? 'text-black' : 'text-white'}`}>
 						NEXSTORE
 					</Link>
 				</div>
 
-				<div className='absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-3 lg:flex'>
+				<div className='absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-3 lg:flex'>
 					{HEADER_NAV_ITEMS.map(({ label, path }) => {
 						const isActive = pathname === `/${path}` || (pathname === '/' && path === '');
 						return (

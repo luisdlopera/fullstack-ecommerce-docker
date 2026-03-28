@@ -15,6 +15,7 @@ type AuthContextType = {
 	login: (email: string, password: string) => Promise<void>;
 	register: (name: string, email: string, password: string) => Promise<void>;
 	logout: () => Promise<void>;
+	refreshSession: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,21 +32,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<AuthUser | null>(null);
 	const [loading, setLoading] = useState(true);
 
+	const refreshSession = useCallback(async () => {
+		const res = await fetch('/api/auth/session', { credentials: 'include' });
+		if (!res.ok) {
+			setUser(null);
+			return;
+		}
+		const data = (await res.json()) as { user: AuthUser | null };
+		setUser(data.user ?? null);
+	}, []);
+
 	useEffect(() => {
 		queueMicrotask(async () => {
 			try {
-				const res = await fetch('/api/auth/session', { credentials: 'include' });
-				if (res.ok) {
-					const data = (await res.json()) as { user: AuthUser | null };
-					if (data.user) setUser(data.user);
-				}
+				await refreshSession();
 			} catch {
 				/* ignore */
 			} finally {
 				setLoading(false);
 			}
 		});
-	}, []);
+	}, [refreshSession]);
 
 	const login = useCallback(async (email: string, password: string) => {
 		const res = await fetch('/api/auth/login', {
@@ -90,7 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	}, []);
 
-	const value = useMemo(() => ({ user, loading, login, register, logout }), [user, loading, login, register, logout]);
+	const value = useMemo(
+		() => ({ user, loading, login, register, logout, refreshSession }),
+		[user, loading, login, register, logout, refreshSession],
+	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

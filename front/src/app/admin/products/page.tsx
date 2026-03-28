@@ -122,99 +122,102 @@ export default function AdminProductsPage() {
 	});
 
 	const columns: Column<AdminProduct>[] = [
-			{
-				key: 'product',
-				header: 'Producto',
-				render: (p) => (
-					<div className='flex items-center gap-3'>
-						{p.ProductImage?.[0]?.url ? (
-							<Image
-								src={p.ProductImage[0].url}
-								alt={p.title}
-								width={40}
-								height={40}
-								className='h-10 w-10 rounded-lg object-cover'
-							/>
-						) : (
-							<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100'>
-								<ImageIcon size={16} className='text-gray-400' />
-							</div>
-						)}
-						<div>
-							<p className='font-medium text-gray-900'>{p.title}</p>
-							<p className='text-xs text-gray-500'>{p.sku ?? p.slug}</p>
-						</div>
-					</div>
-				),
-			},
-			{
-				key: 'category',
-				header: 'Categoría',
-				render: (p) => <span className='text-sm'>{p.category.name}</span>,
-			},
-			{
-				key: 'price',
-				header: 'Precio',
-				render: (p) => (
-					<div>
-						<span className='font-semibold'>{formatCurrency(p.price)}</span>
-						{p.comparePrice && (
-							<span className='ml-1 text-xs text-gray-400 line-through'>
-								{formatCurrency(p.comparePrice)}
-							</span>
-						)}
-					</div>
-				),
-			},
-			{
-				key: 'stock',
-				header: 'Stock',
-				render: (p) => (
-					<StatusBadge
-						value={p.inStock > 0 ? `${p.inStock} uds` : 'Agotado'}
-						variant={p.inStock > 10 ? 'green' : p.inStock > 0 ? 'yellow' : 'red'}
-					/>
-				),
-			},
-			{
-				key: 'status',
-				header: 'Estado',
-				render: (p) =>
-					canWrite ? (
-						<button type='button' onClick={() => toggleMutation.mutate({ id: p.id, isActive: !p.isActive })}>
-							<StatusBadge value={p.isActive ? 'Activo' : 'Inactivo'} variant={p.isActive ? 'green' : 'gray'} />
-						</button>
+		{
+			key: 'product',
+			header: 'Producto',
+			render: (p) => (
+				<div className='flex items-center gap-3'>
+					{p.ProductImage?.[0]?.url ? (
+						<Image
+							src={p.ProductImage[0].url}
+							alt={p.title}
+							width={40}
+							height={40}
+							className='h-10 w-10 rounded-lg object-cover'
+						/>
 					) : (
-						<StatusBadge value={p.isActive ? 'Activo' : 'Inactivo'} variant={p.isActive ? 'green' : 'gray'} />
-					),
-			},
-			{
-				key: 'actions',
-				header: '',
-				className: 'text-right',
-				render: (p) => (
-					<div className='flex justify-end gap-2'>
-						{canWrite && (
-							<button
-								type='button'
-								onClick={() => setEditProduct(p)}
-								className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
-							>
-								Editar
-							</button>
-						)}
-						{canDelete && (
-							<button
-								type='button'
-								onClick={() => setDeleteTarget(p)}
-								className='rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50'
-							>
-								Eliminar
-							</button>
-						)}
+						<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100'>
+							<ImageIcon size={16} className='text-gray-400' />
+						</div>
+					)}
+					<div>
+						<p className='font-medium text-gray-900'>{p.title}</p>
+						<p className='text-xs text-gray-500'>{p.sku ?? p.slug}</p>
 					</div>
+				</div>
+			),
+		},
+		{
+			key: 'category',
+			header: 'Categoría',
+			render: (p) => <span className='text-sm'>{p.category.name}</span>,
+		},
+		{
+			key: 'price',
+			header: 'Precio',
+			render: (p) => (
+				<div>
+					<span className='font-semibold'>{formatCurrency(p.price)}</span>
+					{p.comparePrice && (
+						<span className='ml-1 text-xs text-gray-400 line-through'>
+							{formatCurrency(p.comparePrice)}
+						</span>
+					)}
+				</div>
+			),
+		},
+		{
+			key: 'stock',
+			header: 'Stock',
+			render: (p) => (
+				<StatusBadge
+					value={p.inStock > 0 ? `${p.inStock} uds` : 'Agotado'}
+					variant={p.inStock > 10 ? 'green' : p.inStock > 0 ? 'yellow' : 'red'}
+				/>
+			),
+		},
+		{
+			key: 'status',
+			header: 'Estado',
+			render: (p) =>
+				canWrite ? (
+					<button type='button' onClick={() => toggleMutation.mutate({ id: p.id, isActive: !p.isActive })}>
+						<StatusBadge
+							value={p.isActive ? 'Activo' : 'Inactivo'}
+							variant={p.isActive ? 'green' : 'gray'}
+						/>
+					</button>
+				) : (
+					<StatusBadge value={p.isActive ? 'Activo' : 'Inactivo'} variant={p.isActive ? 'green' : 'gray'} />
 				),
-			},
+		},
+		{
+			key: 'actions',
+			header: '',
+			className: 'text-right',
+			render: (p) => (
+				<div className='flex justify-end gap-2'>
+					{canWrite && (
+						<button
+							type='button'
+							onClick={() => setEditProduct(p)}
+							className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
+						>
+							Editar
+						</button>
+					)}
+					{canDelete && (
+						<button
+							type='button'
+							onClick={() => setDeleteTarget(p)}
+							className='rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50'
+						>
+							Eliminar
+						</button>
+					)}
+				</div>
+			),
+		},
 	];
 
 	const categoryOptions = (categories ?? []).map((c: AdminCategory) => ({ value: c.id, label: c.name }));
@@ -536,9 +539,7 @@ function ProductFormModal({
 								size='sm'
 								isSelected={selectedSizes.includes(s)}
 								onValueChange={(checked) => {
-									setSelectedSizes((prev) =>
-										checked ? [...prev, s] : prev.filter((x) => x !== s),
-									);
+									setSelectedSizes((prev) => (checked ? [...prev, s] : prev.filter((x) => x !== s)));
 								}}
 							>
 								{s}

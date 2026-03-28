@@ -99,119 +99,121 @@ export default function AuthPage() {
 
 	return (
 		<>
-		<div className='mx-auto flex min-h-screen w-[90%] max-w-480 items-center justify-around gap-10 pt-20'>
-			<div className='flex w-1/3 flex-col gap-6'>
-				<Form className='flex flex-col items-start gap-2 text-black' onSubmit={onLogin}>
-					<h2 className='mb-6 text-3xl font-bold'>Iniciar sesión</h2>
+			<div className='mx-auto flex min-h-screen w-[90%] max-w-480 items-center justify-around gap-10 pt-20'>
+				<div className='flex w-1/3 flex-col gap-6'>
+					<Form className='flex flex-col items-start gap-2 text-black' onSubmit={onLogin}>
+						<h2 className='mb-6 text-3xl font-bold'>Iniciar sesión</h2>
+						<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />
+						<Input
+							isRequired
+							name='password'
+							type='password'
+							label='Contraseña'
+							placeholder='Ingresa tu contraseña'
+							minLength={6}
+						/>
+						{loginError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{loginError}</p>}
+						<Button className='bg-primary w-full text-white' type='submit' isLoading={loginLoading}>
+							Ingresar
+						</Button>
+					</Form>
+
+					{showAuthDemoHints && (
+						<Button
+							type='button'
+							variant='bordered'
+							className='w-full border-gray-300 text-gray-700'
+							onPress={() => setDemoUsersOpen(true)}
+						>
+							Mostrar usuarios de prueba
+						</Button>
+					)}
+				</div>
+
+				<Form className='flex w-1/3 flex-col items-start gap-2 text-black' onSubmit={onRegister}>
+					<h2 className='mb-6 text-3xl font-bold'>Crear una cuenta</h2>
+					<Input isRequired name='name' label='Nombre' placeholder='Tu nombre' minLength={2} />
 					<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />
 					<Input
 						isRequired
 						name='password'
 						type='password'
 						label='Contraseña'
-						placeholder='Ingresa tu contraseña'
+						placeholder='Mínimo 6 caracteres'
 						minLength={6}
 					/>
-					{loginError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{loginError}</p>}
-					<Button className='bg-primary w-full text-white' type='submit' isLoading={loginLoading}>
-						Ingresar
+					{registerError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{registerError}</p>}
+					<p className='mb-2 text-sm text-gray-600'>
+						Tu información se empleará para brindarte una experiencia personalizada, administrar tu cuenta y
+						cumplir con lo establecido en nuestra <span className='font-bold'>Política de Privacidad.</span>
+					</p>
+					<Button className='bg-primary w-full text-white' type='submit' isLoading={registerLoading}>
+						Crear cuenta
 					</Button>
 				</Form>
-
-				{showAuthDemoHints && (
-					<Button
-						type='button'
-						variant='bordered'
-						className='w-full border-gray-300 text-gray-700'
-						onPress={() => setDemoUsersOpen(true)}
-					>
-						Mostrar usuarios de prueba
-					</Button>
-				)}
 			</div>
 
-			<Form className='flex w-1/3 flex-col items-start gap-2 text-black' onSubmit={onRegister}>
-				<h2 className='mb-6 text-3xl font-bold'>Crear una cuenta</h2>
-				<Input isRequired name='name' label='Nombre' placeholder='Tu nombre' minLength={2} />
-				<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />
-				<Input
-					isRequired
-					name='password'
-					type='password'
-					label='Contraseña'
-					placeholder='Mínimo 6 caracteres'
-					minLength={6}
-				/>
-				{registerError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{registerError}</p>}
-				<p className='mb-2 text-sm text-gray-600'>
-					Tu información se empleará para brindarte una experiencia personalizada, administrar tu cuenta y
-					cumplir con lo establecido en nuestra <span className='font-bold'>Política de Privacidad.</span>
-				</p>
-				<Button className='bg-primary w-full text-white' type='submit' isLoading={registerLoading}>
-					Crear cuenta
-				</Button>
-			</Form>
-		</div>
-
-		{showAuthDemoHints && (
-			<Modal isOpen={demoUsersOpen} onOpenChange={setDemoUsersOpen} size='lg' scrollBehavior='inside'>
-				<ModalContent>
-					{(onClose) => (
-						<>
-							<ModalHeader className='flex flex-col gap-1'>
-								<span>Usuarios de prueba (solo desarrollo)</span>
-								<span className='text-sm font-normal text-gray-500'>
-									Contraseña para todos:{' '}
-									<span className='font-mono font-medium text-gray-800'>{DEMO_PASSWORD}</span>
-								</span>
-							</ModalHeader>
-							<ModalBody className='text-sm text-gray-700'>
-								<div className='space-y-2'>
-									{SEED_TEST_USERS.map((u) => (
-										<div
-											key={u.email}
-											className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'
-										>
-											<div className='min-w-0 flex-1'>
-												<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>
-													{u.label}
-												</span>
-												<span className='ml-2 break-all'>{u.email}</span>
-											</div>
-											<Button
-												type='button'
-												size='sm'
-												variant='flat'
-												className='inline-flex shrink-0 min-w-0 items-center gap-1 px-2'
-												aria-label={`Copiar ${u.email}`}
-												onPress={() => void copyEmail(u.email)}
+			{showAuthDemoHints && (
+				<Modal isOpen={demoUsersOpen} onOpenChange={setDemoUsersOpen} size='lg' scrollBehavior='inside'>
+					<ModalContent>
+						{(onClose) => (
+							<>
+								<ModalHeader className='flex flex-col gap-1'>
+									<span>Usuarios de prueba (solo desarrollo)</span>
+									<span className='text-sm font-normal text-gray-500'>
+										Contraseña para todos:{' '}
+										<span className='font-mono font-medium text-gray-800'>{DEMO_PASSWORD}</span>
+									</span>
+								</ModalHeader>
+								<ModalBody className='text-sm text-gray-700'>
+									<div className='space-y-2'>
+										{SEED_TEST_USERS.map((u) => (
+											<div
+												key={u.email}
+												className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'
 											>
-												{copiedEmail === u.email ? (
-													<>
-														<Check className='h-4 w-4 text-green-600' aria-hidden />
-														<span className='ml-1 hidden sm:inline'>Copiado</span>
-													</>
-												) : (
-													<>
-														<Copy className='h-4 w-4' aria-hidden />
-														<span className='ml-1 hidden sm:inline'>Copiar</span>
-													</>
-												)}
-											</Button>
-										</div>
-									))}
-								</div>
-							</ModalBody>
-							<ModalFooter>
-								<Button color='primary' className='bg-primary text-white' onPress={onClose}>
-									Cerrar
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
-		)}
+												<div className='min-w-0 flex-1'>
+													<span
+														className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}
+													>
+														{u.label}
+													</span>
+													<span className='ml-2 break-all'>{u.email}</span>
+												</div>
+												<Button
+													type='button'
+													size='sm'
+													variant='flat'
+													className='inline-flex min-w-0 shrink-0 items-center gap-1 px-2'
+													aria-label={`Copiar ${u.email}`}
+													onPress={() => void copyEmail(u.email)}
+												>
+													{copiedEmail === u.email ? (
+														<>
+															<Check className='h-4 w-4 text-green-600' aria-hidden />
+															<span className='ml-1 hidden sm:inline'>Copiado</span>
+														</>
+													) : (
+														<>
+															<Copy className='h-4 w-4' aria-hidden />
+															<span className='ml-1 hidden sm:inline'>Copiar</span>
+														</>
+													)}
+												</Button>
+											</div>
+										))}
+									</div>
+								</ModalBody>
+								<ModalFooter>
+									<Button color='primary' className='bg-primary text-white' onPress={onClose}>
+										Cerrar
+									</Button>
+								</ModalFooter>
+							</>
+						)}
+					</ModalContent>
+				</Modal>
+			)}
 		</>
 	);
 }

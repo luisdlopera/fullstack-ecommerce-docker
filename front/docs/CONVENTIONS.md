@@ -16,12 +16,12 @@ Stack: **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS
 
 - Código **por dominio funcional** (collection, product-detail, cart, checkout, admin, catalog, product).
 - Cada feature suele incluir:
-  - `components/` — UI y piezas reutilizables dentro del feature (a menudo con carpeta por componente + `index.ts`).
-  - `hooks/` — lógica de estado y efectos ligados al feature.
-  - `lib/` — utilidades puras (filtros, mapeo API → vista, URLs).
-  - `context/` o `contexts/` — cuando el feature expone estado global (ej. carrito).
-  - `services/` — cliente HTTP específico del feature (ej. `admin-api.ts`).
-  - `types/` — tipos solo del admin u otros módulos grandes.
+    - `components/` — UI y piezas reutilizables dentro del feature (a menudo con carpeta por componente + `index.ts`).
+    - `hooks/` — lógica de estado y efectos ligados al feature.
+    - `lib/` — utilidades puras (filtros, mapeo API → vista, URLs).
+    - `context/` o `contexts/` — cuando el feature expone estado global (ej. carrito).
+    - `services/` — cliente HTTP específico del feature (ej. `admin-api.ts`).
+    - `types/` — tipos solo del admin u otros módulos grandes.
 - Exportar lo público del feature desde `features/<name>/index.ts` (barrel). Evita importar archivos internos profundos desde fuera del feature salvo necesidad.
 
 ### `components/`
@@ -54,10 +54,10 @@ Stack: **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS
 
 ### Variables de entorno
 
-| Variable | Uso |
-|----------|-----|
-| `NEXT_PUBLIC_API_URL` | Base del API Nest **en el navegador** (debe incluir el sufijo `/api`). Catálogo público, `shopFetch`, etc. |
-| `INTERNAL_API_URL` | Misma base pero para **Route Handlers** y Server Components en Docker/servidor (ej. `http://back:4000/api`). Prioritaria en servidor si existe. |
+| Variable              | Uso                                                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Base del API Nest **en el navegador** (debe incluir el sufijo `/api`). Catálogo público, `shopFetch`, etc.                                      |
+| `INTERNAL_API_URL`    | Misma base pero para **Route Handlers** y Server Components en Docker/servidor (ej. `http://back:4000/api`). Prioritaria en servidor si existe. |
 
 ### Tres formas de hablar con el backend
 
@@ -106,10 +106,10 @@ Stack: **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS
 
 ## 6. Testing
 
-| Tipo | Herramienta | Ubicación típica |
-|------|-------------|------------------|
-| Unit / integración ligera | Vitest | Junto al código: `*.test.ts`, `*.test.tsx` |
-| E2E | Playwright | `e2e/*.spec.ts`, `npm run test:e2e` |
+| Tipo                      | Herramienta | Ubicación típica                           |
+| ------------------------- | ----------- | ------------------------------------------ |
+| Unit / integración ligera | Vitest      | Junto al código: `*.test.ts`, `*.test.tsx` |
+| E2E                       | Playwright  | `e2e/*.spec.ts`, `npm run test:e2e`        |
 
 - Preferir tests de **lib pura** (filtros, URLs, mapeos) y componentes con **Testing Library**.
 - E2E: `playwright.config.ts` levanta `npm run dev`; no asumir API real salvo que el entorno lo provea.

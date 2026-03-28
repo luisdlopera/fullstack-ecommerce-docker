@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button, Chip, Spinner } from '@heroui/react';
-import { ArrowLeft, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { bffFetch } from '@/lib/bff-fetch';
@@ -17,16 +16,9 @@ type OrderSummary = {
 };
 
 export default function OrdersPage() {
-	const { user, loading: authLoading } = useAuth();
-	const router = useRouter();
+	const { user } = useAuth();
 	const [orders, setOrders] = useState<OrderSummary[]>([]);
 	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		if (!authLoading && !user) {
-			router.replace('/auth');
-		}
-	}, [user, authLoading, router]);
 
 	useEffect(() => {
 		if (!user) return;
@@ -43,25 +35,16 @@ export default function OrdersPage() {
 		fetchOrders();
 	}, [user]);
 
-	if (authLoading || !user) {
+	if (!user) {
 		return (
-			<main className='flex min-h-screen items-center justify-center'>
+			<div className='flex min-h-[50vh] items-center justify-center'>
 				<Spinner size='lg' />
-			</main>
+			</div>
 		);
 	}
 
 	return (
-		<main className='mx-auto mt-28 w-11/12 max-w-4xl pb-16 text-black'>
-			<Button
-				variant='light'
-				onPress={() => router.push('/account')}
-				startContent={<ArrowLeft size={18} />}
-				className='mb-6 text-black'
-			>
-				Mi cuenta
-			</Button>
-
+		<main className='w-full text-black'>
 			<div className='mb-8'>
 				<h1 className='text-3xl font-bold'>Mis Pedidos</h1>
 				{user.role === 'USER' && (

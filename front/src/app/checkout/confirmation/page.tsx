@@ -90,7 +90,9 @@ function ConfirmationContent() {
 				</div>
 			)}
 
-			<p className='text-sm text-gray-500'>Puedes verificar o reintentar el pago desde tu historial de pedidos.</p>
+			<p className='text-sm text-gray-500'>
+				Puedes verificar o reintentar el pago desde tu historial de pedidos.
+			</p>
 
 			<div className='flex gap-4'>
 				<Button as={Link} href='/orders' color='default' size='lg'>

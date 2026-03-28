@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { canAccessCountriesPath, isAdminRole } from '@/features/admin';
 import type { Role } from '@/features/admin';
+import { formatRoleLabel } from '@/lib/format-role-label';
 import {
 	LayoutDashboard,
 	Users,
@@ -19,10 +20,7 @@ import {
 	X,
 	ChevronRight,
 } from 'lucide-react';
-const Toaster = dynamic(
-	() => import('react-hot-toast').then((m) => ({ default: m.Toaster })),
-	{ ssr: false },
-);
+const Toaster = dynamic(() => import('react-hot-toast').then((m) => ({ default: m.Toaster })), { ssr: false });
 
 const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; requireFullAccess?: boolean }[] = [
 	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -122,7 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 					<div className='mb-3 text-xs text-gray-500'>
 						<p className='font-medium text-gray-800'>{user.name}</p>
 						<p>{user.email}</p>
-						<p className='mt-0.5 uppercase'>{user.role.replace('_', ' ')}</p>
+						<p className='mt-0.5'>{formatRoleLabel(user.role)}</p>
 					</div>
 					<button
 						onClick={() => {

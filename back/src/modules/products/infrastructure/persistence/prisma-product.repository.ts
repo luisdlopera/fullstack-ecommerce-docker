@@ -14,9 +14,7 @@ import type {
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { buildProductListWhere } from './build-product-list-where';
 
-function mapImages(
-  imgs: Array<{ id: number; url: string; sortOrder?: number }>,
-): ProductListItem['ProductImage'] {
+function mapImages(imgs: Array<{ id: number; url: string; sortOrder?: number }>): ProductListItem['ProductImage'] {
   return imgs.map((img) => ({
     id: img.id,
     url: img.url,
@@ -121,9 +119,7 @@ export class PrismaProductRepository implements ProductRepositoryPort {
       }),
     ]);
 
-    const categoryNames = [...new Set(categoryRows.map((r) => r.category.name))].sort((a, b) =>
-      a.localeCompare(b),
-    );
+    const categoryNames = [...new Set(categoryRows.map((r) => r.category.name))].sort((a, b) => a.localeCompare(b));
 
     return { inStockCount, outOfStockCount, categoryNames };
   }

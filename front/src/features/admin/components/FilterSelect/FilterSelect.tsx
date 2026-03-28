@@ -45,7 +45,7 @@ export function FilterSelect({
 			size='sm'
 			variant='bordered'
 			radius='lg'
-			className={`min-w-40 max-w-65 ${className ?? ''}`}
+			className={`max-w-65 min-w-40 ${className ?? ''}`}
 			aria-label={ariaLabel ?? placeholder}
 			items={items}
 			selectedKeys={keys}

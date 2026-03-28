@@ -91,6 +91,7 @@ model Product {
 
   ProductImage ProductImage[]
   OrderItem    OrderItem[]
+  favorites    UserFavorite[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -125,6 +126,7 @@ model User {
   address      UserAddress?
   Order        Order[]
   RefreshToken RefreshToken[]
+  favorites    UserFavorite[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -207,6 +209,20 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model UserFavorite {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
 }
 
 model OrderItem {

@@ -4,7 +4,5 @@ import { ProductCard, similarProductToCardModel } from '@/features/product';
 import type { SimilarProductCardProps } from './types';
 
 export function SimilarProductCard({ product }: SimilarProductCardProps) {
-	return (
-		<ProductCard variant='shop' model={similarProductToCardModel(product)} showActions />
-	);
+	return <ProductCard variant='shop' model={similarProductToCardModel(product)} showActions />;
 }

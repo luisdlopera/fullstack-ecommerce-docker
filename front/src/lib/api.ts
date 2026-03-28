@@ -19,7 +19,15 @@ export type FeaturedProduct = {
 	tags?: string[];
 };
 
-import type { Product, ProductImage, ProductListResponse, ProductFacets, ProductFilters, Category, Country } from '@nexstore/api-types';
+import type {
+	Product,
+	ProductImage,
+	ProductListResponse,
+	ProductFacets,
+	ProductFilters,
+	Category,
+	Country,
+} from '@nexstore/api-types';
 
 const getBaseApiUrl = () => {
 	if (typeof window === 'undefined') {

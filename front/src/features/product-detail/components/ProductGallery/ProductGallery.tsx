@@ -112,7 +112,7 @@ export function ProductGallery({
 
 			<div className='order-1 min-w-0 lg:order-2 lg:h-[640px]'>
 				<div
-					className={`relative aspect-[4/5] max-h-[min(75vh,640px)] w-full select-none overflow-hidden rounded-[28px] bg-white shadow-sm lg:aspect-auto lg:h-full lg:max-h-none ${
+					className={`relative aspect-[4/5] max-h-[min(75vh,640px)] w-full overflow-hidden rounded-[28px] bg-white shadow-sm select-none lg:aspect-auto lg:h-full lg:max-h-none ${
 						images.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''
 					}`}
 					onPointerDown={onPointerDownSwipe}

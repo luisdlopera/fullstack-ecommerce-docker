@@ -2,7 +2,12 @@ import { Prisma, Size } from '@prisma/client';
 import type { ProductListFilters } from '../../domain/ports/product-repository.port';
 
 function parseCsv(v?: string): string[] {
-  return v?.split(',').map((s) => s.trim()).filter(Boolean) ?? [];
+  return (
+    v
+      ?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean) ?? []
+  );
 }
 
 function mapUiSizeToPrismaSize(s: string): Size | null {

@@ -43,7 +43,9 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 	const { isFavorite, toggleFavorite } = useFavorites();
 
 	const initialSelection =
-		initialApiProduct && !useMock ? selectionFromApi(initialApiProduct) : { size: null as string | null, color: null as string | null };
+		initialApiProduct && !useMock
+			? selectionFromApi(initialApiProduct)
+			: { size: null as string | null, color: null as string | null };
 
 	const [product, setProduct] = useState<ProductDetail | null>(() =>
 		initialApiProduct ? mapApiProductToProductDetail(initialApiProduct) : null,
@@ -69,7 +71,9 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 		if (initialApiProduct && params.slug === slug) {
 			const p = mapApiProductToProductDetail(initialApiProduct);
 			setProduct(p);
-			setSelectedSize(initialApiProduct.sizes.length === 1 ? initialApiProduct.sizes[0] : pickDefaultSize(p.sizes));
+			setSelectedSize(
+				initialApiProduct.sizes.length === 1 ? initialApiProduct.sizes[0] : pickDefaultSize(p.sizes),
+			);
 			setSelectedColorId(defaultColorId(p.colors));
 			setSelectedImage(0);
 			setQuantity(1);

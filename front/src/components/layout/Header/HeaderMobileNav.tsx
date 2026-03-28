@@ -90,7 +90,7 @@ export function HeaderMobileNav({
 						<Heart className='h-5 w-5 shrink-0' />
 						Favoritos
 						{favoriteCount > 0 && (
-							<span className='ml-auto rounded-md bg-danger px-2 py-0.5 text-xs font-bold text-white'>
+							<span className='bg-danger ml-auto rounded-md px-2 py-0.5 text-xs font-bold text-white'>
 								{favoriteCount > 99 ? '99+' : favoriteCount}
 							</span>
 						)}
@@ -103,7 +103,7 @@ export function HeaderMobileNav({
 						<ShoppingCart className='h-5 w-5 shrink-0' />
 						Carrito
 						{cartCount > 0 && (
-							<span className='ml-auto rounded-md bg-primary px-2 py-0.5 text-xs font-bold text-white'>
+							<span className='bg-primary ml-auto rounded-md px-2 py-0.5 text-xs font-bold text-white'>
 								{cartCount > 99 ? '99+' : cartCount}
 							</span>
 						)}
@@ -164,7 +164,7 @@ export function HeaderMobileNav({
 						<Link
 							href='/auth'
 							onClick={onClose}
-							className='flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-primary hover:bg-primary/10'
+							className='text-primary hover:bg-primary/10 flex items-center gap-3 rounded-xl px-4 py-3 font-semibold'
 						>
 							<User className='h-5 w-5 shrink-0' />
 							Iniciar sesión
@@ -202,4 +202,3 @@ export function HeaderMenuTrigger({
 		</div>
 	);
 }
-

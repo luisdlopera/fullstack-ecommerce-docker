@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Scrollbar, Autoplay } from 'swiper/modules';
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LAYOUT_MAIN_INNER_WIDTH } from '@/components/layout/layout-classes';
 import { Button, Link } from '@heroui/react';
 
 export function Slider() {
@@ -16,6 +17,7 @@ export function Slider() {
 				<Swiper
 					modules={[Navigation, Scrollbar, Autoplay]}
 					loop={true}
+					simulateTouch
 					// autoplay={{ delay: 3000, disableOnInteraction: false }}
 					navigation={{
 						nextEl: '.custom-next',
@@ -31,6 +33,7 @@ export function Slider() {
 							alt='slide'
 							width={1440}
 							height={702}
+							draggable={false}
 							className='h-full w-full object-cover'
 						/>
 						<div className='bg-opacity-50 absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center bg-black p-4 text-white'>
@@ -59,6 +62,7 @@ export function Slider() {
 							alt='slide'
 							width={1440}
 							height={702}
+							draggable={false}
 							className='h-full w-full object-cover'
 						/>
 						<div className='bg-opacity-50 absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center bg-black p-4 text-white'>
@@ -82,6 +86,7 @@ export function Slider() {
 							alt='slide'
 							width={1440}
 							height={702}
+							draggable={false}
 							className='h-full w-full object-cover'
 						/>
 						<div className='bg-opacity-50 absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center bg-black p-4 text-white'>
@@ -99,14 +104,18 @@ export function Slider() {
 				</SwiperSlide>
 				</Swiper>
 
-				<Link className='custom-prev absolute top-1/2 left-10 z-10 -translate-y-1/2 p-3 text-white'>
-					<ChevronLeft size={30} />
-				</Link>
-				<Link className='custom-next absolute top-1/2 right-10 z-10 -translate-y-1/2 p-3 text-white'>
-					<ChevronRight size={30} />
-				</Link>
+				<div
+					className={`pointer-events-none absolute inset-0 z-10 flex h-full items-center justify-between ${LAYOUT_MAIN_INNER_WIDTH}`}
+				>
+					<Link className='custom-prev pointer-events-auto p-3 text-white'>
+						<ChevronLeft size={30} />
+					</Link>
+					<Link className='custom-next pointer-events-auto p-3 text-white'>
+						<ChevronRight size={30} />
+					</Link>
+				</div>
 			</div>
-			<Image className='relative -top-20 w-full' src='/Separator.svg' alt='' width={100} height={100} />
+			<Image className='relative -top-32 w-full' src='/Separator.svg' alt='' width={100} height={100} />
 		</div>
 	);
 }

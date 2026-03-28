@@ -9,6 +9,7 @@ import { useCart } from '@/features/cart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { isAdminRole } from '@/features/admin';
+import { LAYOUT_MAIN_INNER_WIDTH } from '@/components/layout/layout-classes';
 import { HEADER_NAV_ITEMS } from './header-nav';
 import { HeaderMenuTrigger, HeaderMobileNav } from './HeaderMobileNav';
 
@@ -78,7 +79,7 @@ export function Header() {
 		<header
 			className={`fixed top-0 z-50 mx-auto flex h-21 w-full items-center justify-center transition-all duration-300 ease-out will-change-transform ${headerVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'} ${solidAppearance ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
 		>
-			<div className='relative mx-auto flex h-full w-[90%] max-w-480 items-center'>
+			<div className={`relative flex h-full items-center ${LAYOUT_MAIN_INNER_WIDTH}`}>
 				<div className='shrink-0'>
 					<Link
 						href='/'

@@ -6,64 +6,68 @@ updates:
       interval: weekly
       day: monday
       time: "06:00"
-    open-pull-requests-limit: 10
-    groups:
-      root-security:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
-  - package-ecosystem: npm
-    directory: /back
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:10"
-    open-pull-requests-limit: 10
-    groups:
-      back-security:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
-  - package-ecosystem: npm
-    directory: /front
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:20"
-    open-pull-requests-limit: 10
-    groups:
-      front-security:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
-  - package-ecosystem: npm
-    directory: /packages/api-types
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:30"
     open-pull-requests-limit: 5
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      non-breaking:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "@heroui/react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "lucide-react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "eslint"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@eslint/js"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
       day: monday
-      time: "06:40"
+      time: "06:30"
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: docker
     directory: /back
     schedule:
       interval: weekly
       day: monday
-      time: "06:50"
+      time: "06:40"
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: docker
     directory: /front
     schedule:
       interval: weekly
       day: monday
-      time: "07:00"
+      time: "06:50"
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"

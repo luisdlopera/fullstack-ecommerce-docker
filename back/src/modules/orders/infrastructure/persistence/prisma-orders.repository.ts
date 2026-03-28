@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import type { CreateOrderDto, UpdateOrderPaymentDto } from '../http/dto/create-order.dto';
@@ -11,7 +11,7 @@ import type {
 
 @Injectable()
 export class PrismaOrdersRepository implements OrdersRepositoryPort {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findProductsByIds(ids: string[]): Promise<CheckoutProductRow[]> {
     const rows = await this.prisma.product.findMany({
@@ -84,6 +84,10 @@ export class PrismaOrdersRepository implements OrdersRepositoryPort {
   }
 
   findOrdersForUser(userId: string, skip: number, take: number): Promise<OrderWithItemsAndAddress[]> {
+    if (!this.prisma) {
+      throw new Error('PrismaService not injected in PrismaOrdersRepository');
+    }
+
     return this.prisma.order.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },

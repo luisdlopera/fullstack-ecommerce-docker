@@ -52,19 +52,31 @@ cp .env.template .env         # Linux/Mac
 openssl rand -hex 64
 ```
 
-4) Levanta todo por primera vez (DB en Docker + apps locales):
+4) Levanta PostgreSQL:
 
 ```bash
-npm run dev:stack
+npm run dev:db
 ```
 
-5) Abre:
+5) Aplica migraciones, genera cliente Prisma y carga seed:
+
+```bash
+npm run db:sync:seed
+```
+
+6) Levanta frontend + backend locales:
+
+```bash
+npm run dev:apps
+```
+
+7) Abre:
 
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:4000/api/health`
 - Swagger docs: `http://localhost:4000/api/docs`
 
-6) Cargar datos de prueba (usuarios, productos, países, etc.):
+8) Cargar datos de prueba (usuarios, productos, países, etc.) cuando lo necesites:
 
 **Con el backend en local** (desde la raíz del repo, con PostgreSQL accesible y `DATABASE_URL` en `.env`):
 
@@ -98,13 +110,25 @@ npm run dev:apps
 
 Si `3000` o `4000` están ocupados, `dev:apps` elige automáticamente el siguiente puerto libre.
 
-3) Levantar solo PostgreSQL:
+3) Si hubo cambios de schema ya migrados en git (pull/CI):
+
+```bash
+npm run db:sync
+```
+
+4) Si tú cambiaste `schema.prisma` en local:
+
+```bash
+npm run prisma:migrate:dev -w back
+```
+
+5) Levantar solo PostgreSQL:
 
 ```bash
 npm run dev:db
 ```
 
-4) Apagar contenedores Docker:
+6) Apagar contenedores Docker:
 
 ```bash
 npm run dev:down
@@ -118,6 +142,8 @@ npm run dev:down
 | `npm run dev:apps` | Ejecuta `back` + `front` en paralelo usando npm workspaces |
 | `npm run dev:db` | Levanta solo PostgreSQL con Docker Compose |
 | `npm run dev:down` | Apaga contenedores Docker del proyecto |
+| `npm run db:sync` | Ejecuta `prisma generate` + `prisma migrate deploy` en `back/` |
+| `npm run db:sync:seed` | Ejecuta `db:sync` y luego el seed del backend |
 | `npm run dev:front` | Ejecuta solo frontend |
 | `npm run dev:back` | Ejecuta solo backend |
 | `npm run format` | Formatea `front/` y `back/` con Prettier |
@@ -176,12 +202,12 @@ npm run dev:apps    # solo apps (DB ya levantada)
 
 ## Prisma (backend)
 
-Comandos útiles:
+Comandos recomendados desde la raíz:
 
 ```bash
-npm run prisma:generate -w back
-npm run prisma:migrate:dev -w back
-npm run prisma:seed -w back
+npm run db:sync                      # generate + migrate deploy
+npm run db:sync:seed                 # db:sync + seed
+npm run prisma:migrate:dev -w back   # cuando tú cambias schema.prisma
 ```
 
 El seed también se puede ejecutar con `npx prisma db seed` dentro de `back/` (usa `prisma.seed` del `package.json` del backend).
@@ -208,3 +234,16 @@ npm run test -w back          # ejecutar tests
 npm run test:watch -w back    # modo watch
 npm run test:cov -w back      # con cobertura
 ```
+
+## Gobernanza del repositorio
+
+- Licencia: ver `LICENSE`.
+- Seguridad: política y reporte en `SECURITY.md`.
+- Contribución: flujo de ramas, commits y PR checklist en `CONTRIBUTING.md`.
+
+## Calidad y CI
+
+- CI principal en `.github/workflows/ci.yml`.
+- Escaneo de secretos en `.github/workflows/secret-scan.yml`.
+- Auditoría de dependencias en `.github/workflows/security-audit.yml`.
+- Actualizaciones automáticas de dependencias en `.github/dependabot.yml`.

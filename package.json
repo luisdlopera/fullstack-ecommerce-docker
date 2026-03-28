@@ -2,6 +2,10 @@
   "name": "nexstore",
   "version": "1.0.0",
   "private": true,
+  "overrides": {
+    "path-to-regexp": "8.3.0",
+    "handlebars": "4.7.9"
+  },
   "workspaces": [
     "front",
     "back",
@@ -16,6 +20,8 @@
     "dev:stack": "npm run dev:db && npm run dev:apps",
     "dev:down": "docker compose down",
     "build": "npm run build -w front && npm run build -w back",
+    "db:sync": "npm run prisma:generate -w back && npm run prisma:migrate:deploy -w back",
+    "db:sync:seed": "npm run db:sync && npm run prisma:seed -w back",
     "db:seed": "npm run prisma:seed -w back",
     "lint": "npm run lint -w front && npm run lint -w back",
     "format": "npm run format -w front && npm run format -w back"

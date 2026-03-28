@@ -2,13 +2,14 @@ import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import bcryptjs from 'bcryptjs';
 import { Gender, OrderStatus, PrismaClient, Role, Size } from '@prisma/client';
+import { createPrismaClientOptions } from '../src/shared/infrastructure/prisma/prisma-client-options';
 import { seedCatalog } from './seed-catalog';
 
 // Monorepo: allow `npm run prisma:seed -w back` with `.env` at repo root.
 config({ path: resolve(process.cwd(), '..', '.env') });
 config({ path: resolve(process.cwd(), '.env') });
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(createPrismaClientOptions());
 
 async function main() {
   console.log('Seeding database...');

@@ -38,12 +38,12 @@ export function HeaderMobileNav({
 		<>
 			<button
 				type='button'
-				className='fixed inset-0 z-[60] bg-black/40 lg:hidden'
+				className='fixed inset-0 z-60 bg-black/40 lg:hidden'
 				aria-label='Cerrar menú'
 				onClick={onClose}
 			/>
 			<div
-				className='fixed inset-y-0 right-0 z-[70] flex w-[min(100%,320px)] flex-col border-l border-neutral-200 bg-white shadow-xl lg:hidden'
+				className='fixed inset-y-0 right-0 z-70 flex w-full max-w-80 flex-col border-l border-neutral-200 bg-white shadow-xl lg:hidden'
 				role='dialog'
 				aria-modal='true'
 				aria-labelledby='mobile-nav-title'
@@ -178,17 +178,15 @@ export function HeaderMobileNav({
 
 export function HeaderMenuTrigger({
 	onOpen,
-	scrolled,
-	isHome,
+	solidAppearance,
 }: {
 	onOpen: () => void;
-	scrolled: boolean;
-	isHome: boolean;
+	/** True when the header bar is solid (inner pages or home past hero). */
+	solidAppearance: boolean;
 }) {
-	const tone =
-		scrolled || !isHome
-			? 'text-neutral-900'
-			: 'text-white data-[hover=true]:bg-white/10 data-[pressed=true]:bg-white/15';
+	const tone = solidAppearance
+		? 'text-neutral-900'
+		: 'text-white data-[hover=true]:bg-white/10 data-[pressed=true]:bg-white/15';
 
 	return (
 		<div className='lg:hidden'>

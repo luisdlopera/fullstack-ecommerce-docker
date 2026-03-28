@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Checkbox } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -192,6 +193,7 @@ export default function AdminCountriesPage() {
 			/>
 
 			<CountryFormModal
+				key={createOpen ? 'country-create' : 'country-create-idle'}
 				open={createOpen}
 				title='Crear país'
 				loading={createMutation.isPending}
@@ -201,6 +203,7 @@ export default function AdminCountriesPage() {
 
 			{editCountry && (
 				<CountryFormModal
+					key={editCountry.id}
 					open
 					title='Editar país'
 					initialData={editCountry}
@@ -238,6 +241,10 @@ function CountryFormModal({
 	onClose: () => void;
 	onSubmit: (data: Record<string, unknown>) => void;
 }) {
+	const [isActive, setIsActive] = useState(initialData?.isActive ?? true);
+	const [allowsShipping, setAllowsShipping] = useState(initialData?.allowsShipping ?? true);
+	const [allowsPurchase, setAllowsPurchase] = useState(initialData?.allowsPurchase ?? true);
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		const form = e.target as HTMLFormElement;
@@ -247,9 +254,9 @@ function CountryFormModal({
 			name: fd.get('name'),
 			isoCode: fd.get('isoCode') || undefined,
 			currency: fd.get('currency') || 'USD',
-			isActive: fd.get('isActive') === 'on',
-			allowsShipping: fd.get('allowsShipping') === 'on',
-			allowsPurchase: fd.get('allowsPurchase') === 'on',
+			isActive,
+			allowsShipping,
+			allowsPurchase,
 			shippingBaseCost: Number(fd.get('shippingBaseCost') || 0),
 			etaDays: Number(fd.get('etaDays') || 7),
 			priority: Number(fd.get('priority') || 0),
@@ -331,34 +338,16 @@ function CountryFormModal({
 						/>
 					</div>
 				</div>
-				<div className='flex flex-wrap gap-6'>
-					<label className='flex items-center gap-2'>
-						<input
-							type='checkbox'
-							name='isActive'
-							defaultChecked={initialData?.isActive ?? true}
-							className='rounded border-gray-300'
-						/>
+				<div className='flex flex-wrap items-center gap-6'>
+					<Checkbox size='sm' isSelected={isActive} onValueChange={setIsActive}>
 						<span className='text-sm font-medium text-gray-700'>Activo</span>
-					</label>
-					<label className='flex items-center gap-2'>
-						<input
-							type='checkbox'
-							name='allowsShipping'
-							defaultChecked={initialData?.allowsShipping ?? true}
-							className='rounded border-gray-300'
-						/>
+					</Checkbox>
+					<Checkbox size='sm' isSelected={allowsShipping} onValueChange={setAllowsShipping}>
 						<span className='text-sm font-medium text-gray-700'>Permite envío</span>
-					</label>
-					<label className='flex items-center gap-2'>
-						<input
-							type='checkbox'
-							name='allowsPurchase'
-							defaultChecked={initialData?.allowsPurchase ?? true}
-							className='rounded border-gray-300'
-						/>
+					</Checkbox>
+					<Checkbox size='sm' isSelected={allowsPurchase} onValueChange={setAllowsPurchase}>
 						<span className='text-sm font-medium text-gray-700'>Permite compra</span>
-					</label>
+					</Checkbox>
 				</div>
 			</div>
 		</FormModal>

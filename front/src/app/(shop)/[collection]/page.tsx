@@ -6,9 +6,9 @@ import { CatalogListingSkeleton, isCollectionSlug, ProductListingPage } from '@/
 type PageProps = { params: Promise<{ collection: string }> };
 
 const TITLES: Record<string, string> = {
-	men: 'Men Collection | NEXSTORE',
-	women: 'Woman Collection | NEXSTORE',
-	kids: 'Kids Collection | NEXSTORE',
+	men: 'Hombre | NEXSTORE',
+	women: 'Mujer | NEXSTORE',
+	kids: 'Niños | NEXSTORE',
 	new: 'Nueva colección | NEXSTORE',
 };
 
@@ -24,7 +24,7 @@ export default async function CollectionPage({ params }: PageProps) {
 	return (
 		<Suspense
 			fallback={
-				<div className='mx-auto w-full max-w-7xl px-4 pt-28 pb-16 md:px-6 lg:px-8'>
+				<div className='mx-auto w-[90%] max-w-480 pt-28 pb-16'>
 					<CatalogListingSkeleton />
 				</div>
 			}

@@ -1,7 +1,8 @@
 'use client';
 
-import { Button, Form, Input } from '@heroui/react';
-import { useEffect, useState } from 'react';
+import { Button, Form, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
+import { Check, Copy } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -28,6 +29,26 @@ export default function AuthPage() {
 
 	const [registerError, setRegisterError] = useState('');
 	const [registerLoading, setRegisterLoading] = useState(false);
+	const [demoUsersOpen, setDemoUsersOpen] = useState(false);
+	const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+	const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const copyEmail = async (email: string) => {
+		try {
+			await navigator.clipboard.writeText(email);
+			setCopiedEmail(email);
+			if (copyResetRef.current) clearTimeout(copyResetRef.current);
+			copyResetRef.current = setTimeout(() => setCopiedEmail(null), 2000);
+		} catch {
+			/* ignore */
+		}
+	};
+
+	useEffect(() => {
+		return () => {
+			if (copyResetRef.current) clearTimeout(copyResetRef.current);
+		};
+	}, []);
 
 	useEffect(() => {
 		if (user) {
@@ -77,7 +98,8 @@ export default function AuthPage() {
 	};
 
 	return (
-		<div className='mx-auto flex min-h-screen w-11/12 items-center justify-around gap-10 pt-20'>
+		<>
+		<div className='mx-auto flex min-h-screen w-[90%] max-w-480 items-center justify-around gap-10 pt-20'>
 			<div className='flex w-1/3 flex-col gap-6'>
 				<Form className='flex flex-col items-start gap-2 text-black' onSubmit={onLogin}>
 					<h2 className='mb-6 text-3xl font-bold'>Iniciar sesión</h2>
@@ -97,27 +119,14 @@ export default function AuthPage() {
 				</Form>
 
 				{showAuthDemoHints && (
-					<div className='rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700'>
-						<p className='mb-1 font-bold text-gray-900'>Usuarios de prueba (solo desarrollo)</p>
-						<p className='mb-3 text-xs text-gray-500'>
-							Contraseña para todos: <span className='font-mono'>{DEMO_PASSWORD}</span>
-						</p>
-						<div className='max-h-64 space-y-2 overflow-y-auto pr-1'>
-							{SEED_TEST_USERS.map((u) => (
-								<div
-									key={u.email}
-									className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'
-								>
-									<div className='min-w-0 flex-1'>
-										<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>
-											{u.label}
-										</span>
-										<span className='ml-2 break-all'>{u.email}</span>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
+					<Button
+						type='button'
+						variant='bordered'
+						className='w-full border-gray-300 text-gray-700'
+						onPress={() => setDemoUsersOpen(true)}
+					>
+						Mostrar usuarios de prueba
+					</Button>
 				)}
 			</div>
 
@@ -143,5 +152,66 @@ export default function AuthPage() {
 				</Button>
 			</Form>
 		</div>
+
+		{showAuthDemoHints && (
+			<Modal isOpen={demoUsersOpen} onOpenChange={setDemoUsersOpen} size='lg' scrollBehavior='inside'>
+				<ModalContent>
+					{(onClose) => (
+						<>
+							<ModalHeader className='flex flex-col gap-1'>
+								<span>Usuarios de prueba (solo desarrollo)</span>
+								<span className='text-sm font-normal text-gray-500'>
+									Contraseña para todos:{' '}
+									<span className='font-mono font-medium text-gray-800'>{DEMO_PASSWORD}</span>
+								</span>
+							</ModalHeader>
+							<ModalBody className='text-sm text-gray-700'>
+								<div className='space-y-2'>
+									{SEED_TEST_USERS.map((u) => (
+										<div
+											key={u.email}
+											className='flex items-center justify-between gap-2 border-b border-gray-100 py-2 last:border-0'
+										>
+											<div className='min-w-0 flex-1'>
+												<span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}>
+													{u.label}
+												</span>
+												<span className='ml-2 break-all'>{u.email}</span>
+											</div>
+											<Button
+												type='button'
+												size='sm'
+												variant='flat'
+												className='inline-flex shrink-0 min-w-0 items-center gap-1 px-2'
+												aria-label={`Copiar ${u.email}`}
+												onPress={() => void copyEmail(u.email)}
+											>
+												{copiedEmail === u.email ? (
+													<>
+														<Check className='h-4 w-4 text-green-600' aria-hidden />
+														<span className='ml-1 hidden sm:inline'>Copiado</span>
+													</>
+												) : (
+													<>
+														<Copy className='h-4 w-4' aria-hidden />
+														<span className='ml-1 hidden sm:inline'>Copiar</span>
+													</>
+												)}
+											</Button>
+										</div>
+									))}
+								</div>
+							</ModalBody>
+							<ModalFooter>
+								<Button color='primary' className='bg-primary text-white' onPress={onClose}>
+									Cerrar
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+		)}
+		</>
 	);
 }

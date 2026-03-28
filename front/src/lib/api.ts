@@ -149,7 +149,9 @@ export async function fetchProductsClient(filters: ProductFilters = {}): Promise
 export async function fetchProductFacetsClient(filters: ProductFilters = {}): Promise<ProductFacets> {
 	const baseUrl = getClientApiUrl();
 	const params = new URLSearchParams();
-	const { page: _p, limit: _l, ...rest } = filters;
+	const rest = Object.fromEntries(
+		Object.entries(filters).filter(([key]) => key !== 'page' && key !== 'limit'),
+	) as ProductFilters;
 	appendProductFiltersToSearchParams(params, rest);
 	const qs = params.toString();
 	const response = await fetch(`${baseUrl}/products/facets${qs ? `?${qs}` : ''}`, { cache: 'no-store' });

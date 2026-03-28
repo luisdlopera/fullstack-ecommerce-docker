@@ -21,6 +21,18 @@ export function applyAuthCookies(res: NextResponse, tokens: { accessToken: strin
 }
 
 export function clearAuthCookies(res: NextResponse) {
-	res.cookies.set(NEXSTORE_ACCESS_COOKIE, '', { path: '/', maxAge: 0 });
-	res.cookies.set(NEXSTORE_REFRESH_COOKIE, '', { path: '/', maxAge: 0 });
+	res.cookies.set(NEXSTORE_ACCESS_COOKIE, '', {
+		httpOnly: true,
+		secure,
+		sameSite: 'lax',
+		path: '/',
+		maxAge: 0,
+	});
+	res.cookies.set(NEXSTORE_REFRESH_COOKIE, '', {
+		httpOnly: true,
+		secure,
+		sameSite: 'lax',
+		path: '/',
+		maxAge: 0,
+	});
 }

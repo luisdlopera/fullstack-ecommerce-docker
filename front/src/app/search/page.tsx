@@ -38,7 +38,7 @@ function SearchContent() {
 	};
 
 	return (
-		<main className='mx-auto mt-28 w-11/12 max-w-7xl pb-16 text-black'>
+		<main className='mx-auto mt-28 w-[90%] max-w-480 pb-16 text-black'>
 			<h1 className='mb-6 text-3xl font-bold'>Buscar productos</h1>
 			<form onSubmit={onSubmit} className='mb-8 flex gap-3'>
 				<Input

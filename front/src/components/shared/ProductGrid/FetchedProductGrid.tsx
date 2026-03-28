@@ -66,7 +66,7 @@ export function FetchedProductGrid({
 		void run();
 	}, [page, gender, tag, query]);
 
-	const wrapperClass = embedded ? 'w-full text-black' : 'mx-auto mt-28 w-11/12 max-w-7xl pb-16 text-black';
+	const wrapperClass = embedded ? 'w-full text-black' : 'mx-auto mt-28 w-[90%] max-w-480 pb-16 text-black';
 
 	const Root = embedded ? 'section' : 'main';
 	const Heading = embedded ? 'h2' : 'h1';

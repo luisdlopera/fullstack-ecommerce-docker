@@ -84,9 +84,9 @@ export function ProductListingPage({ collection }: ProductListingPageProps) {
 	);
 
 	return (
-		<div className='mx-auto w-full max-w-7xl px-4 pt-28 pb-16 md:px-6 lg:px-8'>
+		<div className='mx-auto w-[90%] max-w-480 pt-28 pb-16'>
 			<div className='flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10'>
-				<div className='hidden w-full max-w-[280px] shrink-0 lg:block'>{sidebar}</div>
+				<div className='hidden w-full max-w-70 shrink-0 lg:block'>{sidebar}</div>
 
 				<div className='min-w-0 flex-1'>
 					<CollectionHeader collection={collection} />

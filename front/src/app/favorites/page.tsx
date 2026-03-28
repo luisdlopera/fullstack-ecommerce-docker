@@ -10,7 +10,7 @@ export default function FavoritesPage() {
 	const { items } = useFavorites();
 
 	return (
-		<main className='mx-auto mt-28 w-11/12 max-w-7xl pb-16 text-black'>
+		<main className='mx-auto mt-28 w-[90%] max-w-480 pb-16 text-black'>
 			<h1 className='mb-8 text-3xl font-bold'>Mis Favoritos</h1>
 
 			{items.length === 0 && (

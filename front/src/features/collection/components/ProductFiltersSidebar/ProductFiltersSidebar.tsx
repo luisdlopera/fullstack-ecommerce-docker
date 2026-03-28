@@ -1,5 +1,6 @@
 'use client';
 
+import { Checkbox } from '@heroui/react';
 import {
 	CLASSIFICATION_OPTIONS,
 	COLLECTION_FILTER_OPTIONS,
@@ -17,6 +18,35 @@ function toggle(arr: string[], v: string): string[] {
 	return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 }
 
+function setArrayMembership(current: string[], key: string, selected: boolean): string[] {
+	if (selected) {
+		return current.includes(key) ? current : [...current, key];
+	}
+	return current.filter((x) => x !== key);
+}
+
+const filterCheckboxClassNames = {
+	base: 'max-w-full',
+	label: 'text-sm text-neutral-800',
+} as const;
+
+function draftHasSelections(d: SidebarDraftFilters): boolean {
+	return (
+		d.sizes.length > 0 ||
+		d.availability !== 'all' ||
+		d.categories.length > 0 ||
+		d.colors.length > 0 ||
+		d.priceMin != null ||
+		d.priceMax != null ||
+		d.collections.length > 0 ||
+		d.tags.length > 0 ||
+		d.classifications.length > 0
+	);
+}
+
+const filterActionBtn =
+	'min-h-12 w-full rounded-xl py-3 text-sm font-semibold transition sm:flex-1 sm:min-h-0 sm:min-w-0';
+
 export function ProductFiltersSidebar({
 	draft,
 	onDraftChange,
@@ -27,6 +57,7 @@ export function ProductFiltersSidebar({
 	onClear,
 }: ProductFiltersSidebarProps) {
 	const set = (patch: Partial<SidebarDraftFilters>) => onDraftChange({ ...draft, ...patch });
+	const showClear = draftHasSelections(draft);
 
 	return (
 		<aside className='flex h-full flex-col gap-6'>
@@ -48,15 +79,17 @@ export function ProductFiltersSidebar({
 				<FilterSection title='Categoría'>
 					<div className='flex max-h-40 flex-col gap-2 overflow-y-auto'>
 						{categoryNames.map((name) => (
-							<label key={name} className='flex cursor-pointer items-center gap-2 text-sm'>
-								<input
-									type='checkbox'
-									checked={draft.categories.includes(name)}
-									onChange={() => set({ categories: toggle(draft.categories, name) })}
-									className='h-4 w-4 rounded border-neutral-300 accent-[#343DCB]'
-								/>
+							<Checkbox
+								key={name}
+								size='sm'
+								classNames={filterCheckboxClassNames}
+								isSelected={draft.categories.includes(name)}
+								onValueChange={(selected) =>
+									set({ categories: setArrayMembership(draft.categories, name, selected) })
+								}
+							>
 								{name}
-							</label>
+							</Checkbox>
 						))}
 					</div>
 				</FilterSection>
@@ -64,15 +97,17 @@ export function ProductFiltersSidebar({
 				<FilterSection title='Colores'>
 					<div className='flex flex-col gap-2'>
 						{COLOR_FILTER_OPTIONS.map(({ slug, label }) => (
-							<label key={slug} className='flex cursor-pointer items-center gap-2 text-sm'>
-								<input
-									type='checkbox'
-									checked={draft.colors.includes(slug)}
-									onChange={() => set({ colors: toggle(draft.colors, slug) })}
-									className='h-4 w-4 rounded border-neutral-300 accent-[#343DCB]'
-								/>
+							<Checkbox
+								key={slug}
+								size='sm'
+								classNames={filterCheckboxClassNames}
+								isSelected={draft.colors.includes(slug)}
+								onValueChange={(selected) =>
+									set({ colors: setArrayMembership(draft.colors, slug, selected) })
+								}
+							>
 								{label}
-							</label>
+							</Checkbox>
 						))}
 					</div>
 				</FilterSection>
@@ -121,15 +156,17 @@ export function ProductFiltersSidebar({
 				<FilterSection title='Colecciones'>
 					<div className='flex flex-col gap-2'>
 						{COLLECTION_FILTER_OPTIONS.map(({ slug, label }) => (
-							<label key={slug} className='flex cursor-pointer items-center gap-2 text-sm'>
-								<input
-									type='checkbox'
-									checked={draft.collections.includes(slug)}
-									onChange={() => set({ collections: toggle(draft.collections, slug) })}
-									className='h-4 w-4 rounded border-neutral-300 accent-[#343DCB]'
-								/>
+							<Checkbox
+								key={slug}
+								size='sm'
+								classNames={filterCheckboxClassNames}
+								isSelected={draft.collections.includes(slug)}
+								onValueChange={(selected) =>
+									set({ collections: setArrayMembership(draft.collections, slug, selected) })
+								}
+							>
 								{label}
-							</label>
+							</Checkbox>
 						))}
 					</div>
 				</FilterSection>
@@ -137,15 +174,17 @@ export function ProductFiltersSidebar({
 				<FilterSection title='Etiquetas'>
 					<div className='flex flex-col gap-2'>
 						{TAG_FILTER_OPTIONS.map(({ slug, label }) => (
-							<label key={slug} className='flex cursor-pointer items-center gap-2 text-sm'>
-								<input
-									type='checkbox'
-									checked={draft.tags.includes(slug)}
-									onChange={() => set({ tags: toggle(draft.tags, slug) })}
-									className='h-4 w-4 rounded border-neutral-300 accent-[#343DCB]'
-								/>
+							<Checkbox
+								key={slug}
+								size='sm'
+								classNames={filterCheckboxClassNames}
+								isSelected={draft.tags.includes(slug)}
+								onValueChange={(selected) =>
+									set({ tags: setArrayMembership(draft.tags, slug, selected) })
+								}
+							>
 								{label}
-							</label>
+							</Checkbox>
 						))}
 					</div>
 				</FilterSection>
@@ -153,32 +192,38 @@ export function ProductFiltersSidebar({
 				<FilterSection title='Clasificación'>
 					<div className='flex flex-col gap-2'>
 						{CLASSIFICATION_OPTIONS.map(({ slug, label }) => (
-							<label key={slug} className='flex cursor-pointer items-center gap-2 text-sm'>
-								<input
-									type='checkbox'
-									checked={draft.classifications.includes(slug)}
-									onChange={() => set({ classifications: toggle(draft.classifications, slug) })}
-									className='h-4 w-4 rounded border-neutral-300 accent-[#343DCB]'
-								/>
+							<Checkbox
+								key={slug}
+								size='sm'
+								classNames={filterCheckboxClassNames}
+								isSelected={draft.classifications.includes(slug)}
+								onValueChange={(selected) =>
+									set({
+										classifications: setArrayMembership(draft.classifications, slug, selected),
+									})
+								}
+							>
 								{label}
-							</label>
+							</Checkbox>
 						))}
 					</div>
 				</FilterSection>
 			</div>
 
 			<div className='mt-auto flex flex-col gap-2 sm:flex-row sm:items-stretch'>
-				<button
-					type='button'
-					onClick={onClear}
-					className='w-full rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50'
-				>
-					Limpiar filtros
-				</button>
+				{showClear && (
+					<button
+						type='button'
+						onClick={onClear}
+						className={`${filterActionBtn} border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50`}
+					>
+						Limpiar filtros
+					</button>
+				)}
 				<button
 					type='button'
 					onClick={onApply}
-					className='w-full rounded-xl bg-[#343DCB] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2f37b7] sm:flex-1'
+					className={`${filterActionBtn} bg-[#343DCB] text-white shadow-sm hover:bg-[#2f37b7]`}
 				>
 					Aplicar filtros
 				</button>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Radio, RadioGroup } from '@heroui/react';
 import type { AvailabilityFilterMode } from '../../types';
 import type { AvailabilityFilterProps } from './types';
 
@@ -15,29 +16,33 @@ export function AvailabilityFilter({ mode, onChange, inStockCount, outOfStockCou
 	return (
 		<div>
 			<p className='mb-2 text-xs font-semibold tracking-wider text-neutral-500 uppercase'>Disponibilidad</p>
-			<div className='flex flex-col rounded-xl border border-neutral-100 bg-neutral-50/50 p-1'>
+			<RadioGroup
+				value={mode}
+				onValueChange={(v) => onChange(v as AvailabilityFilterMode)}
+				classNames={{ wrapper: 'gap-0' }}
+				className='flex flex-col rounded-xl border border-neutral-100 bg-neutral-50/50 p-1'
+			>
 				{rows.map(({ label, value, countOf }) => {
 					const count = countOf === 'all' ? total : countOf === 'in' ? inStockCount : outOfStockCount;
 					return (
-						<label
+						<Radio
 							key={value}
-							className='flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-neutral-50'
+							value={value}
+							size='sm'
+							classNames={{
+								base: 'm-0 max-w-full border-0 bg-transparent p-0 shadow-none hover:bg-neutral-50',
+								wrapper: 'mr-2',
+								label: 'w-full text-sm text-neutral-800',
+							}}
 						>
-							<span className='flex items-center gap-2'>
-								<input
-									type='radio'
-									name='availability'
-									checked={mode === value}
-									onChange={() => onChange(value)}
-									className='h-4 w-4 accent-[#343DCB]'
-								/>
-								{label}
+							<span className='flex w-full min-w-0 items-center justify-between gap-3'>
+								<span>{label}</span>
+								<span className='shrink-0 text-neutral-400 tabular-nums'>({count})</span>
 							</span>
-							<span className='text-neutral-400 tabular-nums'>({count})</span>
-						</label>
+						</Radio>
 					);
 				})}
-			</div>
+			</RadioGroup>
 		</div>
 	);
 }

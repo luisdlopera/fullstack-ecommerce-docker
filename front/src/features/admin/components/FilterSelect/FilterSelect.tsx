@@ -35,14 +35,19 @@ export function FilterSelect({
 	'aria-label': ariaLabel,
 }: FilterSelectProps) {
 	const keys = new Set<string>([toKey(value, allowEmpty)]);
+	const items = [
+		...(allowEmpty ? [{ key: EMPTY_KEY, label: placeholder }] : []),
+		...options.map((opt) => ({ key: toKey(opt.value, false), label: opt.label })),
+	];
 
 	return (
 		<Select
 			size='sm'
 			variant='bordered'
 			radius='lg'
-			className={`min-w-[160px] max-w-[260px] ${className ?? ''}`}
+			className={`min-w-40 max-w-65 ${className ?? ''}`}
 			aria-label={ariaLabel ?? placeholder}
+			items={items}
 			selectedKeys={keys}
 			onSelectionChange={(sel) => {
 				const k = Array.from(sel as Set<string>)[0];
@@ -50,16 +55,7 @@ export function FilterSelect({
 				onChange(fromKey(String(k), allowEmpty));
 			}}
 		>
-			{allowEmpty ? (
-				<SelectItem key={EMPTY_KEY} textValue={placeholder}>
-					{placeholder}
-				</SelectItem>
-			) : null}
-			{options.map((opt) => (
-				<SelectItem key={toKey(opt.value, false)} textValue={opt.label}>
-					{opt.label}
-				</SelectItem>
-			))}
+			{(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
 		</Select>
 	);
 }

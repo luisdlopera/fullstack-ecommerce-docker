@@ -9,19 +9,19 @@ const COPY: Record<
 	}
 > = {
 	men: {
-		title: 'Men Collection',
+		title: 'Colección hombre',
 		description: 'Piezas esenciales con silueta contemporánea y acabados premium para el día a día.',
 	},
 	women: {
-		title: 'Woman Collection',
+		title: 'Colección mujer',
 		description: 'Curaduría femenina con textura, color y versatilidad para cada momento.',
 	},
 	kids: {
-		title: 'Kids Collection',
+		title: 'Colección niños',
 		description: 'Comodidad y resistencia para que jueguen, exploren y brillen sin límites.',
 	},
 	new: {
-		title: 'Nueva Colección: Estilo que Inspira.',
+		title: 'Nueva colección: estilo que inspira',
 		description: 'Lanzamientos recientes seleccionados: tendencia, calidad y actitud NEXSTORE.',
 	},
 };

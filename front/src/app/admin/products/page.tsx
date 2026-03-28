@@ -2,8 +2,9 @@
 
 import { Checkbox, Select, SelectItem } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Plus, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -127,7 +128,13 @@ export default function AdminProductsPage() {
 				render: (p) => (
 					<div className='flex items-center gap-3'>
 						{p.ProductImage?.[0]?.url ? (
-							<img src={p.ProductImage[0].url} alt='' className='h-10 w-10 rounded-lg object-cover' />
+							<Image
+								src={p.ProductImage[0].url}
+								alt={p.title}
+								width={40}
+								height={40}
+								className='h-10 w-10 rounded-lg object-cover'
+							/>
 						) : (
 							<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100'>
 								<ImageIcon size={16} className='text-gray-400' />
@@ -290,6 +297,7 @@ export default function AdminProductsPage() {
 
 			{canWrite && (
 				<ProductFormModal
+					key={createOpen ? 'product-create-open' : 'product-create-closed'}
 					open={createOpen}
 					title='Crear producto'
 					categories={categories ?? []}
@@ -301,6 +309,7 @@ export default function AdminProductsPage() {
 
 			{canWrite && editProduct && (
 				<ProductFormModal
+					key={editProduct.id}
 					open
 					title='Editar producto'
 					initialData={editProduct}
@@ -348,15 +357,10 @@ function ProductFormModal({
 	const [selectedSizes, setSelectedSizes] = useState<string[]>(initialData?.sizes ?? ['S', 'M', 'L']);
 	const [featured, setFeatured] = useState(initialData?.featured ?? false);
 	const [isActive, setIsActive] = useState(initialData?.isActive ?? true);
-
-	useEffect(() => {
-		if (!open) return;
-		setGender(initialData?.gender ?? 'unisex');
-		setCategoryId(initialData?.categoryId ?? '');
-		setSelectedSizes(initialData?.sizes?.length ? initialData.sizes : ['S', 'M', 'L']);
-		setFeatured(initialData?.featured ?? false);
-		setIsActive(initialData?.isActive ?? true);
-	}, [open, initialData]);
+	const categoryItems = [
+		{ id: CATEGORY_PLACEHOLDER_KEY, name: 'Seleccionar' },
+		...categories.map((c) => ({ id: c.id, name: c.name })),
+	];
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -503,20 +507,14 @@ function ProductFormModal({
 						size='sm'
 						variant='bordered'
 						placeholder='Seleccionar'
+						items={categoryItems}
 						selectedKeys={new Set([categoryKey])}
 						onSelectionChange={(keys) => {
 							const k = Array.from(keys as Set<string>)[0];
 							setCategoryId(k === CATEGORY_PLACEHOLDER_KEY || !k ? '' : String(k));
 						}}
 					>
-						<SelectItem key={CATEGORY_PLACEHOLDER_KEY} textValue='Seleccionar'>
-							Seleccionar
-						</SelectItem>
-						{categories.map((c) => (
-							<SelectItem key={c.id} textValue={c.name}>
-								{c.name}
-							</SelectItem>
-						))}
+						{(item) => <SelectItem key={item.id}>{item.name}</SelectItem>}
 					</Select>
 				</div>
 				<div className='sm:col-span-2'>

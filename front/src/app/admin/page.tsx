@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { DollarSign, ShoppingCart, Users, Package, Clock, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
+import Image from 'next/image';
 import {
 	AdminPageHeader,
 	dashboardApi,
@@ -181,9 +182,11 @@ function TopProductsSection({ products }: { products: TopProduct[] }) {
 								{i + 1}
 							</span>
 							{item.product?.ProductImage?.[0]?.url && (
-								<img
+								<Image
 									src={item.product.ProductImage[0].url}
-									alt=''
+									alt={item.product?.title ?? 'Producto'}
+									width={40}
+									height={40}
 									className='h-10 w-10 rounded-lg object-cover'
 								/>
 							)}

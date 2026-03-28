@@ -28,12 +28,21 @@ export function Header() {
 
 	const isHome = pathname === '/';
 
+	/** Transparent → solid only on home (hero/slider). Other routes always use the solid bar. */
+	const solidAppearance = !isHome || scrolled;
+
 	useEffect(() => {
 		const scrollDelta = 8;
 		const topRevealPx = 72;
 
 		const handleScroll = () => {
 			const y = window.scrollY;
+
+			if (!isHome) {
+				setHeaderVisible(true);
+				return;
+			}
+
 			setScrolled(y > HEADER_SOLID_BG_SCROLL_Y);
 
 			if (y < topRevealPx) {
@@ -49,7 +58,7 @@ export function Header() {
 		lastScrollY.current = window.scrollY;
 		window.addEventListener('scroll', handleScroll, { passive: true });
 		return () => window.removeEventListener('scroll', handleScroll);
-	}, []);
+	}, [isHome]);
 
 	useEffect(() => {
 		if (!mobileOpen) return;
@@ -67,13 +76,13 @@ export function Header() {
 
 	return (
 		<header
-			className={`fixed top-0 z-50 mx-auto flex h-[84px] w-full items-center justify-center transition-all duration-300 ease-out will-change-transform ${headerVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'} ${scrolled ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
+			className={`fixed top-0 z-50 mx-auto flex h-21 w-full items-center justify-center transition-all duration-300 ease-out will-change-transform ${headerVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'} ${solidAppearance ? 'bg-white/40 text-black backdrop-blur-md' : 'bg-transparent text-white'}`}
 		>
-			<div className='relative mx-auto flex h-full w-[90%] max-w-[1920px] items-center'>
+			<div className='relative mx-auto flex h-full w-[90%] max-w-480 items-center'>
 				<div className='shrink-0'>
 					<Link
 						href='/'
-						className={`text-2xl font-bold ${scrolled || !isHome ? 'text-black' : 'text-white'}`}
+						className={`text-2xl font-bold ${solidAppearance ? 'text-black' : 'text-white'}`}
 					>
 						NEXSTORE
 					</Link>
@@ -86,7 +95,7 @@ export function Header() {
 							<div key={path || 'home'}>
 								<Link
 									href={path ? `/${path}` : '/'}
-									className={`text-black ${scrolled ? 'text-black' : isHome ? 'text-white' : 'text-black'} ${isActive ? 'bg-primary rounded-xl px-3 py-2 font-bold text-white' : 'rounded-xl px-3 py-2'} transition-colors duration-300 hover:bg-gray-200 hover:text-black`}
+									className={`text-black ${solidAppearance ? 'text-black' : 'text-white'} ${isActive ? 'bg-primary rounded-xl px-3 py-2 font-bold text-white' : 'rounded-xl px-3 py-2'} transition-colors duration-300 hover:bg-gray-200 hover:text-black`}
 								>
 									{label}
 								</Link>
@@ -96,11 +105,7 @@ export function Header() {
 				</div>
 
 				<div className='ml-auto flex shrink-0 items-center gap-2 md:gap-4'>
-					<HeaderMenuTrigger
-						onOpen={() => setMobileOpen(true)}
-						scrolled={scrolled}
-						isHome={isHome}
-					/>
+					<HeaderMenuTrigger onOpen={() => setMobileOpen(true)} solidAppearance={solidAppearance} />
 					<div className='hidden md:flex'>
 						<Button as={Link} href='/search' isIconOnly aria-label='Search' color='default'>
 							<Search />
@@ -113,7 +118,7 @@ export function Header() {
 							</Button>
 							{favoriteItems.length > 0 && (
 								<span
-									className='bg-danger pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums ring-1 ring-black/15'
+									className='bg-danger pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-6 min-w-6 items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums ring-1 ring-black/15'
 									aria-hidden
 								>
 									{favoriteItems.length > 99 ? '99+' : favoriteItems.length}
@@ -128,7 +133,7 @@ export function Header() {
 							</Button>
 							{totalItems > 0 && (
 								<span
-									className='bg-primary pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-[24px] min-w-[24px] items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums ring-1 ring-black/15'
+									className='bg-primary pointer-events-none absolute -top-1 -right-1 z-20 flex min-h-6 min-w-6 items-center justify-center rounded-lg px-1.5 text-xs leading-none font-bold text-white tabular-nums ring-1 ring-black/15'
 									aria-hidden
 								>
 									{totalItems > 99 ? '99+' : totalItems}

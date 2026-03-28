@@ -84,7 +84,7 @@ export function buildProductListWhere(filters: ProductListFilters): Prisma.Produ
   const colors = parseCsv(filters.colors);
   if (colors.length > 0) {
     andParts.push({
-      OR: colors.map((c) => ({ tags: { has: `c:${c.toLowerCase()}` } })),
+      OR: colors.map((c: string) => ({ tags: { has: `c:${c.toLowerCase()}` } })),
     });
   }
 

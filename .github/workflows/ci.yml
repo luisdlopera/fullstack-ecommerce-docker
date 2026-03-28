@@ -51,6 +51,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma client (backend)
+        run: npm run prisma:generate -w back
+
       - name: Build monorepo
         run: npm run build
 
@@ -71,6 +74,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Generate Prisma client (backend)
+        run: npm run prisma:generate -w back
 
       - name: Test backend
         run: npm run test -w back -- --runInBand

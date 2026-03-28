@@ -1,4 +1,5 @@
 export * from './types';
+export * from './permissions';
 export * from './services/admin-api';
 export { AdminPageHeader } from './components/AdminPageHeader';
 export { ConfirmDialog } from './components/ConfirmDialog';

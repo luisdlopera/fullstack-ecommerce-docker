@@ -25,7 +25,10 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path?: s
 	const init: RequestInit = {
 		method: request.method,
 		headers,
-		body: request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text(),
+		body:
+			request.method === 'GET' || request.method === 'HEAD'
+				? undefined
+				: new Uint8Array(await request.arrayBuffer()),
 		cache: 'no-store',
 	};
 

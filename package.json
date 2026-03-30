@@ -16,7 +16,7 @@
     "dev": "npm run dev:apps",
     "dev:front": "npm run dev -w front",
     "dev:back": "npm run start:dev -w back",
-    "dev:db": "docker compose up -d postgres",
+    "dev:db": "docker compose up -d postgres minio minio-init",
     "dev:apps": "node scripts/dev-apps.mjs",
     "dev:stack": "npm run dev:db && npm run dev:apps",
     "dev:down": "docker compose down",

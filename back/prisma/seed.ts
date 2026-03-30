@@ -261,6 +261,7 @@ async function main() {
         url,
         productId: product.id,
         sortOrder: i,
+        isPrimary: i === 0,
       })),
     });
   }

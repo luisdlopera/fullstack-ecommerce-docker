@@ -14,11 +14,16 @@ src/
   main.ts
   shared/
     shared.module.ts          # @Global() — exporta PrismaService
-    domain/                   # tipos/puertos realmente transversales (vacío por defecto)
+    domain/                   # tipos/puertos realmente transversales
+      ports/
+        storage.port.ts       # StoragePort (upload/delete/getPublicUrl)
     application/              # helpers de aplicación compartidos (vacío por defecto)
     infrastructure/
       prisma/prisma.service.ts
       auth/                   # guards, decorators, jwt-payload, permissions
+      storage/
+        storage.config.ts
+        s3-compatible-storage.adapter.ts
   modules/
     auth/
       domain/

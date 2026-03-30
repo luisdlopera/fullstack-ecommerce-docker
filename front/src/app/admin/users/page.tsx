@@ -1,5 +1,6 @@
 'use client';
 
+import { Input, Select, SelectItem } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -121,17 +122,23 @@ export default function AdminUsersPage() {
 			key: 'role',
 			header: 'Rol',
 			render: (u) => (
-				<select
-					value={u.role}
-					onChange={(e) => roleMutation.mutate({ id: u.id, role: e.target.value })}
-					className='rounded border border-gray-200 bg-transparent px-2 py-1 text-xs font-medium'
+				<Select
+					size='sm'
+					variant='flat'
+					radius='md'
+					selectedKeys={new Set([u.role])}
+					onSelectionChange={(keys) => {
+						const nextRole = Array.from(keys as Set<string>)[0];
+						if (nextRole) {
+							roleMutation.mutate({ id: u.id, role: String(nextRole) });
+						}
+					}}
+					className='max-w-44'
 				>
 					{ROLE_OPTIONS.map((r) => (
-						<option key={r.value} value={r.value}>
-							{r.label}
-						</option>
+						<SelectItem key={r.value}>{r.label}</SelectItem>
 					))}
-				</select>
+				</Select>
 			),
 		},
 		{
@@ -306,59 +313,57 @@ function UserFormModal({
 	return (
 		<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading}>
 			<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-				<div>
-					<label className='mb-1 block text-sm font-medium text-gray-700'>Nombre *</label>
-					<input
-						name='name'
-						defaultValue={initialData?.name ?? ''}
-						required
-						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-					/>
-				</div>
-				<div>
-					<label className='mb-1 block text-sm font-medium text-gray-700'>Email *</label>
-					<input
-						name='email'
-						type='email'
-						defaultValue={initialData?.email ?? ''}
-						required
-						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-					/>
-				</div>
-				<div>
-					<label className='mb-1 block text-sm font-medium text-gray-700'>Teléfono</label>
-					<input
-						name='phone'
-						defaultValue={initialData?.phone ?? ''}
-						className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-					/>
-				</div>
+				<Input
+					label='Nombre *'
+					name='name'
+					defaultValue={initialData?.name ?? ''}
+					required
+					variant='flat'
+					radius='lg'
+					size='sm'
+				/>
+				<Input
+					label='Email *'
+					name='email'
+					type='email'
+					defaultValue={initialData?.email ?? ''}
+					required
+					variant='flat'
+					radius='lg'
+					size='sm'
+				/>
+				<Input
+					label='Teléfono'
+					name='phone'
+					defaultValue={initialData?.phone ?? ''}
+					variant='flat'
+					radius='lg'
+					size='sm'
+				/>
 				{!initialData && (
 					<>
-						<div>
-							<label className='mb-1 block text-sm font-medium text-gray-700'>Contraseña *</label>
-							<input
-								name='password'
-								type='password'
-								required
-								minLength={6}
-								className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-							/>
-						</div>
-						<div>
-							<label className='mb-1 block text-sm font-medium text-gray-700'>Rol</label>
-							<select
-								name='role'
-								defaultValue='USER'
-								className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-							>
-								{ROLE_OPTIONS.map((r) => (
-									<option key={r.value} value={r.value}>
-										{r.label}
-									</option>
-								))}
-							</select>
-						</div>
+						<Input
+							label='Contraseña *'
+							name='password'
+							type='password'
+							required
+							minLength={6}
+							variant='flat'
+							radius='lg'
+							size='sm'
+						/>
+						<Select
+							label='Rol'
+							name='role'
+							defaultSelectedKeys={new Set(['USER'])}
+							variant='flat'
+							radius='lg'
+							size='sm'
+						>
+							{ROLE_OPTIONS.map((r) => (
+								<SelectItem key={r.value}>{r.label}</SelectItem>
+							))}
+						</Select>
 					</>
 				)}
 			</div>

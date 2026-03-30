@@ -21,13 +21,19 @@ function readNestErrorMessage(body: unknown, fallback: string): string {
 /** Proxied to Nest with httpOnly JWT (see `/api/bff`). */
 async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const p = path.startsWith('/') ? path : `/${path}`;
+	const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+	const headers = new Headers(options.headers);
+	if (!isFormData && !headers.has('Content-Type')) {
+		headers.set('Content-Type', 'application/json');
+	}
+	if (!headers.has('Accept')) {
+		headers.set('Accept', 'application/json');
+	}
+
 	const res = await fetch(`/api/bff${p}`, {
 		...options,
 		credentials: 'include',
-		headers: {
-			'Content-Type': 'application/json',
-			...options.headers,
-		},
+		headers,
 	});
 
 	if (!res.ok) {
@@ -143,6 +149,19 @@ export const productsApi = {
 			body: JSON.stringify({ isActive }),
 		}),
 
+	uploadImage: (id: string, file: File, makePrimary?: boolean) => {
+		const formData = new FormData();
+		formData.append('file', file);
+		if (makePrimary !== undefined) {
+			formData.append('makePrimary', String(makePrimary));
+		}
+
+		return adminFetch<{ id: number; url: string; sortOrder: number; isPrimary: boolean }>(`/admin/products/${id}/images`, {
+			method: 'POST',
+			body: formData,
+		});
+	},
+
 	addImage: (id: string, imageUrl: string) =>
 		adminFetch<{ id: number; url: string }>(`/admin/products/${id}/images`, {
 			method: 'POST',
@@ -151,6 +170,17 @@ export const productsApi = {
 
 	deleteImage: (productId: string, imageId: number) =>
 		adminFetch<{ ok: boolean }>(`/admin/products/${productId}/images/${imageId}`, { method: 'DELETE' }),
+
+	reorderImages: (productId: string, imageIds: number[]) =>
+		adminFetch<{ ok: boolean }>(`/admin/products/${productId}/images/reorder`, {
+			method: 'PATCH',
+			body: JSON.stringify({ imageIds }),
+		}),
+
+	setPrimaryImage: (productId: string, imageId: number) =>
+		adminFetch<{ id: number; isPrimary: boolean }>(`/admin/products/${productId}/images/${imageId}/primary`, {
+			method: 'PATCH',
+		}),
 };
 
 // ─── Categories ──────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Checkbox } from '@heroui/react';
+import { Checkbox, Input } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -267,76 +267,76 @@ function CountryFormModal({
 		<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading}>
 			<div className='space-y-4'>
 				<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>ID (código) *</label>
-						<input
-							name='id'
-							defaultValue={initialData?.id}
-							required
-							disabled={!!initialData}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black disabled:bg-gray-100'
-						/>
-					</div>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Nombre *</label>
-						<input
-							name='name'
-							defaultValue={initialData?.name}
-							required
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Código ISO</label>
-						<input
-							name='isoCode'
-							defaultValue={initialData?.isoCode ?? ''}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
+					<Input
+						label='ID (código) *'
+						name='id'
+						defaultValue={initialData?.id}
+						required
+						disabled={!!initialData}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Nombre *'
+						name='name'
+						defaultValue={initialData?.name}
+						required
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Código ISO'
+						name='isoCode'
+						defaultValue={initialData?.isoCode ?? ''}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
 				</div>
 				<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Moneda</label>
-						<input
-							name='currency'
-							defaultValue={initialData?.currency ?? 'USD'}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Costo envío base</label>
-						<input
-							name='shippingBaseCost'
-							type='number'
-							step='0.01'
-							min='0'
-							defaultValue={initialData?.shippingBaseCost ?? 0}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>ETA (días)</label>
-						<input
-							name='etaDays'
-							type='number'
-							min='0'
-							defaultValue={initialData?.etaDays ?? 7}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
+					<Input
+						label='Moneda'
+						name='currency'
+						defaultValue={initialData?.currency ?? 'USD'}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Costo envío base'
+						name='shippingBaseCost'
+						type='number'
+						step='0.01'
+						min='0'
+						defaultValue={String(initialData?.shippingBaseCost ?? 0)}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='ETA (días)'
+						name='etaDays'
+						type='number'
+						min='0'
+						defaultValue={String(initialData?.etaDays ?? 7)}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
 				</div>
 				<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Prioridad</label>
-						<input
-							name='priority'
-							type='number'
-							min='0'
-							defaultValue={initialData?.priority ?? 0}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
+					<Input
+						label='Prioridad'
+						name='priority'
+						type='number'
+						min='0'
+						defaultValue={String(initialData?.priority ?? 0)}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
 				</div>
 				<div className='flex flex-wrap items-center gap-6'>
 					<Checkbox size='sm' isSelected={isActive} onValueChange={setIsActive}>

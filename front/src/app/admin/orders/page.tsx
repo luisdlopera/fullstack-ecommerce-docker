@@ -1,5 +1,6 @@
 'use client';
 
+import { Select, SelectItem, Textarea } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -110,17 +111,23 @@ export default function AdminOrdersPage() {
 			key: 'status',
 			header: 'Estado',
 			render: (o) => (
-				<select
-					value={o.status}
-					onChange={(e) => statusMutation.mutate({ id: o.id, status: e.target.value })}
-					className='rounded border border-gray-200 bg-transparent px-2 py-1 text-xs font-medium'
+				<Select
+					size='sm'
+					variant='flat'
+					radius='md'
+					selectedKeys={new Set([o.status])}
+					onSelectionChange={(keys) => {
+						const nextStatus = Array.from(keys as Set<string>)[0];
+						if (nextStatus) {
+							statusMutation.mutate({ id: o.id, status: String(nextStatus) });
+						}
+					}}
+					className='max-w-44'
 				>
 					{ORDER_STATUS_OPTIONS.map((s) => (
-						<option key={s.value} value={s.value}>
-							{s.label}
-						</option>
+						<SelectItem key={s.value}>{s.label}</SelectItem>
 					))}
-				</select>
+				</Select>
 			),
 		},
 		{
@@ -307,11 +314,13 @@ function OrderDetailDrawer({
 
 					<div>
 						<h3 className='mb-2 text-sm font-semibold text-gray-900'>Notas internas</h3>
-						<textarea
+						<Textarea
 							value={notes}
 							onChange={(e) => setNotes(e.target.value)}
 							rows={3}
-							className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black'
+							variant='flat'
+							radius='lg'
+							size='sm'
 							placeholder='Agregar notas internas...'
 						/>
 						<button

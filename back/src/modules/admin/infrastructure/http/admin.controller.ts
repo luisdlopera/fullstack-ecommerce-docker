@@ -10,14 +10,20 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { OrderStatus, PaymentStatus, Role } from '@prisma/client';
-import { IsString, MinLength } from 'class-validator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import { Roles } from '../../../../shared/infrastructure/auth/roles.decorator';
 import { ADMIN_ROLES, FULL_ACCESS_ROLES, MANAGEMENT_ROLES } from '../../../../shared/infrastructure/auth/permissions';
 import { AdminService } from '../../application/admin.service';
+import { DeleteProductImageUseCase } from '../../application/use-cases/delete-product-image.use-case';
+import { ReorderProductImagesUseCase } from '../../application/use-cases/reorder-product-images.use-case';
+import { SetPrimaryProductImageUseCase } from '../../application/use-cases/set-primary-product-image.use-case';
+import { UploadProductImageUseCase } from '../../application/use-cases/upload-product-image.use-case';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
@@ -28,17 +34,24 @@ import { UpdateOrderNotesDto } from './dto/update-order-notes.dto';
 import { UpsertProductDto } from './dto/upsert-product.dto';
 import { UpsertCategoryDto } from './dto/upsert-category.dto';
 import { UpsertCountryDto } from './dto/upsert-country.dto';
-
-class ProductImageDto {
-  @IsString()
-  @MinLength(3)
-  imageUrl!: string;
-}
+import { UploadProductImageDto } from './dto/upload-product-image.dto';
+import { ReorderProductImagesDto } from './dto/reorder-product-images.dto';
+import type { UploadFile } from '../../application/use-cases/upload-file.type';
 
 @Roles(...ADMIN_ROLES)
 @Controller('admin')
 export class AdminController {
-  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
+  constructor(
+    @Inject(AdminService) private readonly adminService: AdminService,
+    @Inject(UploadProductImageUseCase)
+    private readonly uploadProductImageUseCase: UploadProductImageUseCase,
+    @Inject(DeleteProductImageUseCase)
+    private readonly deleteProductImageUseCase: DeleteProductImageUseCase,
+    @Inject(ReorderProductImagesUseCase)
+    private readonly reorderProductImagesUseCase: ReorderProductImagesUseCase,
+    @Inject(SetPrimaryProductImageUseCase)
+    private readonly setPrimaryProductImageUseCase: SetPrimaryProductImageUseCase,
+  ) {}
 
   // ─── Dashboard ──────────────────────────────────────────────────────
 
@@ -191,14 +204,35 @@ export class AdminController {
 
   @Roles(...MANAGEMENT_ROLES)
   @Post('products/:id/images')
-  addProductImage(@Param('id') productId: string, @Body() dto: ProductImageDto) {
-    return this.adminService.addProductImage(productId, dto.imageUrl);
+  @UseInterceptors(FileInterceptor('file'))
+  uploadProductImage(
+    @Param('id') productId: string,
+    @UploadedFile() file: UploadFile | undefined,
+    @Body() dto: UploadProductImageDto,
+  ) {
+    return this.uploadProductImageUseCase.execute({
+      productId,
+      file,
+      makePrimary: dto.makePrimary,
+    });
   }
 
   @Roles(...MANAGEMENT_ROLES)
   @Delete('products/:id/images/:imageId')
   deleteProductImage(@Param('id') productId: string, @Param('imageId', ParseIntPipe) imageId: number) {
-    return this.adminService.deleteProductImage(productId, imageId);
+    return this.deleteProductImageUseCase.execute(productId, imageId);
+  }
+
+  @Roles(...MANAGEMENT_ROLES)
+  @Patch('products/:id/images/reorder')
+  reorderProductImages(@Param('id') productId: string, @Body() dto: ReorderProductImagesDto) {
+    return this.reorderProductImagesUseCase.execute(productId, dto.imageIds);
+  }
+
+  @Roles(...MANAGEMENT_ROLES)
+  @Patch('products/:id/images/:imageId/primary')
+  setPrimaryProductImage(@Param('id') productId: string, @Param('imageId', ParseIntPipe) imageId: number) {
+    return this.setPrimaryProductImageUseCase.execute(productId, imageId);
   }
 
   // ─── Categories ─────────────────────────────────────────────────────

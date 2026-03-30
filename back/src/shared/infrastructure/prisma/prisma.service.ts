@@ -4,6 +4,10 @@ import { createPrismaClientOptions } from './prisma-client-options';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
+  override get passwordResetToken() {
+    return super.passwordResetToken;
+  }
+
   constructor() {
     super(createPrismaClientOptions());
   }

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
 	AdminPageHeader,
 	ConfirmDialog,
@@ -12,6 +13,7 @@ import {
 	ErrorState,
 	FilterSelect,
 	FormModal,
+	PERMISSIONS,
 	SearchInput,
 	StatusBadge,
 	usersApi,
@@ -24,7 +26,7 @@ const ROLE_OPTIONS = [
 	{ value: 'ADMIN', label: 'Admin' },
 	{ value: 'MANAGER', label: 'Manager' },
 	{ value: 'SUPPORT', label: 'Support' },
-	{ value: 'USER', label: 'User' },
+	{ value: 'CUSTOMER', label: 'Customer' },
 ];
 
 const STATUS_OPTIONS = [
@@ -38,6 +40,9 @@ function formatDate(d: string | null) {
 }
 
 export default function AdminUsersPage() {
+	const { hasPermission } = usePermissions();
+	const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
+
 	const queryClient = useQueryClient();
 	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState('');
@@ -122,30 +127,37 @@ export default function AdminUsersPage() {
 			key: 'role',
 			header: 'Rol',
 			render: (u) => (
-				<Select
-					size='sm'
-					variant='flat'
-					radius='md'
-					selectedKeys={new Set([u.role])}
-					onSelectionChange={(keys) => {
-						const nextRole = Array.from(keys as Set<string>)[0];
-						if (nextRole) {
-							roleMutation.mutate({ id: u.id, role: String(nextRole) });
-						}
-					}}
-					className='max-w-44'
-				>
-					{ROLE_OPTIONS.map((r) => (
-						<SelectItem key={r.value}>{r.label}</SelectItem>
-					))}
-				</Select>
+				canManageUsers ? (
+					<Select
+						size='sm'
+						variant='flat'
+						radius='md'
+						selectedKeys={new Set([u.role])}
+						onSelectionChange={(keys) => {
+							const nextRole = Array.from(keys as Set<string>)[0];
+							if (nextRole) {
+								roleMutation.mutate({ id: u.id, role: String(nextRole) });
+							}
+						}}
+						className='max-w-44'
+					>
+						{ROLE_OPTIONS.map((r) => (
+							<SelectItem key={r.value}>{r.label}</SelectItem>
+						))}
+					</Select>
+				) : (
+					<span className='text-xs font-medium text-gray-600'>{u.role}</span>
+				)
 			),
 		},
 		{
 			key: 'status',
 			header: 'Estado',
 			render: (u) => (
-				<button onClick={() => toggleStatusMutation.mutate({ id: u.id, isActive: !u.isActive })}>
+				<button
+					onClick={() => canManageUsers && toggleStatusMutation.mutate({ id: u.id, isActive: !u.isActive })}
+					disabled={!canManageUsers}
+				>
 					<StatusBadge value={u.isActive ? 'Activo' : 'Inactivo'} variant={u.isActive ? 'green' : 'red'} />
 				</button>
 			),
@@ -165,20 +177,22 @@ export default function AdminUsersPage() {
 			header: '',
 			className: 'text-right',
 			render: (u) => (
-				<div className='flex justify-end gap-2'>
-					<button
-						onClick={() => setEditUser(u)}
-						className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
-					>
-						Editar
-					</button>
-					<button
-						onClick={() => setDeleteTarget(u)}
-						className='rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50'
-					>
-						Eliminar
-					</button>
-				</div>
+				canManageUsers ? (
+					<div className='flex justify-end gap-2'>
+						<button
+							onClick={() => setEditUser(u)}
+							className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
+						>
+							Editar
+						</button>
+						<button
+							onClick={() => setDeleteTarget(u)}
+							className='rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50'
+						>
+							Eliminar
+						</button>
+					</div>
+				) : null
 			),
 		},
 	];
@@ -198,12 +212,14 @@ export default function AdminUsersPage() {
 				title='Usuarios'
 				description='Administra los usuarios registrados en la plataforma'
 				actions={
+					canManageUsers ? (
 					<button
 						onClick={() => setCreateOpen(true)}
 						className='flex items-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800'
 					>
 						<Plus size={16} /> Nuevo usuario
 					</button>
+					) : null
 				}
 			/>
 
@@ -247,13 +263,15 @@ export default function AdminUsersPage() {
 				emptyMessage='No se encontraron usuarios'
 			/>
 
-			<UserFormModal
-				open={createOpen}
-				title='Crear usuario'
-				loading={createMutation.isPending}
-				onClose={() => setCreateOpen(false)}
-				onSubmit={(formData) => createMutation.mutate(formData)}
-			/>
+			{canManageUsers && (
+				<UserFormModal
+					open={createOpen}
+					title='Crear usuario'
+					loading={createMutation.isPending}
+					onClose={() => setCreateOpen(false)}
+					onSubmit={(formData) => createMutation.mutate(formData)}
+				/>
+			)}
 
 			{editUser && (
 				<UserFormModal
@@ -272,7 +290,7 @@ export default function AdminUsersPage() {
 				description={`¿Estás seguro de eliminar a "${deleteTarget?.name}"? Esta acción desactivará la cuenta.`}
 				confirmLabel='Eliminar'
 				loading={deleteMutation.isPending}
-				onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+				onConfirm={() => canManageUsers && deleteTarget && deleteMutation.mutate(deleteTarget.id)}
 				onCancel={() => setDeleteTarget(null)}
 			/>
 		</>
@@ -355,7 +373,7 @@ function UserFormModal({
 						<Select
 							label='Rol'
 							name='role'
-							defaultSelectedKeys={new Set(['USER'])}
+							defaultSelectedKeys={new Set(['CUSTOMER'])}
 							variant='flat'
 							radius='lg'
 							size='sm'

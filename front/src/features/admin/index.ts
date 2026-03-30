@@ -11,3 +11,4 @@ export { LoadingSkeleton } from './components/LoadingSkeleton';
 export { SearchInput } from './components/SearchInput';
 export { StatCard } from './components/StatCard';
 export { StatusBadge } from './components/StatusBadge';
+export { PermissionGate } from './components/PermissionGate';

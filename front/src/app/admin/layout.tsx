@@ -3,10 +3,9 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { canAccessCountriesPath, isAdminRole } from '@/features/admin';
-import type { Role } from '@/features/admin';
+import { useEffect, useMemo, useState } from 'react';
+import { PERMISSIONS, type PermissionKey } from '@/features/admin';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatRoleLabel } from '@/lib/format-role-label';
 import {
 	LayoutDashboard,
@@ -14,21 +13,42 @@ import {
 	ShoppingCart,
 	Package,
 	FolderTree,
-	Globe,
 	LogOut,
 	Menu,
 	X,
 	ChevronRight,
+	ShieldCheck,
+	Settings,
+	Wallet,
+	Percent,
+	Boxes,
 } from 'lucide-react';
 const Toaster = dynamic(() => import('react-hot-toast').then((m) => ({ default: m.Toaster })), { ssr: false });
 
-const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; requireFullAccess?: boolean }[] = [
-	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-	{ href: '/admin/users', label: 'Usuarios', icon: Users },
-	{ href: '/admin/orders', label: 'Órdenes', icon: ShoppingCart },
-	{ href: '/admin/products', label: 'Productos', icon: Package },
-	{ href: '/admin/categories', label: 'Categorías', icon: FolderTree },
-	{ href: '/admin/countries', label: 'Países', icon: Globe, requireFullAccess: true },
+const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; permission: PermissionKey }[] = [
+	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard, permission: PERMISSIONS.DASHBOARD_READ },
+	{ href: '/admin/users', label: 'Usuarios', icon: Users, permission: PERMISSIONS.USERS_READ },
+	{ href: '/admin/orders', label: 'Órdenes', icon: ShoppingCart, permission: PERMISSIONS.ORDERS_READ },
+	{ href: '/admin/products', label: 'Productos', icon: Package, permission: PERMISSIONS.PRODUCTS_READ },
+	{ href: '/admin/categories', label: 'Categorías', icon: FolderTree, permission: PERMISSIONS.CATEGORIES_READ },
+	{ href: '/admin/inventory', label: 'Inventario', icon: Boxes, permission: PERMISSIONS.INVENTORY_READ },
+	{ href: '/admin/promotions', label: 'Promociones', icon: Percent, permission: PERMISSIONS.PROMOTIONS_MANAGE },
+	{ href: '/admin/payments', label: 'Pagos', icon: Wallet, permission: PERMISSIONS.PAYMENTS_READ },
+	{ href: '/admin/audit-logs', label: 'Audit Logs', icon: ShieldCheck, permission: PERMISSIONS.AUDIT_READ },
+	{ href: '/admin/countries', label: 'Settings', icon: Settings, permission: PERMISSIONS.SETTINGS_MANAGE },
+];
+
+const ROUTE_PERMISSIONS: Array<{ startsWith: string; permission: PermissionKey }> = [
+	{ startsWith: '/admin/users', permission: PERMISSIONS.USERS_READ },
+	{ startsWith: '/admin/orders', permission: PERMISSIONS.ORDERS_READ },
+	{ startsWith: '/admin/products', permission: PERMISSIONS.PRODUCTS_READ },
+	{ startsWith: '/admin/categories', permission: PERMISSIONS.CATEGORIES_READ },
+	{ startsWith: '/admin/inventory', permission: PERMISSIONS.INVENTORY_READ },
+	{ startsWith: '/admin/promotions', permission: PERMISSIONS.PROMOTIONS_MANAGE },
+	{ startsWith: '/admin/payments', permission: PERMISSIONS.PAYMENTS_READ },
+	{ startsWith: '/admin/audit-logs', permission: PERMISSIONS.AUDIT_READ },
+	{ startsWith: '/admin/countries', permission: PERMISSIONS.SETTINGS_MANAGE },
+	{ startsWith: '/admin', permission: PERMISSIONS.DASHBOARD_READ },
 ];
 
 function getBreadcrumbs(pathname: string) {
@@ -42,23 +62,35 @@ function getBreadcrumbs(pathname: string) {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
 	const pathname = usePathname();
-	const { user, loading, logout } = useAuth();
+	const { user, loading, logout, hasPermission, isAdmin } = usePermissions();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
-	useEffect(() => {
-		if (!loading && (!user || !isAdminRole(user.role))) {
-			router.replace('/');
-		}
-	}, [loading, user, router]);
+	const visibleNavItems = useMemo(() => {
+		if (!user) return [];
+		return NAV_ITEMS.filter((item) => hasPermission(item.permission)).map((item) => {
+			if (item.href === '/admin/users' && user.role === 'SUPPORT') {
+				return { ...item, label: 'Clientes' };
+			}
+			return item;
+		});
+	}, [hasPermission, user]);
 
 	useEffect(() => {
-		if (loading || !user || !isAdminRole(user.role)) return;
-		if (pathname.startsWith('/admin/countries') && !canAccessCountriesPath(user.role)) {
-			router.replace('/admin');
+		if (!loading && (!user || !isAdmin)) {
+			router.replace('/forbidden');
 		}
-	}, [loading, user, pathname, router]);
+	}, [isAdmin, loading, user, router]);
 
-	if (loading || !user || !isAdminRole(user.role)) {
+	useEffect(() => {
+		if (loading || !user || !isAdmin) return;
+
+		const routePermission = ROUTE_PERMISSIONS.find((item) => pathname.startsWith(item.startsWith));
+		if (routePermission && !hasPermission(routePermission.permission)) {
+			router.replace('/forbidden');
+		}
+	}, [hasPermission, isAdmin, loading, pathname, router, user]);
+
+	if (loading || !user || !isAdmin) {
 		return (
 			<div className='flex min-h-screen items-center justify-center bg-gray-50'>
 				<div className='h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-black' />
@@ -92,9 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 				</div>
 
 				<nav className='flex-1 space-y-1 overflow-y-auto px-3 py-4'>
-					{NAV_ITEMS.filter(
-						(item) => !item.requireFullAccess || canAccessCountriesPath(user.role as Role),
-					).map((item) => {
+					{visibleNavItems.map((item) => {
 						const isActive =
 							item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
 

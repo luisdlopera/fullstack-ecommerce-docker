@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { Button, Input } from '@heroui/react';
 import { KeyRound } from 'lucide-react';
 import { bffFetch } from '@/lib/bff-fetch';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 
 export default function AccountSettingsPage() {
 	const [saving, setSaving] = useState(false);
@@ -53,11 +54,10 @@ export default function AccountSettingsPage() {
 
 			<section className='max-w-xl rounded-2xl border border-gray-200 p-6'>
 				<form onSubmit={handleChangePassword} className='flex flex-col gap-4'>
-					<Input isRequired type='password' name='currentPassword' label='Contraseña actual' minLength={6} />
-					<Input isRequired type='password' name='newPassword' label='Nueva contraseña' minLength={8} />
-					<Input
+					<PasswordInput isRequired name='currentPassword' label='Contraseña actual' minLength={6} />
+					<PasswordInput isRequired name='newPassword' label='Nueva contraseña' minLength={8} />
+					<PasswordInput
 						isRequired
-						type='password'
 						name='confirmPassword'
 						label='Confirmar nueva contraseña'
 						minLength={8}

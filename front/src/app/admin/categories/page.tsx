@@ -1,6 +1,6 @@
 'use client';
 
-import { Input, Select, SelectItem, Textarea } from '@heroui/react';
+import { Autocomplete, AutocompleteItem, Input, Textarea } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -209,12 +209,13 @@ function CategoryFormModal({
 	onSubmit: (data: Record<string, unknown>) => void;
 }) {
 	const NONE_PARENT_KEY = '__none_parent__';
+	const [parentId, setParentId] = useState(initialData?.parentId ?? NONE_PARENT_KEY);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		const form = e.target as HTMLFormElement;
 		const fd = new FormData(form);
-		const rawParentId = String(fd.get('parentId') ?? '');
+		const rawParentId = parentId;
 		onSubmit({
 			name: fd.get('name'),
 			slug: fd.get('slug'),
@@ -226,8 +227,6 @@ function CategoryFormModal({
 		});
 	};
 
-	const parentIdValue = initialData?.parentId ?? NONE_PARENT_KEY;
-	const defaultParentKeys = new Set([parentIdValue]);
 	const parentItems = [{ id: NONE_PARENT_KEY, name: 'Ninguna' }, ...categories.map((c) => ({ id: c.id, name: c.name }))];
 
 	return (
@@ -263,17 +262,18 @@ function CategoryFormModal({
 					size='sm'
 				/>
 				<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-					<Select
+					<Autocomplete
 						label='Categoría padre'
-						name='parentId'
-						defaultSelectedKeys={defaultParentKeys}
-						items={parentItems}
+						selectedKey={parentId}
+						onSelectionChange={(key) => setParentId(key ? String(key) : NONE_PARENT_KEY)}
 						variant='flat'
 						radius='lg'
 						size='sm'
 					>
-						{(item) => <SelectItem key={item.id}>{item.name}</SelectItem>}
-					</Select>
+						{parentItems.map((item) => (
+							<AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+						))}
+					</Autocomplete>
 					<Input
 						label='Orden'
 						name='sortOrder'

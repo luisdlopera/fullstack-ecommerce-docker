@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Button, Input, Select, SelectItem, Spinner } from '@heroui/react';
+import { Autocomplete, AutocompleteItem, Button, Input, Spinner } from '@heroui/react';
 import { Pencil, Plus, Save, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { type Country, type UserAddress, type UserAddressListResponse } from '@/lib/api';
@@ -25,9 +25,14 @@ export default function AccountAddressesPage() {
 	const [saving, setSaving] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 	const [deleteTarget, setDeleteTarget] = useState<UserAddress | null>(null);
+	const [countryId, setCountryId] = useState('');
 	const [message, setMessage] = useState('');
 
 	const selectedAddress = addresses.find((address) => address.id === selectedAddressId) ?? null;
+
+	useEffect(() => {
+		setCountryId(selectedAddress?.countryId ?? '');
+	}, [selectedAddress?.countryId]);
 
 	const loadAddresses = useCallback(async (targetPage = page) => {
 		const response = await bffFetch(`/users/me/addresses?page=${targetPage}&limit=${ITEMS_PER_PAGE}`);
@@ -86,10 +91,14 @@ export default function AccountAddressesPage() {
 			postalCode: fd.get('postalCode') as string,
 			city: fd.get('city') as string,
 			phone: fd.get('phone') as string,
-			countryId: fd.get('countryId') as string,
+			countryId,
 		};
 
 		try {
+			if (!countryId) {
+				throw new Error('Selecciona un país');
+			}
+
 			const method = selectedAddress ? 'PUT' : 'POST';
 			const path = selectedAddress ? `/users/me/addresses/${selectedAddress.id}` : '/users/me/addresses';
 			const res = await bffFetch(path, {
@@ -212,16 +221,17 @@ export default function AccountAddressesPage() {
 							label='Código postal'
 							defaultValue={selectedAddress?.postalCode ?? ''}
 						/>
-						<Select
+						<Autocomplete
 							isRequired
-							name='countryId'
 							label='País'
-							defaultSelectedKeys={selectedAddress?.countryId ? [selectedAddress.countryId] : undefined}
+							placeholder='Buscar país'
+							selectedKey={countryId || null}
+							onSelectionChange={(key) => setCountryId(key ? String(key) : '')}
 						>
 							{countries.map((country) => (
-								<SelectItem key={country.id}>{country.name}</SelectItem>
+								<AutocompleteItem key={country.id}>{country.name}</AutocompleteItem>
 							))}
-						</Select>
+						</Autocomplete>
 					</div>
 					<Input isRequired name='phone' label='Teléfono' defaultValue={selectedAddress?.phone ?? ''} />
 

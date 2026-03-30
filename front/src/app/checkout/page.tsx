@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input, Select, SelectItem } from '@heroui/react';
+import { Autocomplete, AutocompleteItem, Button, Input } from '@heroui/react';
 import { useCheckoutSubmit } from '@/features/checkout';
 import { type Country } from '@/lib/api';
 import { fetchCountriesClient } from '@/lib/shop-api';
@@ -11,6 +11,7 @@ export default function CheckoutPage() {
 	const router = useRouter();
 	const { submit, submitting, error, totalPrice, tax, total, items } = useCheckoutSubmit();
 	const [countries, setCountries] = useState<Country[]>([]);
+	const [countryId, setCountryId] = useState('');
 
 	useEffect(() => {
 		if (items.length === 0) {
@@ -31,6 +32,7 @@ export default function CheckoutPage() {
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		if (!countryId) return;
 		const form = new FormData(e.currentTarget);
 		await submit({
 			firstName: form.get('firstName') as string,
@@ -40,7 +42,7 @@ export default function CheckoutPage() {
 			postalCode: form.get('postalCode') as string,
 			city: form.get('city') as string,
 			phone: form.get('phone') as string,
-			countryId: form.get('countryId') as string,
+			countryId,
 		});
 	};
 
@@ -62,11 +64,17 @@ export default function CheckoutPage() {
 					<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
 						<Input isRequired name='city' label='Ciudad' placeholder='Ciudad' />
 						<Input isRequired name='postalCode' label='Código postal' placeholder='00000' />
-						<Select isRequired name='countryId' label='País' placeholder='Selecciona'>
-							{countries.map((c) => (
-								<SelectItem key={c.id}>{c.name}</SelectItem>
+						<Autocomplete
+							isRequired
+							label='País'
+							placeholder='Buscar país'
+							selectedKey={countryId || null}
+							onSelectionChange={(key) => setCountryId(key ? String(key) : '')}
+						>
+							{countries.map((country) => (
+								<AutocompleteItem key={country.id}>{country.name}</AutocompleteItem>
 							))}
-						</Select>
+						</Autocomplete>
 					</div>
 					<Input isRequired name='phone' label='Teléfono' placeholder='+57 300 000 0000' />
 

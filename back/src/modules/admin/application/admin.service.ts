@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
 import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
@@ -123,7 +123,7 @@ export class AdminService {
 
   // ─── Users ────────────────────────────────────────────────────────────
 
-  async getUsers(page = 1, limit = 20, search?: string, role?: Role, isActive?: boolean) {
+  async getUsers(page = 1, limit = 20, search?: string, role?: Role, isActive?: boolean, actorRole?: Role) {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const skip = (safePage - 1) * safeLimit;
@@ -137,7 +137,11 @@ export class AdminService {
         { id: search },
       ];
     }
-    if (role) where.role = role;
+    if (actorRole === Role.SUPPORT) {
+      where.role = Role.CUSTOMER;
+    } else if (role) {
+      where.role = role;
+    }
     if (isActive !== undefined) where.isActive = isActive;
 
     const [rows, total] = await this.prisma.$transaction([
@@ -168,7 +172,7 @@ export class AdminService {
     };
   }
 
-  async getUserById(userId: string) {
+  async getUserById(userId: string, actorRole?: Role) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -192,6 +196,10 @@ export class AdminService {
       },
     });
     if (!user) throw new NotFoundException('User not found');
+    if (actorRole === Role.SUPPORT && user.role !== Role.CUSTOMER) {
+      throw new ForbiddenException('Support can only access customers');
+    }
+
     const address = user.addresses[0] ?? null;
     return {
       ...user,
@@ -200,7 +208,11 @@ export class AdminService {
     };
   }
 
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto, actorRole?: Role) {
+    if (actorRole === Role.ADMIN && dto.role === Role.SUPER_ADMIN) {
+      throw new ForbiddenException('ADMIN cannot manage SUPER_ADMIN users');
+    }
+
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
     });
@@ -212,7 +224,7 @@ export class AdminService {
         email: dto.email.toLowerCase(),
         password: bcryptjs.hashSync(dto.password, 10),
         phone: dto.phone,
-        role: dto.role ?? Role.USER,
+        role: dto.role ?? Role.CUSTOMER,
       },
       select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
     });
@@ -220,7 +232,9 @@ export class AdminService {
     return user;
   }
 
-  async updateUser(userId: string, dto: UpdateUserDto) {
+  async updateUser(userId: string, dto: UpdateUserDto, actorRole?: Role) {
+    await this.assertCanManageTargetUser(userId, actorRole);
+
     if (dto.email) {
       const existing = await this.prisma.user.findFirst({
         where: { email: dto.email.toLowerCase(), id: { not: userId } },
@@ -240,22 +254,34 @@ export class AdminService {
     });
   }
 
-  async updateUserRole(userId: string, dto: UpdateUserRoleDto, actorId: string) {
+  async updateUserRole(userId: string, dto: UpdateUserRoleDto, actorId: string, actorRole: Role) {
     if (userId === actorId) {
       throw new BadRequestException('You cannot change your own role');
     }
 
-    return this.prisma.user.update({
+    await this.assertCanManageTargetUser(userId, actorRole);
+
+    if (actorRole === Role.ADMIN && dto.role === Role.SUPER_ADMIN) {
+      throw new ForbiddenException('ADMIN cannot assign SUPER_ADMIN role');
+    }
+
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: { role: dto.role },
       select: { id: true, name: true, email: true, role: true },
     });
+
+    await this.logAction(actorId, 'user.role.changed', 'user', userId, { nextRole: dto.role });
+
+    return updated;
   }
 
-  async updateUserStatus(userId: string, isActive: boolean, actorId: string) {
+  async updateUserStatus(userId: string, isActive: boolean, actorId: string, actorRole: Role) {
     if (userId === actorId) {
       throw new BadRequestException('You cannot change your own status');
     }
+
+    await this.assertCanManageTargetUser(userId, actorRole);
 
     return this.prisma.user.update({
       where: { id: userId },
@@ -264,10 +290,12 @@ export class AdminService {
     });
   }
 
-  async deleteUser(userId: string, actorId: string) {
+  async deleteUser(userId: string, actorId: string, actorRole: Role) {
     if (userId === actorId) {
       throw new BadRequestException('You cannot delete yourself');
     }
+
+    await this.assertCanManageTargetUser(userId, actorRole);
 
     await this.prisma.user.update({
       where: { id: userId },
@@ -340,7 +368,7 @@ export class AdminService {
     return order;
   }
 
-  async updateOrderStatus(orderId: string, newStatus: OrderStatus) {
+  async updateOrderStatus(orderId: string, newStatus: OrderStatus, actorId: string) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Order not found');
 
@@ -365,11 +393,18 @@ export class AdminService {
       data.paymentStatus = PaymentStatus.REFUNDED;
     }
 
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id: orderId },
       data,
       include: { OrderItem: true, OrderAddress: true },
     });
+
+    await this.logAction(actorId, 'order.status.changed', 'order', orderId, {
+      previousStatus: order.status,
+      nextStatus: newStatus,
+    });
+
+    return updated;
   }
 
   async updatePaymentStatus(orderId: string, newPaymentStatus: PaymentStatus) {
@@ -557,7 +592,7 @@ export class AdminService {
     });
   }
 
-  async deleteProduct(productId: string) {
+  async deleteProduct(productId: string, actorId: string) {
     const product = await this.prisma.product.findUnique({ where: { id: productId } });
     if (!product) throw new NotFoundException('Product not found');
 
@@ -565,6 +600,9 @@ export class AdminService {
       where: { id: productId },
       data: { deletedAt: new Date(), isActive: false },
     });
+
+    await this.logAction(actorId, 'product.deleted', 'product', productId, { title: product.title });
+
     return { ok: true };
   }
 
@@ -797,6 +835,24 @@ export class AdminService {
         where: { id: item.productId },
         data: { inStock: { increment: item.quantity } },
       });
+    }
+  }
+
+  private async assertCanManageTargetUser(targetUserId: string, actorRole?: Role) {
+    if (!actorRole) return;
+    if (actorRole === Role.SUPER_ADMIN) return;
+
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, role: true },
+    });
+
+    if (!target) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (actorRole === Role.ADMIN && target.role === Role.SUPER_ADMIN) {
+      throw new ForbiddenException('ADMIN cannot manage SUPER_ADMIN users');
     }
   }
 }

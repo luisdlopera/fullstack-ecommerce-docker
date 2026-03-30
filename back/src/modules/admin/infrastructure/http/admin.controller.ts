@@ -15,10 +15,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { OrderStatus, PaymentStatus, Role } from '@prisma/client';
+import { Auth } from '../../../../shared/infrastructure/auth/auth.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
-import { Roles } from '../../../../shared/infrastructure/auth/roles.decorator';
-import { ADMIN_ROLES, FULL_ACCESS_ROLES, MANAGEMENT_ROLES } from '../../../../shared/infrastructure/auth/permissions';
+import { PERMISSIONS } from '../../../../shared/infrastructure/auth/permissions';
 import { AdminService } from '../../application/admin.service';
 import { DeleteProductImageUseCase } from '../../application/use-cases/delete-product-image.use-case';
 import { ReorderProductImagesUseCase } from '../../application/use-cases/reorder-product-images.use-case';
@@ -38,7 +38,6 @@ import { UploadProductImageDto } from './dto/upload-product-image.dto';
 import { ReorderProductImagesDto } from './dto/reorder-product-images.dto';
 import type { UploadFile } from '../../application/use-cases/upload-file.type';
 
-@Roles(...ADMIN_ROLES)
 @Controller('admin')
 export class AdminController {
   constructor(
@@ -55,21 +54,25 @@ export class AdminController {
 
   // ─── Dashboard ──────────────────────────────────────────────────────
 
+  @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/summary')
   getDashboardSummary(@Query('period') period?: string) {
     return this.adminService.getDashboardSummary(period);
   }
 
+  @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/sales-chart')
   getSalesChart(@Query('period') period?: string) {
     return this.adminService.getSalesChart(period);
   }
 
+  @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/recent-orders')
   getRecentOrders(@Query('limit', new ParseIntPipe({ optional: true })) limit?: number) {
     return this.adminService.getRecentOrders(limit);
   }
 
+  @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/top-products')
   getTopProducts(@Query('limit', new ParseIntPipe({ optional: true })) limit?: number) {
     return this.adminService.getTopProducts(limit);
@@ -77,54 +80,58 @@ export class AdminController {
 
   // ─── Users ──────────────────────────────────────────────────────────
 
+  @Auth(PERMISSIONS.USERS_READ)
   @Get('users')
   getUsers(
+    @CurrentUser() user: JwtPayload,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('search') search?: string,
     @Query('role') role?: Role,
     @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
   ) {
-    return this.adminService.getUsers(page, limit, search, role, isActive);
+    return this.adminService.getUsers(page, limit, search, role, isActive, user.role);
   }
 
+  @Auth(PERMISSIONS.USERS_READ)
   @Get('users/:id')
-  getUserById(@Param('id') userId: string) {
-    return this.adminService.getUserById(userId);
+  getUserById(@Param('id') userId: string, @CurrentUser() user: JwtPayload) {
+    return this.adminService.getUserById(userId, user.role);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.USERS_MANAGE)
   @Post('users')
-  createUser(@Body() dto: CreateUserDto) {
-    return this.adminService.createUser(dto);
+  createUser(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
+    return this.adminService.createUser(dto, user.role);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.USERS_MANAGE)
   @Patch('users/:id')
-  updateUser(@Param('id') userId: string, @Body() dto: UpdateUserDto) {
-    return this.adminService.updateUser(userId, dto);
+  updateUser(@Param('id') userId: string, @Body() dto: UpdateUserDto, @CurrentUser() user: JwtPayload) {
+    return this.adminService.updateUser(userId, dto, user.role);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.USERS_MANAGE)
   @Patch('users/:id/role')
   updateUserRole(@Param('id') userId: string, @Body() dto: UpdateUserRoleDto, @CurrentUser() user: JwtPayload) {
-    return this.adminService.updateUserRole(userId, dto, user.sub);
+    return this.adminService.updateUserRole(userId, dto, user.sub, user.role);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.USERS_MANAGE)
   @Patch('users/:id/status')
   updateUserStatus(@Param('id') userId: string, @Body() dto: UpdateUserStatusDto, @CurrentUser() user: JwtPayload) {
-    return this.adminService.updateUserStatus(userId, dto.isActive, user.sub);
+    return this.adminService.updateUserStatus(userId, dto.isActive, user.sub, user.role);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.USERS_MANAGE)
   @Delete('users/:id')
   deleteUser(@Param('id') userId: string, @CurrentUser() user: JwtPayload) {
-    return this.adminService.deleteUser(userId, user.sub);
+    return this.adminService.deleteUser(userId, user.sub, user.role);
   }
 
   // ─── Orders ─────────────────────────────────────────────────────────
 
+  @Auth(PERMISSIONS.ORDERS_READ)
   @Get('orders')
   getOrders(
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
@@ -137,23 +144,25 @@ export class AdminController {
     return this.adminService.getOrders(page, limit, search, status, paymentStatus, paid);
   }
 
+  @Auth(PERMISSIONS.ORDERS_READ)
   @Get('orders/:id')
   getOrderById(@Param('id') orderId: string) {
     return this.adminService.getOrderById(orderId);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.ORDERS_UPDATE)
   @Patch('orders/:id/status')
-  updateOrderStatus(@Param('id') orderId: string, @Body() dto: UpdateOrderStatusDto) {
-    return this.adminService.updateOrderStatus(orderId, dto.status);
+  updateOrderStatus(@Param('id') orderId: string, @Body() dto: UpdateOrderStatusDto, @CurrentUser() user: JwtPayload) {
+    return this.adminService.updateOrderStatus(orderId, dto.status, user.sub);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.PAYMENTS_READ)
   @Patch('orders/:id/payment-status')
   updatePaymentStatus(@Param('id') orderId: string, @Body() dto: UpdatePaymentStatusDto) {
     return this.adminService.updatePaymentStatus(orderId, dto.paymentStatus);
   }
 
+  @Auth(PERMISSIONS.ORDERS_UPDATE)
   @Patch('orders/:id/notes')
   updateOrderNotes(@Param('id') orderId: string, @Body() dto: UpdateOrderNotesDto) {
     return this.adminService.updateOrderNotes(orderId, dto.internalNotes);
@@ -161,6 +170,7 @@ export class AdminController {
 
   // ─── Products ───────────────────────────────────────────────────────
 
+  @Auth(PERMISSIONS.PRODUCTS_READ)
   @Get('products')
   getProducts(
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
@@ -173,36 +183,37 @@ export class AdminController {
     return this.adminService.getProducts(page, limit, search, categoryId, isActive, inStock);
   }
 
+  @Auth(PERMISSIONS.PRODUCTS_READ)
   @Get('products/:id')
   getProductById(@Param('id') productId: string) {
     return this.adminService.getProductById(productId);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_CREATE)
   @Post('products')
   createProduct(@Body() dto: UpsertProductDto) {
     return this.adminService.createProduct(dto);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Patch('products/:id')
   updateProduct(@Param('id') productId: string, @Body() dto: UpsertProductDto) {
     return this.adminService.updateProduct(productId, dto);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_DELETE)
   @Delete('products/:id')
-  deleteProduct(@Param('id') productId: string) {
-    return this.adminService.deleteProduct(productId);
+  deleteProduct(@Param('id') productId: string, @CurrentUser() user: JwtPayload) {
+    return this.adminService.deleteProduct(productId, user.sub);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Patch('products/:id/status')
   updateProductStatus(@Param('id') productId: string, @Body('isActive', ParseBoolPipe) isActive: boolean) {
     return this.adminService.updateProductStatus(productId, isActive);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Post('products/:id/images')
   @UseInterceptors(FileInterceptor('file'))
   uploadProductImage(
@@ -217,19 +228,19 @@ export class AdminController {
     });
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Delete('products/:id/images/:imageId')
   deleteProductImage(@Param('id') productId: string, @Param('imageId', ParseIntPipe) imageId: number) {
     return this.deleteProductImageUseCase.execute(productId, imageId);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Patch('products/:id/images/reorder')
   reorderProductImages(@Param('id') productId: string, @Body() dto: ReorderProductImagesDto) {
     return this.reorderProductImagesUseCase.execute(productId, dto.imageIds);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Patch('products/:id/images/:imageId/primary')
   setPrimaryProductImage(@Param('id') productId: string, @Param('imageId', ParseIntPipe) imageId: number) {
     return this.setPrimaryProductImageUseCase.execute(productId, imageId);
@@ -237,29 +248,31 @@ export class AdminController {
 
   // ─── Categories ─────────────────────────────────────────────────────
 
+  @Auth(PERMISSIONS.CATEGORIES_READ)
   @Get('categories')
   getCategories() {
     return this.adminService.getCategories();
   }
 
+  @Auth(PERMISSIONS.CATEGORIES_READ)
   @Get('categories/:id')
   getCategoryById(@Param('id') id: string) {
     return this.adminService.getCategoryById(id);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.CATEGORIES_CREATE)
   @Post('categories')
   createCategory(@Body() dto: UpsertCategoryDto) {
     return this.adminService.createCategory(dto);
   }
 
-  @Roles(...MANAGEMENT_ROLES)
+  @Auth(PERMISSIONS.CATEGORIES_UPDATE)
   @Patch('categories/:id')
   updateCategory(@Param('id') id: string, @Body() dto: UpsertCategoryDto) {
     return this.adminService.updateCategory(id, dto);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.CATEGORIES_DELETE)
   @Delete('categories/:id')
   deleteCategory(@Param('id') id: string) {
     return this.adminService.deleteCategory(id);
@@ -267,24 +280,25 @@ export class AdminController {
 
   // ─── Countries ──────────────────────────────────────────────────────
 
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Get('countries')
   getCountries() {
     return this.adminService.getCountries();
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Post('countries')
   createCountry(@Body() dto: UpsertCountryDto) {
     return this.adminService.createCountry(dto);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Patch('countries/:id')
   updateCountry(@Param('id') id: string, @Body() dto: UpsertCountryDto) {
     return this.adminService.updateCountry(id, dto);
   }
 
-  @Roles(...FULL_ACCESS_ROLES)
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Delete('countries/:id')
   deleteCountry(@Param('id') id: string) {
     return this.adminService.deleteCountry(id);

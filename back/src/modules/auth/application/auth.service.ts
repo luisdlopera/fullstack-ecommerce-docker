@@ -13,6 +13,15 @@ type AuthTokens = {
   refreshToken: string;
 };
 
+type AuthUserPayload = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  roles: Role[];
+  permissions: string[];
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -34,7 +43,7 @@ export class AuthService {
         name: input.name,
         email: input.email.toLowerCase(),
         password: bcryptjs.hashSync(input.password, 10),
-        role: Role.USER,
+        role: Role.CUSTOMER,
       },
     });
 
@@ -46,15 +55,7 @@ export class AuthService {
 
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      ...tokens,
-    };
+    return { user: await this.buildAuthUser(user.id), ...tokens };
   }
 
   async login(input: LoginDto) {
@@ -83,20 +84,12 @@ export class AuthService {
 
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      ...tokens,
-    };
+    return { user: await this.buildAuthUser(user.id), ...tokens };
   }
 
   async refresh(
     refreshToken: string,
-  ): Promise<AuthTokens & { user: { id: string; name: string; email: string; role: Role } }> {
+  ): Promise<AuthTokens & { user: AuthUserPayload }> {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new UnauthorizedException('Missing JWT_SECRET');
 
@@ -132,7 +125,7 @@ export class AuthService {
 
       await this.storeRefreshToken(user.id, tokens.refreshToken);
 
-      return { ...tokens, user };
+      return { ...tokens, user: await this.buildAuthUser(user.id) };
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
       throw new UnauthorizedException('Invalid or expired refresh token');
@@ -140,18 +133,7 @@ export class AuthService {
   }
 
   async me(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
-    });
-
-    if (!user) throw new UnauthorizedException('User not found');
-    return user;
+    return this.buildAuthUser(userId);
   }
 
   async logout(userId: string, refreshToken?: string) {
@@ -210,5 +192,33 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  private async buildAuthUser(userId: string): Promise<AuthUserPayload> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const rolePermissions = await this.prisma.rolePermission.findMany({
+      where: { role: user.role },
+      select: { permissionId: true },
+      orderBy: { permissionId: 'asc' },
+    });
+
+    return {
+      ...user,
+      roles: [user.role],
+      permissions: rolePermissions.map((item) => item.permissionId),
+    };
   }
 }

@@ -3,7 +3,7 @@ import { formatRoleLabel } from './format-role-label';
 
 describe('formatRoleLabel', () => {
 	it('formats known roles into natural labels', () => {
-		expect(formatRoleLabel('USER')).toBe('Cliente');
+		expect(formatRoleLabel('CUSTOMER')).toBe('Cliente');
 		expect(formatRoleLabel('SUPER_ADMIN')).toBe('Super admin');
 		expect(formatRoleLabel('ADMIN')).toBe('Administrador');
 		expect(formatRoleLabel('MANAGER')).toBe('Gestor');

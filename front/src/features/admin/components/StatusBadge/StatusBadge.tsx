@@ -32,7 +32,7 @@ const ROLE_COLORS: Record<string, string> = {
 	ADMIN: 'purple',
 	MANAGER: 'blue',
 	SUPPORT: 'orange',
-	USER: 'gray',
+	CUSTOMER: 'gray',
 };
 
 type StatusBadgeProps = {

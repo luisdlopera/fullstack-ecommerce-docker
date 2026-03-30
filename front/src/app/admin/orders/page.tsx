@@ -5,12 +5,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Eye, X } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
 	AdminPageHeader,
 	DataTable,
 	ErrorState,
 	FilterSelect,
 	ordersApi,
+	PERMISSIONS,
 	SearchInput,
 	StatusBadge,
 	type AdminOrder,
@@ -49,6 +51,9 @@ function formatDate(d: string) {
 }
 
 export default function AdminOrdersPage() {
+	const { hasPermission } = usePermissions();
+	const canUpdateOrders = hasPermission(PERMISSIONS.ORDERS_UPDATE);
+
 	const queryClient = useQueryClient();
 	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState('');
@@ -117,11 +122,13 @@ export default function AdminOrdersPage() {
 					radius='md'
 					selectedKeys={new Set([o.status])}
 					onSelectionChange={(keys) => {
+						if (!canUpdateOrders) return;
 						const nextStatus = Array.from(keys as Set<string>)[0];
 						if (nextStatus) {
 							statusMutation.mutate({ id: o.id, status: String(nextStatus) });
 						}
 					}}
+					disabled={!canUpdateOrders}
 					className='max-w-44'
 				>
 					{ORDER_STATUS_OPTIONS.map((s) => (
@@ -213,8 +220,9 @@ export default function AdminOrdersPage() {
 			{detailOrder && (
 				<OrderDetailDrawer
 					order={detailOrder}
+					canUpdateNotes={canUpdateOrders}
 					onClose={() => setDetailOrder(null)}
-					onSaveNotes={(notes) => notesMutation.mutate({ id: detailOrder.id, notes })}
+					onSaveNotes={(notes) => canUpdateOrders && notesMutation.mutate({ id: detailOrder.id, notes })}
 				/>
 			)}
 		</>
@@ -223,10 +231,12 @@ export default function AdminOrdersPage() {
 
 function OrderDetailDrawer({
 	order,
+	canUpdateNotes,
 	onClose,
 	onSaveNotes,
 }: {
 	order: AdminOrder;
+	canUpdateNotes: boolean;
 	onClose: () => void;
 	onSaveNotes: (notes: string) => void;
 }) {
@@ -317,6 +327,7 @@ function OrderDetailDrawer({
 						<Textarea
 							value={notes}
 							onChange={(e) => setNotes(e.target.value)}
+							isDisabled={!canUpdateNotes}
 							rows={3}
 							variant='flat'
 							radius='lg'
@@ -324,8 +335,9 @@ function OrderDetailDrawer({
 							placeholder='Agregar notas internas...'
 						/>
 						<button
+							disabled={!canUpdateNotes}
 							onClick={() => onSaveNotes(notes)}
-							className='mt-2 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800'
+							className='mt-2 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50'
 						>
 							Guardar notas
 						</button>

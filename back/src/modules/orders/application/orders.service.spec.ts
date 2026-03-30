@@ -119,7 +119,7 @@ describe('OrdersService', () => {
         OrderAddress: null,
       } as never);
 
-      const result = await service.updateStatus('o1', OrderStatus.CANCELLED, 'user-1', Role.USER);
+      const result = await service.updateStatus('o1', OrderStatus.CANCELLED, 'user-1', Role.CUSTOMER);
 
       expect(result.status).toBe(OrderStatus.CANCELLED);
       expect(mockRepo.incrementProductStock).toHaveBeenCalledWith('p1', 2);
@@ -141,7 +141,7 @@ describe('OrdersService', () => {
         updatedAt: new Date(),
       } as never);
 
-      await expect(service.updateStatus('o1', OrderStatus.CANCELLED, 'user-2', Role.USER)).rejects.toThrow(
+      await expect(service.updateStatus('o1', OrderStatus.CANCELLED, 'user-2', Role.CUSTOMER)).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -162,7 +162,7 @@ describe('OrdersService', () => {
         userId: 'user-1',
       } as never);
 
-      const result = await service.getById('o1', 'user-1', Role.USER);
+      const result = await service.getById('o1', 'user-1', Role.CUSTOMER);
       expect(result.id).toBe('o1');
     });
 
@@ -172,7 +172,7 @@ describe('OrdersService', () => {
         userId: 'user-1',
       } as never);
 
-      await expect(service.getById('o1', 'user-2', Role.USER)).rejects.toThrow(ForbiddenException);
+      await expect(service.getById('o1', 'user-2', Role.CUSTOMER)).rejects.toThrow(ForbiddenException);
     });
 
     it('should allow admin to access any order', async () => {

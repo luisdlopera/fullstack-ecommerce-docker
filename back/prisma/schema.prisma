@@ -28,7 +28,7 @@ enum Role {
   ADMIN
   MANAGER
   SUPPORT
-  USER
+  CUSTOMER
 }
 
 enum OrderStatus {
@@ -128,7 +128,7 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   password      String
-  role          Role      @default(USER)
+  role          Role      @default(CUSTOMER)
   image         String?
   phone         String?
   isActive      Boolean   @default(true)
@@ -145,6 +145,30 @@ model User {
 
   @@index([role])
   @@index([isActive])
+}
+
+model Permission {
+  id          String           @id
+  description String?
+
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  role         Role
+  permissionId String
+
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([role, permissionId])
+  @@index([role])
+  @@index([permissionId])
 }
 
 model Country {

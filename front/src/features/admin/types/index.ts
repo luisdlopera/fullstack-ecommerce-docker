@@ -1,4 +1,4 @@
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'SUPPORT' | 'USER';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'SUPPORT' | 'CUSTOMER';
 
 export type OrderStatus = 'PENDING' | 'PAID' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
 

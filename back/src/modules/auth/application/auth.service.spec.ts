@@ -11,6 +11,9 @@ const mockPrisma = {
     create: jest.fn(),
     update: jest.fn(),
   },
+  rolePermission: {
+    findMany: jest.fn(),
+  },
   refreshToken: {
     create: jest.fn(),
     findUnique: jest.fn(),
@@ -40,16 +43,24 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     jest.clearAllMocks();
+    mockPrisma.rolePermission.findMany.mockResolvedValue([]);
   });
 
   describe('register', () => {
     it('should create a new user and return tokens', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'user-1',
+          name: 'Test',
+          email: 'test@test.com',
+          role: 'CUSTOMER',
+        });
       mockPrisma.user.create.mockResolvedValue({
         id: 'user-1',
         name: 'Test',
         email: 'test@test.com',
-        role: 'user',
+        role: 'CUSTOMER',
       });
       mockPrisma.refreshToken.create.mockResolvedValue({});
       mockPrisma.refreshToken.deleteMany.mockResolvedValue({});
@@ -107,7 +118,7 @@ describe('AuthService', () => {
         id: 'user-1',
         email: 'test@test.com',
         password: bcryptjs.hashSync('password123', 10),
-        role: 'user',
+        role: 'CUSTOMER',
       });
 
       await expect(service.login({ email: 'test@test.com', password: 'wrong' })).rejects.toThrow(UnauthorizedException);

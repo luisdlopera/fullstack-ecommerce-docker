@@ -24,6 +24,21 @@ export default defineConfig({
 		{
 			command: `npm run dev:db && npm run db:sync:seed && PORT=${backPort} CORS_ORIGIN=${frontBaseUrl} npm run start:dev -w back`,
 			cwd: repoRoot,
+			env: {
+				...process.env,
+				DATABASE_URL:
+					process.env.DATABASE_URL ??
+					'postgresql://nexstore:nexstore@127.0.0.1:5432/nexstore?schema=public',
+				STORAGE_PROVIDER: process.env.STORAGE_PROVIDER ?? 'minio',
+				STORAGE_BUCKET: process.env.STORAGE_BUCKET ?? 'nexstore-products',
+				STORAGE_REGION: process.env.STORAGE_REGION ?? 'us-east-1',
+				STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT ?? 'http://localhost:9000',
+				STORAGE_ACCESS_KEY: process.env.STORAGE_ACCESS_KEY ?? 'minioadmin',
+				STORAGE_SECRET_KEY: process.env.STORAGE_SECRET_KEY ?? 'minioadmin',
+				STORAGE_PUBLIC_URL:
+					process.env.STORAGE_PUBLIC_URL ?? 'http://localhost:9000/nexstore-products',
+				STORAGE_FORCE_PATH_STYLE: process.env.STORAGE_FORCE_PATH_STYLE ?? 'true',
+			},
 			url: `${backBaseUrl}/health`,
 			reuseExistingServer: false,
 			timeout: 240_000,

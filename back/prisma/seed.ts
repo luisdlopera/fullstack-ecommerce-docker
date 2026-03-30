@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import bcryptjs from 'bcryptjs';
 import { Gender, OrderStatus, PrismaClient, Role, Size } from '@prisma/client';
 import { createPrismaClientOptions } from '../src/shared/infrastructure/prisma/prisma-client-options';
+import { PERMISSIONS, ROLE_PERMISSIONS } from '../src/shared/infrastructure/auth/permissions';
 import { seedCatalog } from './seed-catalog';
 
 // Monorepo: allow `npm run prisma:seed -w back` with `.env` at repo root.
@@ -13,6 +14,49 @@ const prisma = new PrismaClient(createPrismaClientOptions());
 
 async function main() {
   console.log('Seeding database...');
+
+  // ── RBAC permissions ───────────────────────────────────────────────────
+  const permissionDescriptions: Record<string, string> = {
+    [PERMISSIONS.DASHBOARD_READ]: 'Read admin dashboard and analytics overview',
+    [PERMISSIONS.USERS_READ]: 'Read customer and user records',
+    [PERMISSIONS.USERS_MANAGE]: 'Create, update, deactivate and assign user roles',
+    [PERMISSIONS.ORDERS_READ]: 'Read order records and order details',
+    [PERMISSIONS.ORDERS_UPDATE]: 'Update order status and internal order notes',
+    [PERMISSIONS.ORDERS_CANCEL]: 'Cancel active orders',
+    [PERMISSIONS.PRODUCTS_READ]: 'Read product records',
+    [PERMISSIONS.PRODUCTS_CREATE]: 'Create products',
+    [PERMISSIONS.PRODUCTS_UPDATE]: 'Update products and media',
+    [PERMISSIONS.PRODUCTS_DELETE]: 'Delete products',
+    [PERMISSIONS.CATEGORIES_READ]: 'Read categories',
+    [PERMISSIONS.CATEGORIES_CREATE]: 'Create categories',
+    [PERMISSIONS.CATEGORIES_UPDATE]: 'Update categories',
+    [PERMISSIONS.CATEGORIES_DELETE]: 'Delete categories',
+    [PERMISSIONS.INVENTORY_READ]: 'Read inventory status',
+    [PERMISSIONS.INVENTORY_ADJUST]: 'Adjust inventory levels',
+    [PERMISSIONS.PROMOTIONS_MANAGE]: 'Create and manage promotions',
+    [PERMISSIONS.PAYMENTS_READ]: 'Read and update payment status',
+    [PERMISSIONS.AUDIT_READ]: 'Read security and audit logs',
+    [PERMISSIONS.SETTINGS_MANAGE]: 'Manage critical system settings',
+  };
+
+  for (const permissionId of Object.values(PERMISSIONS)) {
+    await prisma.permission.upsert({
+      where: { id: permissionId },
+      update: { description: permissionDescriptions[permissionId] },
+      create: {
+        id: permissionId,
+        description: permissionDescriptions[permissionId],
+      },
+    });
+  }
+
+  await prisma.rolePermission.deleteMany();
+  await prisma.rolePermission.createMany({
+    data: Object.entries(ROLE_PERMISSIONS).flatMap(([role, permissions]) =>
+      permissions.map((permissionId) => ({ role: role as Role, permissionId })),
+    ),
+    skipDuplicates: true,
+  });
 
   // ── Countries ─────────────────────────────────────────────────────────
   const countries = [
@@ -272,9 +316,9 @@ async function main() {
     { email: 'admin@nexstore.com', name: 'Admin', role: Role.ADMIN },
     { email: 'manager@nexstore.com', name: 'Manager', role: Role.MANAGER },
     { email: 'support@nexstore.com', name: 'Support', role: Role.SUPPORT },
-    { email: 'cliente@nexstore.com', name: 'Cliente Demo', role: Role.USER },
-    { email: 'maria@nexstore.com', name: 'María García', role: Role.USER },
-    { email: 'carlos@nexstore.com', name: 'Carlos López', role: Role.USER },
+    { email: 'cliente@nexstore.com', name: 'Cliente Demo', role: Role.CUSTOMER },
+    { email: 'maria@nexstore.com', name: 'María García', role: Role.CUSTOMER },
+    { email: 'carlos@nexstore.com', name: 'Carlos López', role: Role.CUSTOMER },
   ];
 
   for (const u of users) {

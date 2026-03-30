@@ -7,6 +7,8 @@ export type AuthUser = {
 	name: string;
 	email: string;
 	role: string;
+	roles: string[];
+	permissions: string[];
 };
 
 type AuthContextType = {
@@ -20,12 +22,34 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+type AuthUserResponse = {
+	id: string;
+	name: string;
+	email: string;
+	role: string;
+	roles?: string[];
+	permissions?: string[];
+};
+
 function nestErrorMessage(body: unknown, fallback: string): string {
 	if (!body || typeof body !== 'object') return fallback;
 	const msg = (body as { message?: unknown }).message;
 	if (typeof msg === 'string') return msg;
 	if (Array.isArray(msg) && msg.every((x) => typeof x === 'string')) return msg.join('. ');
 	return fallback;
+}
+
+function normalizeAuthUser(user: AuthUserResponse | null | undefined): AuthUser | null {
+	if (!user) return null;
+
+	return {
+		id: user.id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+		roles: user.roles?.length ? user.roles : [user.role],
+		permissions: Array.isArray(user.permissions) ? user.permissions : [],
+	};
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -38,8 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			setUser(null);
 			return;
 		}
-		const data = (await res.json()) as { user: AuthUser | null };
-		setUser(data.user ?? null);
+		const data = (await res.json()) as { user: AuthUserResponse | null };
+		setUser(normalizeAuthUser(data.user));
 	}, []);
 
 	useEffect(() => {
@@ -67,8 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			throw new Error(nestErrorMessage(body, 'Error al iniciar sesión'));
 		}
 
-		const data = (await res.json()) as { user: AuthUser };
-		setUser(data.user);
+		const data = (await res.json()) as { user: AuthUserResponse };
+		setUser(normalizeAuthUser(data.user));
 	}, []);
 
 	const register = useCallback(async (name: string, email: string, password: string) => {
@@ -84,8 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			throw new Error(nestErrorMessage(body, 'Error al registrarse'));
 		}
 
-		const data = (await res.json()) as { user: AuthUser };
-		setUser(data.user);
+		const data = (await res.json()) as { user: AuthUserResponse };
+		setUser(normalizeAuthUser(data.user));
 	}, []);
 
 	const logout = useCallback(async () => {

@@ -6,17 +6,16 @@ import { type Dispatch, type SetStateAction, useState } from 'react';
 import { Plus, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
 	AdminPageHeader,
 	categoriesApi,
-	canDeleteProduct,
-	canManageProductsWrite,
 	ConfirmDialog,
 	DataTable,
 	ErrorState,
 	FilterSelect,
 	FormModal,
+	PERMISSIONS,
 	productsApi,
 	SearchInput,
 	StatusBadge,
@@ -70,10 +69,12 @@ function formatCurrency(v: number) {
 }
 
 export default function AdminProductsPage() {
-	const { user } = useAuth();
-	const role = user?.role ?? 'USER';
-	const canWrite = canManageProductsWrite(role);
-	const canDelete = canDeleteProduct(role);
+	const { hasPermission } = usePermissions();
+	const canWrite =
+		hasPermission(PERMISSIONS.PRODUCTS_CREATE) ||
+		hasPermission(PERMISSIONS.PRODUCTS_UPDATE) ||
+		hasPermission(PERMISSIONS.INVENTORY_ADJUST);
+	const canDelete = hasPermission(PERMISSIONS.PRODUCTS_DELETE);
 
 	const queryClient = useQueryClient();
 	const [page, setPage] = useState(1);

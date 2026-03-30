@@ -2,7 +2,7 @@
 
 import { Button, Checkbox, Chip, Input, Progress, Select, SelectItem, Textarea } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useState } from 'react';
 import { Plus, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
@@ -510,7 +510,7 @@ export default function AdminProductsPage() {
 
 			{canWrite && editProduct && (
 				<ProductFormModal
-					key={editProduct.id}
+					key={`${editProduct.id}-img-${(editProduct.ProductImage ?? []).map((i) => `${i.id}:${i.sortOrder}:${i.isPrimary ? 1 : 0}`).join('|')}`}
 					open
 					title='Editar producto'
 					initialData={editProduct}
@@ -611,10 +611,6 @@ function ProductFormModal({
 		{ id: CATEGORY_PLACEHOLDER_KEY, name: 'Seleccionar' },
 		...categories.map((c) => ({ id: c.id, name: c.name })),
 	];
-
-	useEffect(() => {
-		setLocalImages(initialData?.ProductImage ?? []);
-	}, [initialData]);
 
 	const handleUploadImage = async () => {
 		if (!initialData?.id) {

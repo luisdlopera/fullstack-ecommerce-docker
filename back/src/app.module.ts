@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SharedModule } from './shared/shared.module';
 import { JwtAuthGuard } from './shared/infrastructure/auth/jwt-auth.guard';
+import { AuthorizationGuard } from './shared/infrastructure/auth/authorization.guard';
 import { RolesGuard } from './shared/infrastructure/auth/roles.guard';
 import { ProductsModule } from './modules/products/products.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -30,6 +31,10 @@ import { HealthModule } from './modules/health/health.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthorizationGuard,
     },
     {
       provide: APP_GUARD,

@@ -228,7 +228,7 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 			<main className='mx-auto max-w-7xl px-4 pt-28 pb-20 md:px-8 lg:px-10'>
 				<section className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] lg:items-stretch lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]'>
 					<ProductGallery
-						className='lg:h-[640px]'
+						className='lg:h-160'
 						images={product.images}
 						selectedIndex={selectedImage}
 						onSelectIndex={setSelectedImage}
@@ -238,7 +238,7 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 						onToggleFavorite={handleToggleFavorite}
 					/>
 
-					<div className='flex min-h-0 flex-col lg:h-[640px]'>
+					<div className='flex min-h-0 flex-col lg:h-160'>
 						<ProductInfo
 							product={product}
 							selectedSize={selectedSize}

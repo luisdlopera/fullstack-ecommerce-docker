@@ -33,7 +33,7 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 		<>
 			<div className='flex flex-col items-center gap-4'>
 				<div
-				className='relative h-[355px] w-[290px] overflow-hidden rounded-3xl bg-gray-100'
+				className='relative h-88.75 w-72.5 overflow-hidden rounded-3xl bg-gray-100'
 				onMouseEnter={() => setHover(true)}
 				onMouseLeave={() => setHover(false)}
 				>
@@ -50,7 +50,7 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 						<Image
 							src={model.image}
 							alt={model.title}
-							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
 								hover ? 'absolute opacity-0' : 'opacity-100'
 							}`}
 						/>
@@ -58,7 +58,7 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 							src={model.image2 || model.image}
 							alt=''
 							aria-hidden
-							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
 								hover ? 'opacity-100' : 'absolute opacity-0'
 							}`}
 						/>
@@ -68,7 +68,7 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 						<Image
 							src={model.image}
 							alt={model.title}
-							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
 								hover ? 'absolute opacity-0' : 'opacity-100'
 							}`}
 						/>
@@ -76,7 +76,7 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 							src={model.image2 || model.image}
 							alt=''
 							aria-hidden
-							className={`h-[355px] w-[290px] rounded-3xl object-cover transition-opacity duration-500 ${
+							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
 								hover ? 'opacity-100' : 'absolute opacity-0'
 							}`}
 						/>

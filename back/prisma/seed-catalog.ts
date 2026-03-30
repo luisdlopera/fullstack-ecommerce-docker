@@ -179,6 +179,7 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
         url,
         productId: product.id,
         sortOrder: idx,
+        isPrimary: idx === 0,
       })),
     });
   }

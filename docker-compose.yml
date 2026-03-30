@@ -17,6 +17,39 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: nexstore_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin}
+    command: server /data --console-address ':9001'
+    ports:
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: nexstore_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: 'no'
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${STORAGE_ACCESS_KEY:-minioadmin} ${STORAGE_SECRET_KEY:-minioadmin};
+      mc mb --ignore-existing local/${STORAGE_BUCKET:-nexstore-products};
+      mc anonymous set public local/${STORAGE_BUCKET:-nexstore-products};
+      "
+
   back:
     build:
       context: ./back
@@ -26,6 +59,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:
@@ -35,6 +70,15 @@ services:
       JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-minio}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-nexstore-products}
+      STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-http://minio:9000}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-minioadmin}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-minioadmin}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/nexstore-products}
+      STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE:-true}
+      STORAGE_MAX_FILE_SIZE_BYTES: ${STORAGE_MAX_FILE_SIZE_BYTES:-5242880}
     ports:
       - '4000:4000'
     healthcheck:
@@ -60,3 +104,4 @@ services:
 
 volumes:
   pg_data:
+  minio_data:

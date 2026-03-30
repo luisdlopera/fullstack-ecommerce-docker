@@ -1,5 +1,6 @@
 'use client';
 
+import { Input } from '@heroui/react';
 import { Search } from 'lucide-react';
 import { useRef } from 'react';
 
@@ -19,15 +20,16 @@ export function SearchInput({ value, onChange, placeholder = 'Buscar...' }: Sear
 	};
 
 	return (
-		<div className='relative'>
-			<Search size={16} className='absolute top-1/2 left-3 -translate-y-1/2 text-gray-400' />
-			<input
-				type='text'
-				defaultValue={value}
-				onChange={handleChange}
-				placeholder={placeholder}
-				className='h-10 w-full rounded-lg border border-gray-200 bg-white pr-4 pl-10 text-sm text-gray-900 transition-colors outline-none focus:border-black focus:ring-1 focus:ring-black sm:w-72'
-			/>
-		</div>
+		<Input
+			type='text'
+			defaultValue={value}
+			onChange={handleChange}
+			placeholder={placeholder}
+			variant='flat'
+			size='sm'
+			radius='lg'
+			startContent={<Search size={16} className='text-gray-400' />}
+			className='w-full sm:w-72'
+		/>
 	);
 }

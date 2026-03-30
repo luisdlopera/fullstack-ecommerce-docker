@@ -1,5 +1,6 @@
 'use client';
 
+import { Input, Select, SelectItem, Textarea } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -207,87 +208,90 @@ function CategoryFormModal({
 	onClose: () => void;
 	onSubmit: (data: Record<string, unknown>) => void;
 }) {
+	const NONE_PARENT_KEY = '__none_parent__';
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		const form = e.target as HTMLFormElement;
 		const fd = new FormData(form);
+		const rawParentId = String(fd.get('parentId') ?? '');
 		onSubmit({
 			name: fd.get('name'),
 			slug: fd.get('slug'),
 			description: fd.get('description') || undefined,
 			image: fd.get('image') || undefined,
-			parentId: fd.get('parentId') || undefined,
+			parentId: rawParentId && rawParentId !== NONE_PARENT_KEY ? rawParentId : undefined,
 			sortOrder: Number(fd.get('sortOrder') || 0),
 			isActive: fd.get('isActive') !== 'off',
 		});
 	};
 
+	const parentIdValue = initialData?.parentId ?? NONE_PARENT_KEY;
+	const defaultParentKeys = new Set([parentIdValue]);
+	const parentItems = [{ id: NONE_PARENT_KEY, name: 'Ninguna' }, ...categories.map((c) => ({ id: c.id, name: c.name }))];
+
 	return (
 		<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading}>
 			<div className='space-y-4'>
 				<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Nombre *</label>
-						<input
-							name='name'
-							defaultValue={initialData?.name}
-							required
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Slug *</label>
-						<input
-							name='slug'
-							defaultValue={initialData?.slug}
-							required
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
-				</div>
-				<div>
-					<label className='mb-1 block text-sm font-medium text-gray-700'>Descripción</label>
-					<textarea
-						name='description'
-						defaultValue={initialData?.description ?? ''}
-						rows={2}
-						className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black'
+					<Input
+						label='Nombre *'
+						name='name'
+						defaultValue={initialData?.name}
+						required
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Slug *'
+						name='slug'
+						defaultValue={initialData?.slug}
+						required
+						variant='flat'
+						radius='lg'
+						size='sm'
 					/>
 				</div>
+				<Textarea
+					label='Descripción'
+					name='description'
+					defaultValue={initialData?.description ?? ''}
+					rows={2}
+					variant='flat'
+					radius='lg'
+					size='sm'
+				/>
 				<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Categoría padre</label>
-						<select
-							name='parentId'
-							defaultValue={initialData?.parentId ?? ''}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						>
-							<option value=''>Ninguna</option>
-							{categories.map((c) => (
-								<option key={c.id} value={c.id}>
-									{c.name}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Orden</label>
-						<input
-							name='sortOrder'
-							type='number'
-							min='0'
-							defaultValue={initialData?.sortOrder ?? 0}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
-					<div>
-						<label className='mb-1 block text-sm font-medium text-gray-700'>Imagen URL</label>
-						<input
-							name='image'
-							defaultValue={initialData?.image ?? ''}
-							className='h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-black'
-						/>
-					</div>
+					<Select
+						label='Categoría padre'
+						name='parentId'
+						defaultSelectedKeys={defaultParentKeys}
+						items={parentItems}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					>
+						{(item) => <SelectItem key={item.id}>{item.name}</SelectItem>}
+					</Select>
+					<Input
+						label='Orden'
+						name='sortOrder'
+						type='number'
+						min='0'
+						defaultValue={String(initialData?.sortOrder ?? 0)}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Imagen URL'
+						name='image'
+						defaultValue={initialData?.image ?? ''}
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
 				</div>
 			</div>
 		</FormModal>

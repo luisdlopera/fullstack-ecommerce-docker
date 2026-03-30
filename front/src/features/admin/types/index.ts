@@ -59,7 +59,15 @@ export type AdminProduct = {
 	isActive: boolean;
 	categoryId: string;
 	category: { id: string; name: string };
-	ProductImage: { id: number; url: string; sortOrder: number }[];
+	ProductImage: {
+		id: number;
+		url: string;
+		sortOrder: number;
+		isPrimary?: boolean;
+		contentType?: string | null;
+		sizeBytes?: number | null;
+		storageKey?: string | null;
+	}[];
 	createdAt: string;
 	updatedAt: string;
 };

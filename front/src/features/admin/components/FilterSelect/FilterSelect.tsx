@@ -43,7 +43,7 @@ export function FilterSelect({
 	return (
 		<Select
 			size='sm'
-			variant='bordered'
+			variant='flat'
 			radius='lg'
 			className={`max-w-65 min-w-40 ${className ?? ''}`}
 			aria-label={ariaLabel ?? placeholder}

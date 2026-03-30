@@ -8,7 +8,7 @@ NexStore es un e-commerce organizado como monorepo con separación clara entre f
 
 - `front/`: Next.js (UI)
 - `back/`: NestJS con arquitectura hexagonal + Prisma
-- `docker-compose.yml`: servicios Docker (en desarrollo local se usa solo `postgres`)
+- `docker-compose.yml`: servicios Docker para desarrollo local (`postgres` + `minio`)
 
 ## Stack
 
@@ -52,7 +52,7 @@ cp .env.template .env         # Linux/Mac
 openssl rand -hex 64
 ```
 
-4) Levanta PostgreSQL:
+4) Levanta PostgreSQL + MinIO:
 
 ```bash
 npm run dev:db
@@ -122,7 +122,7 @@ npm run db:sync
 npm run prisma:migrate:dev -w back
 ```
 
-5) Levantar solo PostgreSQL:
+5) Levantar PostgreSQL + MinIO:
 
 ```bash
 npm run dev:db
@@ -140,7 +140,7 @@ npm run dev:down
 |---|---|
 | `npm run dev:stack` | Levanta DB (`postgres`) y ejecuta `back` + `front` en paralelo |
 | `npm run dev:apps` | Ejecuta `back` + `front` en paralelo usando npm workspaces |
-| `npm run dev:db` | Levanta solo PostgreSQL con Docker Compose |
+| `npm run dev:db` | Levanta PostgreSQL + MinIO con Docker Compose |
 | `npm run dev:down` | Apaga contenedores Docker del proyecto |
 | `npm run db:sync` | Ejecuta `prisma generate` + `prisma migrate deploy` en `back/` |
 | `npm run db:sync:seed` | Ejecuta `db:sync` y luego el seed del backend |
@@ -177,6 +177,8 @@ npm run dev:apps
 | Swagger Docs | `http://localhost:4000/api/docs` |
 | Health check | `http://localhost:4000/api/health` |
 | PostgreSQL | `localhost:5432` |
+| MinIO API (S3) | `http://localhost:9000` |
+| MinIO Console | `http://localhost:9001` |
 
 ## Usuarios de prueba
 
@@ -211,6 +213,13 @@ npm run prisma:migrate:dev -w back   # cuando tú cambias schema.prisma
 ```
 
 El seed también se puede ejecutar con `npx prisma db seed` dentro de `back/` (usa `prisma.seed` del `package.json` del backend).
+
+## Storage de imágenes (backend)
+
+- Arquitectura y uso: `back/docs/STORAGE.md`
+- Puerto: `StoragePort` (desacoplado del proveedor)
+- Local: MinIO
+- Demo/Prod: Cloudflare R2
 
 ## Formato de código
 

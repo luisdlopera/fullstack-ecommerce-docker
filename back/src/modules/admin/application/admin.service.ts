@@ -475,7 +475,12 @@ export class AdminService {
 
       if (dto.images?.length) {
         await tx.productImage.createMany({
-          data: dto.images.map((url, index) => ({ productId: product.id, url, sortOrder: index })),
+          data: dto.images.map((url, index) => ({
+            productId: product.id,
+            url,
+            sortOrder: index,
+            isPrimary: index === 0,
+          })),
         });
       }
 
@@ -527,7 +532,12 @@ export class AdminService {
       await this.prisma.$transaction([
         this.prisma.productImage.deleteMany({ where: { productId } }),
         this.prisma.productImage.createMany({
-          data: dto.images.map((url, index) => ({ productId, url, sortOrder: index })),
+          data: dto.images.map((url, index) => ({
+            productId,
+            url,
+            sortOrder: index,
+            isPrimary: index === 0,
+          })),
         }),
       ]);
     }
@@ -566,11 +576,14 @@ export class AdminService {
       _max: { sortOrder: true },
     });
 
+    const existingCount = await this.prisma.productImage.count({ where: { productId } });
+
     return this.prisma.productImage.create({
       data: {
         productId,
         url: imageUrl,
         sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+        isPrimary: existingCount === 0,
       },
     });
   }

@@ -13,7 +13,7 @@ import { Button, Link } from '@heroui/react';
 export function Slider() {
 	return (
 		<div className='relative w-full'>
-			<div className='relative h-[700px] w-full'>
+			<div className='relative h-175 w-full'>
 				<Swiper
 					modules={[Navigation, Scrollbar, Autoplay]}
 					loop={true}

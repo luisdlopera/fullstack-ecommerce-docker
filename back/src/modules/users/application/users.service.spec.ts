@@ -71,7 +71,7 @@ describe('UsersService', () => {
 
       await expect(
         service.changeMyPassword('u1', {
-          currentPassword: 'WrongPass.123',
+          currentPassword: 'wrong-password',
           newPassword: 'NewPass.456',
         }),
       ).rejects.toThrow(UnauthorizedException);

@@ -5,6 +5,7 @@ import { Button, Image, Tooltip } from '@heroui/react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { ProductPriceBlock, ShopStyleBadges } from '@/components/shared/product-card';
+import { ConfirmDialog } from '@/features/admin';
 import { useProductCardActions } from '../../hooks/useProductCardActions';
 import type { ProductCardViewModel } from '../../types/product-card-model';
 
@@ -15,17 +16,27 @@ type ProductCardShopProps = {
 
 export function ProductCardShop({ model, showActions = true }: ProductCardShopProps) {
 	const [hover, setHover] = useState(false);
+	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 	const actions = useProductCardActions(model, { favorites: showActions, cart: showActions });
 	const favoriteTooltip = actions.favorite ? 'En favoritos' : 'Agregar a favoritos';
 	const favoriteAria = actions.favorite ? 'Producto en favoritos' : 'Agregar a favoritos';
 
+	const handleFavoritePress = () => {
+		if (!actions.favorite) {
+			actions.handleToggleFavorite();
+			return;
+		}
+		setConfirmRemoveOpen(true);
+	};
+
 	return (
-		<div className='flex flex-col items-center gap-4'>
-			<div
+		<>
+			<div className='flex flex-col items-center gap-4'>
+				<div
 				className='relative h-[355px] w-[290px] overflow-hidden rounded-3xl bg-gray-100'
 				onMouseEnter={() => setHover(true)}
 				onMouseLeave={() => setHover(false)}
-			>
+				>
 				<ShopStyleBadges
 					isNew={model.isNew}
 					discount={model.discountPercent}
@@ -84,7 +95,7 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 								isIconOnly
 								aria-label={favoriteAria}
 								className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
-								onPress={() => actions.handleToggleFavorite()}
+								onPress={handleFavoritePress}
 							>
 								<Heart
 									className={actions.favorite ? 'text-red-500' : ''}
@@ -114,19 +125,34 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 						</Tooltip>
 					</div>
 				)}
+				</div>
+
+				{model.slug ? (
+					<Link href={actions.productHref} className='mt-4 block text-center'>
+						<h3 className='mx-auto flex w-full text-lg font-semibold text-black'>{model.title}</h3>
+						<ProductPriceBlock variant='shop' price={model.price} comparePrice={model.comparePrice} />
+					</Link>
+				) : (
+					<div className='mt-4 text-center'>
+						<h3 className='mx-auto flex w-full text-lg font-semibold text-black'>{model.title}</h3>
+						<ProductPriceBlock variant='shop' price={model.price} comparePrice={model.comparePrice} />
+					</div>
+				)}
 			</div>
 
-			{model.slug ? (
-				<Link href={actions.productHref} className='mt-4 block text-center'>
-					<h3 className='mx-auto flex w-full text-lg font-semibold text-black'>{model.title}</h3>
-					<ProductPriceBlock variant='shop' price={model.price} comparePrice={model.comparePrice} />
-				</Link>
-			) : (
-				<div className='mt-4 text-center'>
-					<h3 className='mx-auto flex w-full text-lg font-semibold text-black'>{model.title}</h3>
-					<ProductPriceBlock variant='shop' price={model.price} comparePrice={model.comparePrice} />
-				</div>
-			)}
-		</div>
+			<ConfirmDialog
+				open={confirmRemoveOpen}
+				title='Quitar de favoritos'
+				description={`¿Seguro que quieres quitar "${model.title}" de favoritos?`}
+				confirmLabel='Quitar'
+				cancelLabel='Cancelar'
+				variant='danger'
+				onConfirm={() => {
+					actions.handleToggleFavorite();
+					setConfirmRemoveOpen(false);
+				}}
+				onCancel={() => setConfirmRemoveOpen(false)}
+			/>
+		</>
 	);
 }

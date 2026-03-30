@@ -3,19 +3,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { bffFetch } from '@/lib/bff-fetch';
+import type { FavoriteItem as ApiFavoriteItem, FavoritesListResponse } from '@/lib/api';
 
-export type FavoriteItem = {
-	productId: string;
-	slug: string;
-	title: string;
-	price: number;
-	image: string;
-};
+export type FavoriteItem = ApiFavoriteItem;
 
 type FavoritesContextType = {
 	items: FavoriteItem[];
 	isFavorite: (slug: string) => boolean;
 	toggleFavorite: (item: FavoriteItem) => void;
+	removeFavorite: (item: FavoriteItem) => Promise<void>;
 };
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
@@ -34,6 +30,11 @@ function loadFavorites(): FavoriteItem[] {
 function saveFavorites(items: FavoriteItem[]) {
 	if (typeof window === 'undefined') return;
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+function parseFavoritesPayload(payload: FavoriteItem[] | FavoritesListResponse): FavoriteItem[] {
+	if (Array.isArray(payload)) return payload;
+	return payload.data;
 }
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
@@ -76,7 +77,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
 				const res = await bffFetch('/users/me/favorites');
 				if (res.ok) {
-					setItems((await res.json()) as FavoriteItem[]);
+					const payload = (await res.json()) as FavoriteItem[] | FavoritesListResponse;
+					setItems(parseFavoritesPayload(payload));
 					saveFavorites([]);
 					setSyncedUserId(user.id);
 				}
@@ -129,7 +131,21 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 		[user],
 	);
 
-	const value = useMemo(() => ({ items, isFavorite, toggleFavorite }), [items, isFavorite, toggleFavorite]);
+	const removeFavorite = useCallback(
+		async (item: FavoriteItem) => {
+			if (user) {
+				await bffFetch(`/users/me/favorites/${item.productId}`, { method: 'DELETE' });
+			}
+
+			setItems((prev) => prev.filter((fav) => fav.slug !== item.slug));
+		},
+		[user],
+	);
+
+	const value = useMemo(
+		() => ({ items, isFavorite, toggleFavorite, removeFavorite }),
+		[items, isFavorite, toggleFavorite, removeFavorite],
+	);
 
 	return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
 }

@@ -10,6 +10,7 @@ import { ProductInfo } from './components/ProductInfo';
 import { SimilarProductsSection } from './components/SimilarProductsSection';
 import { mapApiProductToProductDetail, mapProductToSimilarProduct } from './lib/product-detail-adapter';
 import type { ProductAccordionItem, ProductDetail, SimilarProduct } from './types';
+import { ConfirmDialog } from '@/features/admin';
 import { useCart } from '@/features/cart';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import type { Product } from '@/lib/api';
@@ -40,7 +41,7 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 	const params = useParams<{ slug: string }>();
 	const router = useRouter();
 	const { addItem } = useCart();
-	const { isFavorite, toggleFavorite } = useFavorites();
+	const { isFavorite, toggleFavorite, removeFavorite } = useFavorites();
 
 	const initialSelection =
 		initialApiProduct && !useMock
@@ -57,6 +58,7 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 	const [selectedColorId, setSelectedColorId] = useState<string | null>(() => initialSelection.color);
 	const [quantity, setQuantity] = useState(1);
 	const [addFeedback, setAddFeedback] = useState(false);
+	const [favoriteDeleteOpen, setFavoriteDeleteOpen] = useState(false);
 
 	useEffect(() => {
 		if (useMock) {
@@ -153,6 +155,11 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 
 	const handleToggleFavorite = () => {
 		if (!product) return;
+		if (favorite) {
+			setFavoriteDeleteOpen(true);
+			return;
+		}
+
 		const img = product.images[0] ?? '/img/shirt/shirt-black-1.png';
 		toggleFavorite({
 			productId: product.id,
@@ -161,6 +168,19 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 			price: product.price,
 			image: img,
 		});
+	};
+
+	const handleConfirmRemoveFavorite = async () => {
+		if (!product) return;
+		const img = product.images[0] ?? '/img/shirt/shirt-black-1.png';
+		await removeFavorite({
+			productId: product.id,
+			slug: product.slug,
+			title: product.name,
+			price: product.price,
+			image: img,
+		});
+		setFavoriteDeleteOpen(false);
 	};
 
 	const pushCartItem = () => {
@@ -243,6 +263,17 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 
 				<SimilarProductsSection products={relatedProducts} />
 			</main>
+
+			<ConfirmDialog
+				open={favoriteDeleteOpen}
+				title='Quitar de favoritos'
+				description={`¿Seguro que quieres quitar "${product?.name ?? ''}" de favoritos?`}
+				confirmLabel='Quitar'
+				cancelLabel='Cancelar'
+				variant='danger'
+				onConfirm={() => void handleConfirmRemoveFavorite()}
+				onCancel={() => setFavoriteDeleteOpen(false)}
+			/>
 		</div>
 	);
 }

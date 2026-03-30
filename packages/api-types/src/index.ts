@@ -67,3 +67,44 @@ export type Country = {
 	id: string;
 	name: string;
 };
+
+export type FavoriteItem = {
+	productId: string;
+	slug: string;
+	title: string;
+	price: number;
+	image: string;
+};
+
+export type FavoritesListResponse = {
+	data: FavoriteItem[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	};
+};
+
+export type UserAddress = {
+	id: string;
+	firstName: string;
+	lastName: string;
+	address: string;
+	address2?: string | null;
+	postalCode: string;
+	city: string;
+	phone: string;
+	countryId: string;
+	country?: Country;
+};
+
+export type UserAddressListResponse = {
+	data: UserAddress[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	};
+};

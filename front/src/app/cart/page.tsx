@@ -3,10 +3,20 @@
 import { Button, Image } from '@heroui/react';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 import { useCart } from '@/features/cart';
+import { ConfirmDialog } from '@/features/admin';
+
+type RemoveTarget = {
+	productId: string;
+	size: string;
+	title: string;
+};
 
 export default function CartPage() {
 	const { items, removeItem, updateQuantity, clearCart, totalItems, totalPrice } = useCart();
+	const [clearOpen, setClearOpen] = useState(false);
+	const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null);
 
 	if (items.length === 0) {
 		return (
@@ -28,7 +38,7 @@ export default function CartPage() {
 		<main className='mx-auto mt-28 w-11/12 max-w-6xl pb-16 text-black'>
 			<div className='mb-6 flex items-center justify-between'>
 				<h1 className='text-3xl font-bold'>Carrito ({totalItems})</h1>
-				<Button variant='light' color='danger' onPress={clearCart} startContent={<Trash2 size={16} />}>
+				<Button variant='light' color='danger' onPress={() => setClearOpen(true)} startContent={<Trash2 size={16} />}>
 					Vaciar carrito
 				</Button>
 			</div>
@@ -84,7 +94,9 @@ export default function CartPage() {
 										size='sm'
 										variant='light'
 										color='danger'
-										onPress={() => removeItem(item.productId, item.size)}
+										onPress={() =>
+											setRemoveTarget({ productId: item.productId, size: item.size, title: item.title })
+										}
 									>
 										<Trash2 size={16} />
 									</Button>
@@ -116,6 +128,35 @@ export default function CartPage() {
 					</Button>
 				</div>
 			</div>
+
+			<ConfirmDialog
+				open={clearOpen}
+				title='Vaciar carrito'
+				description='¿Seguro que quieres eliminar todos los productos del carrito?'
+				confirmLabel='Vaciar carrito'
+				cancelLabel='Cancelar'
+				variant='danger'
+				onConfirm={() => {
+					clearCart();
+					setClearOpen(false);
+				}}
+				onCancel={() => setClearOpen(false)}
+			/>
+
+			<ConfirmDialog
+				open={!!removeTarget}
+				title='Eliminar producto'
+				description={`¿Seguro que quieres eliminar "${removeTarget?.title ?? ''}" del carrito?`}
+				confirmLabel='Eliminar'
+				cancelLabel='Cancelar'
+				variant='danger'
+				onConfirm={() => {
+					if (!removeTarget) return;
+					removeItem(removeTarget.productId, removeTarget.size);
+					setRemoveTarget(null);
+				}}
+				onCancel={() => setRemoveTarget(null)}
+			/>
 		</main>
 	);
 }

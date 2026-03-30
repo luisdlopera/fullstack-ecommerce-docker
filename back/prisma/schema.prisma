@@ -134,7 +134,7 @@ model User {
   isActive      Boolean   @default(true)
   lastLoginAt   DateTime?
 
-  address      UserAddress?
+  addresses    UserAddress[]
   Order        Order[]
   RefreshToken RefreshToken[]
   favorites    UserFavorite[]
@@ -180,7 +180,9 @@ model UserAddress {
   countryId String
 
   user   User   @relation(fields: [userId], references: [id])
-  userId String @unique
+  userId String
+
+  @@index([userId])
 }
 
 model Order {

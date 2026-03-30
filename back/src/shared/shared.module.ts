@@ -11,7 +11,8 @@ import { PrismaService } from './infrastructure/prisma/prisma.service';
     StorageConfig,
     {
       provide: STORAGE_PORT,
-      useClass: S3CompatibleStorageAdapter,
+      inject: [StorageConfig],
+      useFactory: (storageConfig: StorageConfig) => new S3CompatibleStorageAdapter(storageConfig),
     },
   ],
   exports: [PrismaService, StorageConfig, STORAGE_PORT],

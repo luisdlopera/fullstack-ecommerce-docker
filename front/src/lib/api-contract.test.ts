@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { appendProductFiltersToSearchParams } from '@/lib/api';
-import type { ProductListResponse } from '@nexstore/api-types';
+import type { FavoritesListResponse, ProductListResponse, UserAddressListResponse } from '@nexstore/api-types';
 
 describe('appendProductFiltersToSearchParams', () => {
 	it('matches list query shape used by ProductListResponse requests', () => {
@@ -27,5 +27,25 @@ describe('ProductListResponse typing', () => {
 			meta: { page: 1, limit: 12, total: 0, totalPages: 1 },
 		};
 		expect(body.meta.totalPages).toBe(1);
+	});
+});
+
+describe('FavoritesListResponse typing', () => {
+	it('accepts minimal paginated shape', () => {
+		const body: FavoritesListResponse = {
+			data: [],
+			meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
+		};
+		expect(body.meta.total).toBe(0);
+	});
+});
+
+describe('UserAddressListResponse typing', () => {
+	it('accepts minimal paginated shape', () => {
+		const body: UserAddressListResponse = {
+			data: [],
+			meta: { page: 1, limit: 10, total: 0, totalPages: 1 },
+		};
+		expect(body.meta.limit).toBe(10);
 	});
 });

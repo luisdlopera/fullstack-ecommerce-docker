@@ -6,6 +6,10 @@ export type {
 	ProductFacets,
 	ProductFilters,
 	Country,
+	FavoriteItem,
+	FavoritesListResponse,
+	UserAddress,
+	UserAddressListResponse,
 } from '@nexstore/api-types';
 
 export type FeaturedProduct = {

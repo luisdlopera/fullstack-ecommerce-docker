@@ -5,9 +5,56 @@ import { UpsertAddressDto } from '../infrastructure/http/dto/upsert-address.dto'
 import { UpdateProfileDto } from '../infrastructure/http/dto/update-profile.dto';
 import { ChangePasswordDto } from '../infrastructure/http/dto/change-password.dto';
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 100;
+
+type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
 @Injectable()
 export class UsersService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  private normalizePagination(page?: number, limit?: number) {
+    const normalizedPage = Number.isFinite(page) && page && page > 0 ? Math.floor(page) : DEFAULT_PAGE;
+    const normalizedLimit =
+      Number.isFinite(limit) && limit && limit > 0
+        ? Math.min(Math.floor(limit), MAX_LIMIT)
+        : DEFAULT_LIMIT;
+    const skip = (normalizedPage - 1) * normalizedLimit;
+    return { page: normalizedPage, limit: normalizedLimit, skip };
+  }
+
+  private buildPaginationMeta(page: number, limit: number, total: number): PaginationMeta {
+    return {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
+  }
+
+  private mapFavorite(fav: {
+    product: { id: string; slug: string; title: string; price: number; ProductImage: { url: string }[] };
+  }) {
+    return {
+      productId: fav.product.id,
+      slug: fav.product.slug,
+      title: fav.product.title,
+      price: fav.product.price,
+      image: fav.product.ProductImage[0]?.url ?? '',
+    };
+  }
+
+  private async validateCountry(countryId: string) {
+    const country = await this.prisma.country.findUnique({ where: { id: countryId } });
+    if (!country) throw new NotFoundException('Country not found');
+  }
 
   async getMyProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -70,21 +117,38 @@ export class UsersService {
   }
 
   async getMyAddress(userId: string) {
-    return this.prisma.userAddress.findUnique({
+    return this.prisma.userAddress.findFirst({
       where: { userId },
+      orderBy: { id: 'desc' },
       include: { country: true },
     });
   }
 
-  async upsertMyAddress(userId: string, dto: UpsertAddressDto) {
-    const country = await this.prisma.country.findUnique({
-      where: { id: dto.countryId },
-    });
-    if (!country) throw new NotFoundException('Country not found');
+  async listMyAddresses(userId: string, page?: number, limit?: number) {
+    const pagination = this.normalizePagination(page, limit);
+    const [total, addresses] = await Promise.all([
+      this.prisma.userAddress.count({ where: { userId } }),
+      this.prisma.userAddress.findMany({
+        where: { userId },
+        orderBy: { id: 'desc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+        include: { country: true },
+      }),
+    ]);
 
-    return this.prisma.userAddress.upsert({
-      where: { userId },
-      update: {
+    return {
+      data: addresses,
+      meta: this.buildPaginationMeta(pagination.page, pagination.limit, total),
+    };
+  }
+
+  async createMyAddress(userId: string, dto: UpsertAddressDto) {
+    await this.validateCountry(dto.countryId);
+
+    return this.prisma.userAddress.create({
+      data: {
+        userId,
         firstName: dto.firstName,
         lastName: dto.lastName,
         address: dto.address,
@@ -94,7 +158,71 @@ export class UsersService {
         phone: dto.phone,
         countryId: dto.countryId,
       },
-      create: {
+      include: { country: true },
+    });
+  }
+
+  async updateMyAddress(userId: string, addressId: string, dto: UpsertAddressDto) {
+    await this.validateCountry(dto.countryId);
+
+    const existing = await this.prisma.userAddress.findFirst({
+      where: { id: addressId, userId },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException('Address not found');
+
+    return this.prisma.userAddress.update({
+      where: { id: existing.id },
+      data: {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        address: dto.address,
+        address2: dto.address2,
+        postalCode: dto.postalCode,
+        city: dto.city,
+        phone: dto.phone,
+        countryId: dto.countryId,
+      },
+      include: { country: true },
+    });
+  }
+
+  async deleteMyAddressById(userId: string, addressId: string) {
+    const result = await this.prisma.userAddress.deleteMany({
+      where: { id: addressId, userId },
+    });
+    if (result.count === 0) throw new NotFoundException('Address not found');
+    return { ok: true };
+  }
+
+  async upsertMyAddress(userId: string, dto: UpsertAddressDto) {
+    await this.validateCountry(dto.countryId);
+
+    const existing = await this.prisma.userAddress.findFirst({
+      where: { userId },
+      orderBy: { id: 'desc' },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return this.prisma.userAddress.update({
+        where: { id: existing.id },
+        data: {
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          address: dto.address,
+          address2: dto.address2,
+          postalCode: dto.postalCode,
+          city: dto.city,
+          phone: dto.phone,
+          countryId: dto.countryId,
+        },
+        include: { country: true },
+      });
+    }
+
+    return this.prisma.userAddress.create({
+      data: {
         userId,
         firstName: dto.firstName,
         lastName: dto.lastName,
@@ -110,12 +238,14 @@ export class UsersService {
   }
 
   async deleteMyAddress(userId: string) {
-    const address = await this.prisma.userAddress.findUnique({
+    const address = await this.prisma.userAddress.findFirst({
       where: { userId },
+      orderBy: { id: 'desc' },
+      select: { id: true },
     });
     if (!address) return { ok: true };
 
-    await this.prisma.userAddress.delete({ where: { userId } });
+    await this.prisma.userAddress.delete({ where: { id: address.id } });
     return { ok: true };
   }
 
@@ -140,13 +270,40 @@ export class UsersService {
       },
     });
 
-    return favorites.map((fav) => ({
-      productId: fav.product.id,
-      slug: fav.product.slug,
-      title: fav.product.title,
-      price: fav.product.price,
-      image: fav.product.ProductImage[0]?.url ?? '',
-    }));
+    return favorites.map((fav) => this.mapFavorite(fav));
+  }
+
+  async listMyFavoritesPaginated(userId: string, page?: number, limit?: number) {
+    const pagination = this.normalizePagination(page, limit);
+    const [total, favorites] = await Promise.all([
+      this.prisma.userFavorite.count({ where: { userId } }),
+      this.prisma.userFavorite.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+        include: {
+          product: {
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              price: true,
+              ProductImage: {
+                orderBy: { sortOrder: 'asc' },
+                take: 1,
+                select: { url: true },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      data: favorites.map((fav) => this.mapFavorite(fav)),
+      meta: this.buildPaginationMeta(pagination.page, pagination.limit, total),
+    };
   }
 
   async addMyFavorite(userId: string, productId: string) {

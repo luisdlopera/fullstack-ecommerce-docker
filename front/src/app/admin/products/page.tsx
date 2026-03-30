@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type Dispatch, type SetStateAction, useState } from 'react';
 import { Plus, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -93,10 +94,8 @@ export default function AdminProductsPage() {
 	const [categoryFilter, setCategoryFilter] = useState('');
 	const [statusFilter, setStatusFilter] = useState('');
 	const [stockFilter, setStockFilter] = useState('');
-	const [createOpen, setCreateOpen] = useState(false);
 	const [editProduct, setEditProduct] = useState<AdminProduct | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<AdminProduct | null>(null);
-	const [createUploadTask, setCreateUploadTask] = useState<UploadTaskState>(EMPTY_UPLOAD_TASK);
 	const [editUploadTask, setEditUploadTask] = useState<UploadTaskState>(EMPTY_UPLOAD_TASK);
 	const [pendingRetryUploads, setPendingRetryUploads] = useState<PendingRetryUploads | null>(null);
 
@@ -158,49 +157,6 @@ export default function AdminProductsPage() {
 		return failedFiles;
 	};
 
-	const createMutation = useMutation({
-		mutationFn: async ({
-			data,
-			uploadFiles,
-			makePrimary,
-		}: {
-			data: Record<string, unknown>;
-			uploadFiles?: File[];
-			makePrimary?: boolean;
-		}) => {
-			setCreateUploadTask(EMPTY_UPLOAD_TASK);
-			const product = await productsApi.create(data);
-			if (uploadFiles && uploadFiles.length > 0) {
-				const failedFiles = await runUploadFiles({
-					productId: product.id,
-					files: uploadFiles,
-					makePrimary: makePrimary === true,
-					setTask: setCreateUploadTask,
-				});
-
-				const freshProduct = await productsApi.getById(product.id);
-				return { product: freshProduct, failedFiles };
-			}
-			return { product, failedFiles: [] as File[] };
-		},
-		onSuccess: ({ product, failedFiles }) => {
-			if (failedFiles.length > 0) {
-				toast.error(`Producto creado, pero ${failedFiles.length} imagen(es) fallaron. Puedes reintentar.`);
-				setPendingRetryUploads({ productId: product.id, files: failedFiles });
-				setCreateOpen(false);
-				setEditProduct(product);
-			} else {
-				toast.success('Producto creado');
-				setPendingRetryUploads(null);
-				setCreateOpen(false);
-			}
-			queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
-		},
-		onError: (err: Error) => {
-			setCreateUploadTask(EMPTY_UPLOAD_TASK);
-			toast.error(err.message);
-		},
-	});
 
 	const updateMutation = useMutation({
 		mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => productsApi.update(id, data),
@@ -423,7 +379,14 @@ export default function AdminProductsPage() {
 		},
 	];
 
-	const categoryOptions = (categories ?? []).map((c: AdminCategory) => ({ value: c.id, label: c.name }));
+	const categoryOptions = (() => {
+		const seen = new Set<string>();
+		return (categories ?? []).filter((c: AdminCategory) => {
+			if (seen.has(c.id)) return false;
+			seen.add(c.id);
+			return true;
+		}).map((c: AdminCategory) => ({ value: c.id, label: c.name }));
+	})();
 
 	if (error) {
 		return (
@@ -441,13 +404,12 @@ export default function AdminProductsPage() {
 				description='Administra el catálogo de productos'
 				actions={
 					canWrite ? (
-						<button
-							type='button'
-							onClick={() => setCreateOpen(true)}
+						<Link
+							href='/admin/products/create'
 							className='flex items-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800'
 						>
 							<Plus size={16} /> Nuevo producto
-						</button>
+						</Link>
 					) : undefined
 				}
 			/>
@@ -501,24 +463,6 @@ export default function AdminProductsPage() {
 				emptyMessage='No se encontraron productos'
 			/>
 
-			{canWrite && (
-				<ProductFormModal
-					key={createOpen ? 'product-create-open' : 'product-create-closed'}
-					open={createOpen}
-					title='Crear producto'
-					categories={categories ?? []}
-					loading={createMutation.isPending}
-					uploadTask={createUploadTask}
-					onClose={() => setCreateOpen(false)}
-					onSubmit={(data, uploadContext) =>
-						createMutation.mutate({
-							data,
-							uploadFiles: uploadContext?.files,
-							makePrimary: uploadContext?.makePrimary,
-						})
-					}
-				/>
-			)}
 
 			{canWrite && editProduct && (
 				<ProductFormModal
@@ -620,10 +564,17 @@ function ProductFormModal({
 	const [localImages, setLocalImages] = useState<ProductImageItem[]>(initialData?.ProductImage ?? []);
 	const [dragImageId, setDragImageId] = useState<number | null>(null);
 	const [pendingDeleteImageId, setPendingDeleteImageId] = useState<number | null>(null);
-	const categoryItems = [
-		{ id: CATEGORY_PLACEHOLDER_KEY, name: 'Seleccionar' },
-		...categories.map((c) => ({ id: c.id, name: c.name })),
-	];
+	const categoryItems = (() => {
+		const seen = new Set<string>([CATEGORY_PLACEHOLDER_KEY]);
+		const items = [{ id: CATEGORY_PLACEHOLDER_KEY, name: 'Seleccionar' }];
+		for (const c of categories) {
+			if (!seen.has(c.id)) {
+				seen.add(c.id);
+				items.push({ id: c.id, name: c.name });
+			}
+		}
+		return items;
+	})();
 
 	const handleUploadImage = async () => {
 		if (!initialData?.id) {

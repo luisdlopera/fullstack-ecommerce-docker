@@ -16,6 +16,8 @@ type AuthContextType = {
 	loading: boolean;
 	login: (email: string, password: string) => Promise<void>;
 	register: (name: string, email: string, password: string) => Promise<void>;
+	forgotPassword: (email: string) => Promise<void>;
+	resetPassword: (token: string, newPassword: string) => Promise<void>;
 	logout: () => Promise<void>;
 	refreshSession: () => Promise<void>;
 };
@@ -121,9 +123,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	}, []);
 
+	const forgotPassword = useCallback(async (email: string) => {
+		const res = await fetch('/api/auth/forgot-password', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email: email.trim() }),
+		});
+
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			throw new Error(nestErrorMessage(body, 'No fue posible iniciar la recuperación de contraseña'));
+		}
+	}, []);
+
+	const resetPassword = useCallback(async (token: string, newPassword: string) => {
+		const res = await fetch('/api/auth/reset-password', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ token, newPassword }),
+		});
+
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			throw new Error(nestErrorMessage(body, 'No fue posible restablecer la contraseña'));
+		}
+	}, []);
+
 	const value = useMemo(
-		() => ({ user, loading, login, register, logout, refreshSession }),
-		[user, loading, login, register, logout, refreshSession],
+		() => ({ user, loading, login, register, forgotPassword, resetPassword, logout, refreshSession }),
+		[user, loading, login, register, forgotPassword, resetPassword, logout, refreshSession],
 	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

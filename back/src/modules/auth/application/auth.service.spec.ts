@@ -4,6 +4,7 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import bcryptjs from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
+import { EmailService } from '../../../shared/infrastructure/email/email.service';
 
 const mockPrisma = {
   user: {
@@ -20,11 +21,21 @@ const mockPrisma = {
     delete: jest.fn(),
     deleteMany: jest.fn(),
   },
+  passwordResetToken: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+  },
+  $transaction: jest.fn(),
 };
 
 const mockJwt = {
   signAsync: jest.fn().mockResolvedValue('mock-token'),
   verifyAsync: jest.fn(),
+};
+
+const mockEmailService = {
+  sendPasswordResetEmail: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -38,6 +49,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
+        { provide: EmailService, useValue: mockEmailService },
       ],
     }).compile();
 
@@ -154,6 +166,57 @@ describe('AuthService', () => {
       expect(mockPrisma.refreshToken.deleteMany).toHaveBeenCalledWith({
         where: { token: 'specific-token' },
       });
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('should always return ok for unknown email', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.forgotPassword('unknown@test.com');
+
+      expect(result.ok).toBe(true);
+      expect(mockEmailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('should create token and send email for existing user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'test@test.com',
+        isActive: true,
+      });
+      mockPrisma.passwordResetToken.create.mockResolvedValue({});
+      mockEmailService.sendPasswordResetEmail.mockResolvedValue(undefined);
+
+      const result = await service.forgotPassword('test@test.com');
+
+      expect(result.ok).toBe(true);
+      expect(mockPrisma.passwordResetToken.create).toHaveBeenCalledTimes(1);
+      expect(mockEmailService.sendPasswordResetEmail).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should throw for invalid token', async () => {
+      mockPrisma.passwordResetToken.findUnique.mockResolvedValue(null);
+
+      await expect(service.resetPassword('bad-token', 'password123')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should reset password and revoke sessions', async () => {
+      mockPrisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'prt-1',
+        userId: 'user-1',
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60000),
+        user: { id: 'user-1', isActive: true },
+      });
+      mockPrisma.$transaction.mockResolvedValue([]);
+
+      const result = await service.resetPassword('valid-token', 'password123');
+
+      expect(result).toEqual({ ok: true });
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 });

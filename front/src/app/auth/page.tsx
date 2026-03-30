@@ -4,7 +4,9 @@ import { Button, Form, Input, Modal, ModalBody, ModalContent, ModalFooter, Modal
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 
 const showAuthDemoHints = process.env.NODE_ENV === 'development';
 
@@ -104,14 +106,16 @@ export default function AuthPage() {
 					<Form className='flex flex-col items-start gap-2 text-black' onSubmit={onLogin}>
 						<h2 className='mb-6 text-3xl font-bold'>Iniciar sesión</h2>
 						<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />
-						<Input
+						<PasswordInput
 							isRequired
 							name='password'
-							type='password'
 							label='Contraseña'
 							placeholder='Ingresa tu contraseña'
 							minLength={6}
 						/>
+						<Link href='/auth/forgot-password' className='mt-1 text-sm text-gray-600 hover:underline'>
+							¿Olvidaste tu contraseña?
+						</Link>
 						{loginError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{loginError}</p>}
 						<Button className='bg-primary w-full text-white' type='submit' isLoading={loginLoading}>
 							Ingresar
@@ -134,10 +138,9 @@ export default function AuthPage() {
 					<h2 className='mb-6 text-3xl font-bold'>Crear una cuenta</h2>
 					<Input isRequired name='name' label='Nombre' placeholder='Tu nombre' minLength={2} />
 					<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />
-					<Input
+					<PasswordInput
 						isRequired
 						name='password'
-						type='password'
 						label='Contraseña'
 						placeholder='Mínimo 6 caracteres'
 						minLength={6}

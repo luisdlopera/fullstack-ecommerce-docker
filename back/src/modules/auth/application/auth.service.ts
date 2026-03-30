@@ -2,7 +2,8 @@ import { ConflictException, Inject, Injectable, UnauthorizedException } from '@n
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { EmailService } from '../../../shared/infrastructure/email/email.service';
 import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
 import { LoginDto } from '../infrastructure/http/dto/login.dto';
 import { RegisterDto } from '../infrastructure/http/dto/register.dto';
@@ -27,7 +28,22 @@ export class AuthService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(EmailService) private readonly emailService: EmailService,
   ) {}
+
+  private getPasswordResetTtlMs(): number {
+    const minutes = Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 30);
+    if (!Number.isFinite(minutes) || minutes <= 0) return 30 * 60 * 1000;
+    return Math.floor(minutes * 60 * 1000);
+  }
+
+  private getFrontendBaseUrl(): string {
+    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+  }
+
+  private hashResetToken(rawToken: string): string {
+    return createHash('sha256').update(rawToken).digest('hex');
+  }
 
   async register(input: RegisterDto) {
     const existingUser = await this.prisma.user.findUnique({
@@ -146,6 +162,69 @@ export class AuthService {
         where: { userId },
       });
     }
+    return { ok: true };
+  }
+
+  async forgotPassword(email: string) {
+    const normalizedEmail = email.toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, email: true, isActive: true },
+    });
+
+    // Anti-enumeration: always return the same response.
+    if (!user || !user.isActive) {
+      return { ok: true, message: 'Si el correo existe, enviaremos instrucciones para recuperar la contraseña.' };
+    }
+
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = this.hashResetToken(rawToken);
+    const ttlMs = this.getPasswordResetTtlMs();
+    const expiresAt = new Date(Date.now() + ttlMs);
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        tokenHash,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    const resetUrl = `${this.getFrontendBaseUrl()}/auth/reset-password/${encodeURIComponent(rawToken)}`;
+    await this.emailService.sendPasswordResetEmail({
+      to: user.email,
+      resetUrl,
+      ttlMinutes: Math.ceil(ttlMs / 60000),
+    });
+
+    return { ok: true, message: 'Si el correo existe, enviaremos instrucciones para recuperar la contraseña.' };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const tokenHash = this.hashResetToken(token);
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { user: { select: { id: true, isActive: true } } },
+    });
+
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt <= new Date() || !resetToken.user.isActive) {
+      throw new UnauthorizedException('El token es invalido o ha expirado');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { password: bcryptjs.hashSync(newPassword, 10) },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { usedAt: new Date() },
+      }),
+      this.prisma.refreshToken.deleteMany({
+        where: { userId: resetToken.userId },
+      }),
+    ]);
+
     return { ok: true };
   }
 

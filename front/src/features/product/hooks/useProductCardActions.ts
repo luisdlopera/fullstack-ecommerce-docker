@@ -17,11 +17,12 @@ export function useProductCardActions(
 	const [addingToCart, setAddingToCart] = useState(false);
 	const router = useRouter();
 	const { isFavorite, toggleFavorite } = useFavorites();
-	const { addItem, items: cartItems } = useCart();
+	const { addItem, removeItem, items: cartItems } = useCart();
 
 	const slug = model.slug;
 	const favorite = slug ? isFavorite(slug) : false;
-	const inCart = slug ? cartItems.some((i) => i.slug === slug) : false;
+	const cartMatches = slug ? cartItems.filter((i) => i.slug === slug) : [];
+	const inCart = cartMatches.length > 0;
 	const productHref = slug ? `/products/${slug}` : '#';
 
 	const handleToggleFavorite = useCallback(() => {
@@ -55,6 +56,12 @@ export function useProductCardActions(
 
 	const handleAddToCart = useCallback(async () => {
 		if (!slug || model.isSoldOut || !cartEnabled) return;
+		if (inCart) {
+			for (const item of cartMatches) {
+				removeItem(item.productId, item.size);
+			}
+			return;
+		}
 		const { sizes, image } = model;
 		if (sizes && sizes.length > 0) {
 			setAddingToCart(true);
@@ -87,7 +94,7 @@ export function useProductCardActions(
 		} finally {
 			setAddingToCart(false);
 		}
-	}, [slug, model, cartEnabled, addItem, router, productHref, pushLineFromProduct]);
+	}, [slug, model, cartEnabled, inCart, cartMatches, removeItem, addItem, router, productHref, pushLineFromProduct]);
 
 	return {
 		favorite,

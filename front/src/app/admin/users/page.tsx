@@ -20,6 +20,7 @@ import {
 	type AdminUser,
 	type Column,
 } from '@/features/admin';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 
 const ROLE_OPTIONS = [
 	{ value: 'SUPER_ADMIN', label: 'Super Admin' },
@@ -360,10 +361,9 @@ function UserFormModal({
 				/>
 				{!initialData && (
 					<>
-						<Input
+						<PasswordInput
 							label='Contraseña *'
 							name='password'
-							type='password'
 							required
 							minLength={6}
 							variant='flat'

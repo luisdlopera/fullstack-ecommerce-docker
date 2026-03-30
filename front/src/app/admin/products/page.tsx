@@ -1,6 +1,17 @@
 'use client';
 
-import { Button, Checkbox, Chip, Input, Progress, Select, SelectItem, Textarea } from '@heroui/react';
+import {
+	Autocomplete,
+	AutocompleteItem,
+	Button,
+	Checkbox,
+	Chip,
+	Input,
+	Progress,
+	Select,
+	SelectItem,
+	Textarea,
+} from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type Dispatch, type SetStateAction, useState } from 'react';
 import { Plus, Image as ImageIcon } from 'lucide-react';
@@ -985,20 +996,20 @@ function ProductFormModal({
 					</Select>
 				</div>
 				<div className='sm:col-span-2'>
-					<Select
+					<Autocomplete
 						label='Categoría'
 						size='sm'
 						variant='flat'
-						placeholder='Seleccionar'
-						items={categoryItems}
-						selectedKeys={new Set([categoryKey])}
-						onSelectionChange={(keys) => {
-							const k = Array.from(keys as Set<string>)[0];
-							setCategoryId(k === CATEGORY_PLACEHOLDER_KEY || !k ? '' : String(k));
+						placeholder='Buscar categoría'
+						selectedKey={categoryKey}
+						onSelectionChange={(key) => {
+							setCategoryId(key === CATEGORY_PLACEHOLDER_KEY || !key ? '' : String(key));
 						}}
 					>
-						{(item) => <SelectItem key={item.id}>{item.name}</SelectItem>}
-					</Select>
+						{categoryItems.map((item) => (
+							<AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+						))}
+					</Autocomplete>
 				</div>
 				<div className='sm:col-span-2'>
 					<Input

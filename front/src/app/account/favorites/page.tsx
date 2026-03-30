@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@heroui/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Grid3X3, Heart, List, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import { ProductCard, favoriteItemToCardModel } from '@/features/product';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -184,11 +185,18 @@ export default function AccountFavoritesPage() {
 							key={item.slug}
 							className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200 p-4'
 						>
-							<div className='min-w-0'>
+							<div className='flex min-w-0 items-center gap-3'>
+								<div className='relative h-16 w-16 overflow-hidden rounded-lg bg-gray-100'>
+									{item.image ? (
+										<Image src={item.image} alt={item.title} fill className='object-cover' />
+									) : null}
+								</div>
+								<div className='min-w-0'>
 								<Link href={`/products/${item.slug}`} className='truncate text-base font-semibold hover:underline'>
 									{item.title}
 								</Link>
 								<p className='text-sm text-gray-500'>{item.slug}</p>
+								</div>
 							</div>
 							<div className='flex items-center gap-3'>
 								<p className='text-lg font-bold'>${item.price.toFixed(2)}</p>

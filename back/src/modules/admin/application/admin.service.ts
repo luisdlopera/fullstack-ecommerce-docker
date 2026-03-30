@@ -183,12 +183,21 @@ export class AdminService {
         lastLoginAt: true,
         createdAt: true,
         updatedAt: true,
-        address: { include: { country: true } },
+        addresses: {
+          include: { country: true },
+          orderBy: { id: 'desc' },
+          take: 1,
+        },
         _count: { select: { Order: true } },
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    const address = user.addresses[0] ?? null;
+    return {
+      ...user,
+      address,
+      addresses: undefined,
+    };
   }
 
   async createUser(dto: CreateUserDto) {

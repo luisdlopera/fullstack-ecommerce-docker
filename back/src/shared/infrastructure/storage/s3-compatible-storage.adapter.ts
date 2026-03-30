@@ -1,5 +1,5 @@
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { StoragePort, StorageUploadInput } from '../../domain/ports/storage.port';
 import { StorageConfig } from './storage.config';
 
@@ -7,7 +7,7 @@ import { StorageConfig } from './storage.config';
 export class S3CompatibleStorageAdapter implements StoragePort {
   private readonly client: S3Client;
 
-  constructor(private readonly storageConfig: StorageConfig) {
+  constructor(@Inject(StorageConfig) private readonly storageConfig: StorageConfig) {
     this.client = new S3Client({
       region: this.storageConfig.region,
       endpoint: this.storageConfig.endpoint,

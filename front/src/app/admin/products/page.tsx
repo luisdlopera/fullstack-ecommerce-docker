@@ -607,6 +607,7 @@ function ProductFormModal({
 	const [makePrimaryUpload, setMakePrimaryUpload] = useState(false);
 	const [localImages, setLocalImages] = useState<ProductImageItem[]>(initialData?.ProductImage ?? []);
 	const [dragImageId, setDragImageId] = useState<number | null>(null);
+	const [pendingDeleteImageId, setPendingDeleteImageId] = useState<number | null>(null);
 	const categoryItems = [
 		{ id: CATEGORY_PLACEHOLDER_KEY, name: 'Seleccionar' },
 		...categories.map((c) => ({ id: c.id, name: c.name })),
@@ -631,6 +632,12 @@ function ProductFormModal({
 	const handleDeleteImage = async (imageId: number) => {
 		if (!initialData?.id || !onDeleteImage) return;
 		await onDeleteImage(initialData.id, imageId);
+	};
+
+	const handleConfirmDeleteImage = async () => {
+		if (pendingDeleteImageId == null) return;
+		await handleDeleteImage(pendingDeleteImageId);
+		setPendingDeleteImageId(null);
 	};
 
 	const handleSetPrimaryImage = async (imageId: number) => {
@@ -713,8 +720,9 @@ function ProductFormModal({
 	const categoryKey = categoryId || CATEGORY_PLACEHOLDER_KEY;
 
 	return (
-		<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading} size='lg'>
-			<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+		<>
+			<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading} size='lg'>
+				<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
 				{(initialData?.id || !initialData) && (
 					<div className='sm:col-span-2 rounded-xl border border-gray-200 p-4'>
 						<p className='mb-3 text-sm font-semibold text-gray-900'>Imágenes del producto</p>
@@ -759,7 +767,7 @@ function ProductFormModal({
 										<button
 											type='button'
 											disabled={deletingImage}
-											onClick={() => void handleDeleteImage(img.id)}
+											onClick={() => setPendingDeleteImageId(img.id)}
 											className='rounded px-2 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
 										>
 											Borrar
@@ -1041,7 +1049,20 @@ function ProductFormModal({
 						Activo
 					</Checkbox>
 				</div>
-			</div>
-		</FormModal>
+				</div>
+			</FormModal>
+
+			<ConfirmDialog
+				open={pendingDeleteImageId != null}
+				title='Eliminar imagen'
+				description='¿Seguro que quieres eliminar esta imagen del producto?'
+				confirmLabel='Eliminar'
+				cancelLabel='Cancelar'
+				variant='danger'
+				loading={deletingImage}
+				onConfirm={() => void handleConfirmDeleteImage()}
+				onCancel={() => setPendingDeleteImageId(null)}
+			/>
+		</>
 	);
 }

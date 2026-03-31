@@ -2,7 +2,7 @@
 
 import { Input } from '@heroui/react';
 import { Search } from 'lucide-react';
-import { useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 type SearchInputProps = {
 	value: string;
@@ -11,19 +11,29 @@ type SearchInputProps = {
 };
 
 export function SearchInput({ value, onChange, placeholder = 'Buscar...' }: SearchInputProps) {
-	const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+	const [localValue, setLocalValue] = useState(value);
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const newValue = e.target.value;
-		if (timerRef.current) clearTimeout(timerRef.current);
-		timerRef.current = setTimeout(() => onChange(newValue), 300);
-	};
+	// Sync local value with prop if prop changes externally (e.g. from parent reset)
+	useEffect(() => {
+		setLocalValue(value);
+	}, [value]);
+
+	// Debounce local value changes to parent onChange
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			if (localValue !== value) {
+				onChange(localValue);
+			}
+		}, 300);
+
+		return () => clearTimeout(timer);
+	}, [localValue, onChange, value]);
 
 	return (
 		<Input
 			type='text'
-			defaultValue={value}
-			onChange={handleChange}
+			value={localValue}
+			onValueChange={setLocalValue}
 			placeholder={placeholder}
 			variant='flat'
 			size='sm'

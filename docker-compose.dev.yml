@@ -7,11 +7,12 @@ services:
     command: sh -c "npx prisma db push --skip-generate && npm run start:dev"
     environment:
       CHOKIDAR_USEPOLLING: "true"
-      JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret}
+      # Real secret fallback para validación local rápida
+      JWT_SECRET: ${JWT_SECRET:-11f5a3ee55273d281c78c1329e73c52e37c359b19a0ebc36338904fb78ebb0f06dca1422b53d7fa1ececc4c2ed622e53edf3587d4f67e18a4c89250f8d3372ba}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
       TAX_RATE: ${TAX_RATE:-0.15}
-      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-replace-with-mercadopago-access-token}
+      # MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-replace-with-mercadopago-access-token}
     healthcheck:
       disable: true
     volumes:

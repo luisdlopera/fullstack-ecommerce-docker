@@ -12,6 +12,7 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
+  Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { OrderStatus, PaymentStatus, Role } from '@prisma/client';
@@ -40,6 +41,8 @@ import type { UploadFile } from '../../application/use-cases/upload-file.type';
 
 @Controller('admin')
 export class AdminController {
+  private readonly logger = new Logger(AdminController.name);
+
   constructor(
     @Inject(AdminService) private readonly adminService: AdminService,
     @Inject(UploadProductImageUseCase)
@@ -221,6 +224,11 @@ export class AdminController {
     @UploadedFile() file: UploadFile | undefined,
     @Body() dto: UploadProductImageDto,
   ) {
+    this.logger.debug(`Received upload image request for product ${productId}. File present: ${!!file}`);
+    if (file) {
+      this.logger.debug(`File details: ${file.originalname} (${file.mimetype}), size: ${file.size} bytes`);
+    }
+
     return this.uploadProductImageUseCase.execute({
       productId,
       file,

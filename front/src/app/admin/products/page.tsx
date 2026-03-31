@@ -98,6 +98,7 @@ export default function AdminProductsPage() {
 	const [deleteTarget, setDeleteTarget] = useState<AdminProduct | null>(null);
 	const [editUploadTask, setEditUploadTask] = useState<UploadTaskState>(EMPTY_UPLOAD_TASK);
 	const [pendingRetryUploads, setPendingRetryUploads] = useState<PendingRetryUploads | null>(null);
+	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['admin', 'products', page, search, categoryFilter, statusFilter, stockFilter],
@@ -293,6 +294,7 @@ export default function AdminProductsPage() {
 							width={40}
 							height={40}
 							className='h-10 w-10 rounded-lg object-cover'
+							unoptimized
 						/>
 					) : (
 						<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100'>
@@ -357,13 +359,12 @@ export default function AdminProductsPage() {
 			render: (p) => (
 				<div className='flex justify-end gap-2'>
 					{canWrite && (
-						<button
-							type='button'
-							onClick={() => setEditProduct(p)}
+						<Link
+							href={`/admin/products/${p.id}/edit`}
 							className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
 						>
 							Editar
-						</button>
+						</Link>
 					)}
 					{canDelete && (
 						<button
@@ -461,6 +462,10 @@ export default function AdminProductsPage() {
 				onPageChange={setPage}
 				isLoading={isLoading}
 				emptyMessage='No se encontraron productos'
+				selectable
+				rowKey={(p) => p.id}
+				selectedKeys={selectedKeys}
+				onSelectionChange={setSelectedKeys}
 			/>
 
 
@@ -707,6 +712,7 @@ function ProductFormModal({
 											alt={initialData.title}
 											fill
 											className='object-cover'
+											unoptimized
 										/>
 									</div>
 									<div className='mt-2 flex flex-wrap items-center justify-between gap-2'>

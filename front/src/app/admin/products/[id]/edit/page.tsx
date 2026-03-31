@@ -18,8 +18,8 @@ import {
 	Textarea,
 } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useCallback, useId, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useId, useRef, useState, useEffect } from 'react';
 import {
 	ArrowLeft,
 	CloudUpload,
@@ -89,18 +89,28 @@ function formatFileSize(bytes: number): string {
 
 /* ─── Page ────────────────────────────────────────────────────────────── */
 
-export default function AdminProductCreatePage() {
+export default function AdminProductEditPage() {
 	const router = useRouter();
+	const params = useParams();
+	const productId = params.id as string;
 	const queryClient = useQueryClient();
 	const { hasPermission } = usePermissions();
-	const canCreate = hasPermission(PERMISSIONS.PRODUCTS_CREATE);
+	const canEdit = hasPermission(PERMISSIONS.PRODUCTS_UPDATE);
 	const fileInputId = useId();
+
+	/* ── Load product data ───────────────────────────────────────── */
+
+	const { data: product, isLoading: productLoading } = useQuery({
+		queryKey: ['admin', 'product', productId],
+		queryFn: () => productsApi.getById(productId),
+		enabled: !!productId,
+	});
 
 	/* ── Form state ─────────────────────────────────────────────────── */
 
 	const [title, setTitle] = useState('');
 	const [slug, setSlug] = useState('');
-	const [slugManual, setSlugManual] = useState(false);
+	const [slugManual, setSlugManual] = useState(true); // always manual on edit
 	const [description, setDescription] = useState('');
 	const [sku, setSku] = useState('');
 	const [price, setPrice] = useState('');
@@ -112,11 +122,12 @@ export default function AdminProductCreatePage() {
 	const [selectedSizes, setSelectedSizes] = useState<string[]>(['S', 'M', 'L']);
 	const [featured, setFeatured] = useState(false);
 	const [isActive, setIsActive] = useState(true);
+	const [loaded, setLoaded] = useState(false);
 
 	/* ── Image state ────────────────────────────────────────────────── */
 
 	const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
-	const [makePrimary, setMakePrimary] = useState(true);
+	const [makePrimary, setMakePrimary] = useState(false);
 	const [dragOver, setDragOver] = useState(false);
 	const [dragImageId, setDragImageId] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -130,6 +141,27 @@ export default function AdminProductCreatePage() {
 		failed: number;
 		current: string | null;
 	}>({ active: false, total: 0, completed: 0, failed: 0, current: null });
+
+	/* ── Pre-fill form when product loads ───────────────────────────── */
+
+	useEffect(() => {
+		if (product && !loaded) {
+			setTitle(product.title);
+			setSlug(product.slug);
+			setDescription(product.description);
+			setSku(product.sku ?? '');
+			setPrice(String(product.price));
+			setComparePrice(product.comparePrice ? String(product.comparePrice) : '');
+			setInStock(String(product.inStock));
+			setGender(product.gender);
+			setCategoryId(product.categoryId);
+			setTags(product.tags.join(', '));
+			setSelectedSizes(product.sizes);
+			setFeatured(product.featured);
+			setIsActive(product.isActive);
+			setLoaded(true);
+		}
+	}, [product, loaded]);
 
 	/* ── Data queries ───────────────────────────────────────────────── */
 
@@ -223,9 +255,9 @@ export default function AdminProductCreatePage() {
 		});
 	}, []);
 
-	/* ── Create mutation ────────────────────────────────────────────── */
+	/* ── Update mutation ────────────────────────────────────────────── */
 
-	const createMutation = useMutation({
+	const updateMutation = useMutation({
 		mutationFn: async () => {
 			if (!categoryId) throw new Error('Selecciona una categoría');
 			if (selectedSizes.length === 0) throw new Error('Selecciona al menos una talla');
@@ -252,9 +284,9 @@ export default function AdminProductCreatePage() {
 				isActive,
 			};
 
-			const product = await productsApi.create(data);
+			const updated = await productsApi.update(productId, data);
 
-			/* Upload images sequentially */
+			/* Upload new images sequentially */
 			if (pendingImages.length > 0) {
 				setUploadProgress({
 					active: true,
@@ -275,7 +307,7 @@ export default function AdminProductCreatePage() {
 
 					try {
 						const shouldBePrimary = makePrimary && idx === 0;
-						await productsApi.uploadImage(product.id, img.file, shouldBePrimary);
+						await productsApi.uploadImage(productId, img.file, shouldBePrimary);
 						setPendingImages((prev) =>
 							prev.map((i) => (i.id === img.id ? { ...i, status: 'done' } : i)),
 						);
@@ -304,15 +336,16 @@ export default function AdminProductCreatePage() {
 				setUploadProgress((prev) => ({ ...prev, active: false, current: null }));
 
 				if (failCount > 0) {
-					toast.error(`Producto creado, pero ${failCount} imagen(es) fallaron al subirse.`);
+					toast.error(`Producto actualizado, pero ${failCount} imagen(es) fallaron al subirse.`);
 				}
 			}
 
-			return product;
+			return updated;
 		},
 		onSuccess: () => {
-			toast.success('Producto creado exitosamente');
+			toast.success('Producto actualizado exitosamente');
 			queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
+			queryClient.invalidateQueries({ queryKey: ['admin', 'product', productId] });
 			router.push('/admin/products');
 		},
 		onError: (err: Error) => {
@@ -322,18 +355,29 @@ export default function AdminProductCreatePage() {
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		createMutation.mutate();
+		updateMutation.mutate();
 	};
 
-	const isSubmitting = createMutation.isPending;
+	const isSubmitting = updateMutation.isPending;
+
+	/* ── Loading state ──────────────────────────────────────────────── */
+
+	if (productLoading) {
+		return (
+			<div className='flex min-h-[60vh] flex-col items-center justify-center gap-4'>
+				<div className='h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-black' />
+				<p className='text-gray-500'>Cargando producto...</p>
+			</div>
+		);
+	}
 
 	/* ── Permission guard ───────────────────────────────────────────── */
 
-	if (!canCreate) {
+	if (!canEdit) {
 		return (
 			<div className='flex min-h-[60vh] flex-col items-center justify-center gap-4'>
 				<Package size={48} className='text-gray-300' />
-				<p className='text-gray-500'>No tienes permisos para crear productos</p>
+				<p className='text-gray-500'>No tienes permisos para editar productos</p>
 				<Link href='/admin/products'>
 					<Button variant='flat'>Volver a productos</Button>
 				</Link>
@@ -346,8 +390,8 @@ export default function AdminProductCreatePage() {
 	return (
 		<>
 			<AdminPageHeader
-				title='Crear producto'
-				description='Completa la información para añadir un nuevo producto al catálogo'
+				title='Editar producto'
+				description={product?.title ?? 'Modifica la información del producto'}
 				actions={
 					<Link href='/admin/products'>
 						<Button variant='flat' startContent={<ArrowLeft size={16} />}>
@@ -441,14 +485,66 @@ export default function AdminProductCreatePage() {
 							</CardBody>
 						</Card>
 
-						{/* Media / Images */}
+						{/* Existing Images */}
+						{product?.ProductImage && product.ProductImage.length > 0 && (
+							<Card shadow='sm'>
+								<CardHeader className='flex items-center gap-2 px-6 pb-0 pt-5'>
+									<ImagePlus size={18} className='text-default-500' />
+									<h2 className='text-base font-semibold'>Imágenes actuales</h2>
+									<Chip size='sm' variant='flat' color='default' className='ml-auto'>
+										{product.ProductImage.length}
+									</Chip>
+								</CardHeader>
+								<Divider className='mt-3' />
+								<CardBody className='px-6 py-5'>
+									<div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4'>
+										{product.ProductImage.map((img, idx) => (
+											<div
+												key={img.id}
+												className='group relative overflow-hidden rounded-xl border-2 border-default-200'
+											>
+												<div className='relative aspect-square bg-default-100'>
+													<Image
+														src={img.url}
+														alt={product.title}
+														fill
+														className='object-cover'
+														unoptimized
+													/>
+												</div>
+												<div className='border-t border-default-100 bg-default-50 px-2 py-1.5'>
+													<div className='flex items-center justify-between'>
+														{img.isPrimary ? (
+															<Chip
+																size='sm'
+																variant='flat'
+																color='warning'
+																startContent={<Star size={10} />}
+															>
+																Principal
+															</Chip>
+														) : (
+															<span className='text-[10px] text-default-400'>
+																#{idx + 1}
+															</span>
+														)}
+													</div>
+												</div>
+											</div>
+										))}
+									</div>
+								</CardBody>
+							</Card>
+						)}
+
+						{/* New Images */}
 						<Card shadow='sm'>
 							<CardHeader className='flex items-center gap-2 px-6 pb-0 pt-5'>
 								<ImagePlus size={18} className='text-default-500' />
-								<h2 className='text-base font-semibold'>Imágenes del producto</h2>
+								<h2 className='text-base font-semibold'>Agregar nuevas imágenes</h2>
 								{pendingImages.length > 0 && (
 									<Chip size='sm' variant='flat' color='primary' className='ml-auto'>
-										{pendingImages.length} imagen{pendingImages.length !== 1 ? 'es' : ''}
+										{pendingImages.length} nueva{pendingImages.length !== 1 ? 's' : ''}
 									</Chip>
 								)}
 							</CardHeader>
@@ -537,7 +633,6 @@ export default function AdminProductCreatePage() {
 																	: 'border-default-200'
 													}`}
 												>
-													{/* Image */}
 													<div className='relative aspect-square bg-default-100'>
 														<Image
 															src={img.preview}
@@ -546,8 +641,6 @@ export default function AdminProductCreatePage() {
 															className='object-cover'
 															unoptimized
 														/>
-
-														{/* overlay on hover */}
 														<div className='absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100'>
 															<button
 																type='button'
@@ -558,13 +651,9 @@ export default function AdminProductCreatePage() {
 																<Trash2 size={14} />
 															</button>
 														</div>
-
-														{/* grip icon */}
 														<div className='absolute left-1 top-1 rounded bg-black/30 p-0.5 opacity-0 transition-opacity group-hover:opacity-100'>
 															<GripVertical size={12} className='text-white' />
 														</div>
-
-														{/* status overlay */}
 														{img.status === 'uploading' && (
 															<div className='absolute inset-0 flex items-center justify-center bg-black/50'>
 																<div className='h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent' />
@@ -585,8 +674,6 @@ export default function AdminProductCreatePage() {
 															</div>
 														)}
 													</div>
-
-													{/* Info footer */}
 													<div className='border-t border-default-100 bg-default-50 px-2 py-1.5'>
 														<div className='flex items-center justify-between'>
 															{idx === 0 && makePrimary ? (
@@ -667,7 +754,7 @@ export default function AdminProductCreatePage() {
 											isDisabled={isSubmitting}
 										>
 											<span className='text-xs text-default-600'>
-												Marcar la primera imagen como principal
+												Marcar la primera imagen nueva como principal
 											</span>
 										</Checkbox>
 									</div>
@@ -875,7 +962,7 @@ export default function AdminProductCreatePage() {
 						isLoading={isSubmitting}
 						isDisabled={isSubmitting}
 					>
-						{isSubmitting ? 'Creando producto...' : 'Crear producto'}
+						{isSubmitting ? 'Actualizando producto...' : 'Guardar cambios'}
 					</Button>
 				</div>
 			</form>

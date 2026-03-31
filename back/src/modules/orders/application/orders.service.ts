@@ -3,6 +3,7 @@ import { OrderStatus, Role } from '@prisma/client';
 import { CreateOrderDto, UpdateOrderPaymentDto } from '../infrastructure/http/dto/create-order.dto';
 import { isAdminRole } from '../../../shared/infrastructure/auth/permissions';
 import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../domain/ports/orders-repository.port';
+import { InventoryService } from '../../inventory/application/inventory.service';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
@@ -16,7 +17,10 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 @Injectable()
 export class OrdersService {
-  constructor(@Inject(ORDERS_REPOSITORY) private readonly ordersRepository: OrdersRepositoryPort) {}
+  constructor(
+    @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: OrdersRepositoryPort,
+    @Inject(InventoryService) private readonly inventoryService: InventoryService,
+  ) {}
 
   async create(userId: string, dto: CreateOrderDto) {
     const productIds = [...new Set(dto.items.map((item) => item.productId))];
@@ -36,9 +40,6 @@ export class OrdersService {
       if (!product.sizes.includes(item.size)) {
         throw new BadRequestException(`Selected size is not available for product: ${item.productId}`);
       }
-      if (product.inStock < item.quantity) {
-        throw new BadRequestException(`Insufficient stock for product: ${item.productId}`);
-      }
       itemsInOrder += item.quantity;
       subTotal += product.price * item.quantity;
     }
@@ -47,7 +48,36 @@ export class OrdersService {
     const tax = Number((subTotal * taxRate).toFixed(2));
     const total = Number((subTotal + tax).toFixed(2));
 
-    return this.ordersRepository.createOrderWithStockTx(userId, dto, productMap, subTotal, tax, total, itemsInOrder);
+    // Reserve inventory BEFORE creating order (atomic)
+    await this.inventoryService.reserveStock(
+      dto.items.map((item) => ({
+        productId: item.productId,
+        size: item.size,
+        quantity: item.quantity,
+      })),
+      'pending-order', // temporary ref, will be updated
+      userId,
+    );
+
+    try {
+      const order = await this.ordersRepository.createOrderWithStockTx(
+        userId,
+        dto,
+        productMap,
+        subTotal,
+        tax,
+        total,
+        itemsInOrder,
+      );
+
+      return order;
+    } catch (error) {
+      // If order creation fails, release the reserved stock
+      await this.inventoryService.releaseStock('pending-order', userId).catch(() => {
+        // Log but don't re-throw
+      });
+      throw error;
+    }
   }
 
   getMyOrders(userId: string, page = 1, limit = 10) {
@@ -86,8 +116,17 @@ export class OrdersService {
       throw new BadRequestException(`Cannot transition from "${order.status}" to "${newStatus}"`);
     }
 
+    // Handle inventory based on status transition
     if (newStatus === OrderStatus.CANCELLED && !order.isPaid) {
+      // Release reserved stock
+      await this.inventoryService.releaseStock(orderId, userId);
+      // Also restore the old inStock field for backward compatibility
       await this.restoreStock(orderId);
+    }
+
+    if (newStatus === OrderStatus.PAID) {
+      // Commit reserved stock (reserve -> committed)
+      await this.inventoryService.commitStock(orderId, userId);
     }
 
     return this.ordersRepository.updateOrderById(orderId, { status: newStatus });
@@ -105,6 +144,9 @@ export class OrdersService {
       throw new BadRequestException('Order is already paid with another transaction');
     }
 
+    // Commit inventory when payment is confirmed
+    await this.inventoryService.commitStock(orderId, order.userId);
+
     return this.ordersRepository.markOrderPaid(orderId, dto);
   }
 
@@ -116,3 +158,4 @@ export class OrdersService {
     }
   }
 }
+

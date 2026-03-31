@@ -1,6 +1,6 @@
 'use client';
 
-import { Pagination } from '@heroui/react';
+import { Checkbox, Pagination } from '@heroui/react';
 
 export type Column<T> = {
 	key: string;
@@ -19,6 +19,14 @@ type DataTableProps<T> = {
 	isLoading?: boolean;
 	emptyMessage?: string;
 	onRowClick?: (row: T) => void;
+	/** Enable row selection checkboxes. Requires `rowKey` to identify rows. */
+	selectable?: boolean;
+	/** Function to extract a unique key from each row (required when selectable) */
+	rowKey?: (row: T) => string;
+	/** Currently selected row keys */
+	selectedKeys?: Set<string>;
+	/** Callback when selection changes */
+	onSelectionChange?: (keys: Set<string>) => void;
 };
 
 export function DataTable<T>({
@@ -31,7 +39,41 @@ export function DataTable<T>({
 	isLoading,
 	emptyMessage = 'No se encontraron resultados',
 	onRowClick,
+	selectable = false,
+	rowKey,
+	selectedKeys,
+	onSelectionChange,
 }: DataTableProps<T>) {
+	const isSelectable = selectable && rowKey && selectedKeys && onSelectionChange;
+
+	const allKeys = isSelectable ? data.map((row) => rowKey(row)) : [];
+	const allSelected = isSelectable && allKeys.length > 0 && allKeys.every((k) => selectedKeys.has(k));
+	const someSelected = isSelectable && !allSelected && allKeys.some((k) => selectedKeys.has(k));
+
+	const handleSelectAll = () => {
+		if (!isSelectable) return;
+		if (allSelected) {
+			const next = new Set(selectedKeys);
+			for (const k of allKeys) next.delete(k);
+			onSelectionChange(next);
+		} else {
+			const next = new Set(selectedKeys);
+			for (const k of allKeys) next.add(k);
+			onSelectionChange(next);
+		}
+	};
+
+	const handleSelectRow = (key: string) => {
+		if (!isSelectable) return;
+		const next = new Set(selectedKeys);
+		if (next.has(key)) {
+			next.delete(key);
+		} else {
+			next.add(key);
+		}
+		onSelectionChange(next);
+	};
+
 	if (isLoading) {
 		return (
 			<div className='overflow-hidden rounded-xl border border-gray-200 bg-white'>
@@ -76,6 +118,17 @@ export function DataTable<T>({
 				<table className='w-full'>
 					<thead>
 						<tr className='border-b border-gray-200 bg-gray-50'>
+							{isSelectable && (
+								<th className='w-12 px-4 py-3'>
+									<Checkbox
+										size='sm'
+										isSelected={allSelected}
+										isIndeterminate={someSelected}
+										onValueChange={handleSelectAll}
+										aria-label='Seleccionar todos'
+									/>
+								</th>
+							)}
 							{columns.map((col) => (
 								<th
 									key={col.key}
@@ -87,22 +140,39 @@ export function DataTable<T>({
 						</tr>
 					</thead>
 					<tbody className='divide-y divide-gray-100'>
-						{data.map((row, i) => (
-							<tr
-								key={i}
-								onClick={() => onRowClick?.(row)}
-								className={`transition-colors hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
-							>
-								{columns.map((col) => (
-									<td
-										key={col.key}
-										className={`px-6 py-4 text-sm text-gray-700 ${col.className ?? ''}`}
-									>
-										{col.render(row)}
-									</td>
-								))}
-							</tr>
-						))}
+						{data.map((row, i) => {
+							const key = isSelectable ? rowKey(row) : String(i);
+							const isRowSelected = isSelectable && selectedKeys.has(key);
+
+							return (
+								<tr
+									key={key}
+									onClick={() => onRowClick?.(row)}
+									className={`transition-colors ${
+										isRowSelected ? 'bg-primary-50' : 'hover:bg-gray-50'
+									} ${onRowClick ? 'cursor-pointer' : ''}`}
+								>
+									{isSelectable && (
+										<td className='w-12 px-4 py-4'>
+											<Checkbox
+												size='sm'
+												isSelected={isRowSelected}
+												onValueChange={() => handleSelectRow(key)}
+												aria-label={`Seleccionar fila ${i + 1}`}
+											/>
+										</td>
+									)}
+									{columns.map((col) => (
+										<td
+											key={col.key}
+											className={`px-6 py-4 text-sm text-gray-700 ${col.className ?? ''}`}
+										>
+											{col.render(row)}
+										</td>
+									))}
+								</tr>
+							);
+						})}
 					</tbody>
 				</table>
 			</div>
@@ -112,6 +182,11 @@ export function DataTable<T>({
 					<p className='text-sm text-gray-500'>
 						Página {page} de {totalPages}
 						{total !== undefined && <span className='ml-1'>({total} resultados)</span>}
+						{isSelectable && selectedKeys.size > 0 && (
+							<span className='ml-2 font-medium text-primary'>
+								• {selectedKeys.size} seleccionado{selectedKeys.size !== 1 ? 's' : ''}
+							</span>
+						)}
 					</p>
 					<div className='flex justify-center sm:justify-end'>
 						<Pagination

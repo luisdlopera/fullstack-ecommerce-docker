@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type {
   AdminProductImageRepositoryPort,
   CreateProductImageInput,
@@ -8,7 +8,7 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 
 @Injectable()
 export class PrismaAdminProductImageRepository implements AdminProductImageRepositoryPort {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async existsProductById(productId: string): Promise<boolean> {
     const row = await this.prisma.product.findUnique({

@@ -12,6 +12,7 @@ import {
 	DataTable,
 	ErrorState,
 	FormModal,
+	SearchInput,
 	StatusBadge,
 	type AdminCategory,
 	type Column,
@@ -19,6 +20,7 @@ import {
 
 export default function AdminCategoriesPage() {
 	const queryClient = useQueryClient();
+	const [search, setSearch] = useState('');
 	const [createOpen, setCreateOpen] = useState(false);
 	const [editCategory, setEditCategory] = useState<AdminCategory | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<AdminCategory | null>(null);
@@ -32,6 +34,13 @@ export default function AdminCategoriesPage() {
 		queryKey: ['admin', 'categories'],
 		queryFn: () => categoriesApi.list(),
 	});
+ 
+	const filtered = (categories ?? []).filter(
+		(c) =>
+			!search ||
+			c.name.toLowerCase().includes(search.toLowerCase()) ||
+			c.slug.toLowerCase().includes(search.toLowerCase()),
+	);
 
 	const createMutation = useMutation({
 		mutationFn: (d: Record<string, unknown>) => categoriesApi.create(d),
@@ -146,9 +155,13 @@ export default function AdminCategoriesPage() {
 				}
 			/>
 
+			<div className='mb-4'>
+				<SearchInput value={search} onChange={setSearch} placeholder='Buscar por nombre o slug...' />
+			</div>
+
 			<DataTable
 				columns={columns}
-				data={categories ?? []}
+				data={filtered}
 				isLoading={isLoading}
 				emptyMessage='No hay categorías registradas'
 			/>

@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { Button, Input } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { KeyRound } from 'lucide-react';
 import { bffFetch } from '@/lib/bff-fetch';
 import { PasswordInput } from '@/components/shared/PasswordInput';

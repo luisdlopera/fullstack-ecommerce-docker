@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { STORAGE_PORT, type StoragePort } from '../../../../shared/domain/ports/storage.port';
 import { StorageConfig } from '../../../../shared/infrastructure/storage/storage.config';
 import {
@@ -21,13 +21,21 @@ export type UploadProductImageInput = {
 
 @Injectable()
 export class UploadProductImageUseCase {
+  private readonly logger = new Logger(UploadProductImageUseCase.name);
+
   constructor(
     @Inject(STORAGE_PORT)
     private readonly storage: StoragePort,
     @Inject(ADMIN_PRODUCT_IMAGE_REPOSITORY)
     private readonly repository: AdminProductImageRepositoryPort,
-    private readonly storageConfig: StorageConfig,
-  ) {}
+    @Inject(StorageConfig)
+    private storageConfig: StorageConfig,
+  ) {
+    if (!this.storageConfig) {
+      this.logger.warn('StorageConfig undefined from DI, manually instantiating as fallback.');
+      this.storageConfig = new StorageConfig();
+    }
+  }
 
   async execute(input: UploadProductImageInput) {
     validateProductImageFile(input.file, this.storageConfig.maxFileSizeBytes);
@@ -41,12 +49,22 @@ export class UploadProductImageUseCase {
     const extension = MIME_TO_EXTENSION[mimeType];
     const key = buildProductImageKey(input.productId, extension);
 
-    await this.storage.upload({
-      key,
-      body: input.file.buffer,
-      contentType: mimeType,
-      cacheControl: 'public, max-age=31536000, immutable',
-    });
+    try {
+      this.logger.debug(`Uploading image for product ${input.productId} to MinIO with key ${key}`);
+      await this.storage.upload({
+        key,
+        body: input.file.buffer,
+        contentType: mimeType,
+        cacheControl: 'public, max-age=31536000, immutable',
+      });
+      this.logger.debug(`Image uploaded successfully to key ${key}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload product image to MinIO: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new InternalServerErrorException('Error al subir la imagen al servidor de almacenamiento');
+    }
 
     const url = this.storage.getPublicUrl(key);
 

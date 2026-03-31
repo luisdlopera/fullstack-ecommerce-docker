@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import type {
@@ -9,7 +9,7 @@ import type {
 
 @Injectable()
 export class PrismaPaymentOrderRepository implements PaymentOrderRepositoryPort {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findOrderById(orderId: string): Promise<OrderPaymentRow | null> {
     const order = await this.prisma.order.findUnique({

@@ -92,6 +92,7 @@ model Product {
   ProductImage ProductImage[]
   OrderItem    OrderItem[]
   favorites    UserFavorite[]
+  inventoryItems InventoryItem[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -317,5 +318,59 @@ model AuditLog {
 
   @@index([actorId])
   @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ─── Inventory ──────────────────────────────────────────────────────────
+
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RESERVATION
+  COMMIT
+  RELEASE
+  RETURN
+}
+
+model InventoryItem {
+  id        String  @id @default(uuid())
+  productId String
+  size      Size
+  location  String  @default("MAIN")
+  available Int     @default(0)
+  reserved  Int     @default(0)
+  committed Int     @default(0)
+  minStock  Int     @default(5)
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  movements InventoryMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, size, location])
+  @@index([productId])
+  @@index([available])
+  @@index([location])
+}
+
+model InventoryMovement {
+  id              String                @id @default(uuid())
+  inventoryItemId String
+  type            InventoryMovementType
+  quantity        Int
+  reason          String
+  referenceType   String?
+  referenceId     String?
+  userId          String?
+
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryItemId])
+  @@index([type])
+  @@index([referenceType, referenceId])
   @@index([createdAt])
 }

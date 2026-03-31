@@ -158,3 +158,54 @@ export type TopProduct = {
 	product: AdminProduct;
 	totalSold: number;
 };
+
+// ─── Inventory Types ─────────────────────────────────────────────────
+
+export type InventoryItem = {
+	id: string;
+	productId: string;
+	size: string;
+	location: string;
+	available: number;
+	reserved: number;
+	committed: number;
+	minStock: number;
+	createdAt: string;
+	updatedAt: string;
+	product: {
+		id: string;
+		title: string;
+		slug: string;
+		sku: string | null;
+		isActive: boolean;
+		ProductImage: { id: number; url: string; isPrimary: boolean }[];
+	};
+};
+
+export type InventoryMovement = {
+	id: string;
+	inventoryItemId: string;
+	type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'RESERVATION' | 'COMMIT' | 'RELEASE' | 'RETURN';
+	quantity: number;
+	reason: string;
+	referenceType: string | null;
+	referenceId: string | null;
+	userId: string | null;
+	createdAt: string;
+	inventoryItem: {
+		id: string;
+		productId: string;
+		size: string;
+		location: string;
+		product: { id: string; title: string; sku: string | null };
+	};
+};
+
+export type InventorySummary = {
+	totalItems: number;
+	totalAvailable: number;
+	totalReserved: number;
+	totalCommitted: number;
+	lowStockCount: number;
+	outOfStockCount: number;
+};

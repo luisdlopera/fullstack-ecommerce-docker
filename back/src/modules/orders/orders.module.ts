@@ -5,9 +5,10 @@ import { OrdersService } from './application/orders.service';
 import { ORDERS_REPOSITORY } from './domain/ports/orders-repository.port';
 import { PrismaOrdersRepository } from './infrastructure/persistence/prisma-orders.repository';
 import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
+import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, InventoryModule],
   controllers: [OrdersController],
   providers: [
     OrdersService,
@@ -20,3 +21,4 @@ import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service
   exports: [OrdersService],
 })
 export class OrdersModule {}
+

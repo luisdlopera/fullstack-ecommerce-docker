@@ -5,6 +5,9 @@ import type {
 	AdminProduct,
 	AdminUser,
 	DashboardSummary,
+	InventoryItem,
+	InventoryMovement,
+	InventorySummary,
 	PaginatedResponse,
 	SalesChartPoint,
 	TopProduct,
@@ -211,4 +214,43 @@ export const countriesApi = {
 		adminFetch<AdminCountry>(`/admin/countries/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
 	delete: (id: string) => adminFetch<{ ok: boolean }>(`/admin/countries/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Inventory ───────────────────────────────────────────────────────
+
+export const inventoryApi = {
+	getSummary: () => adminFetch<InventorySummary>('/admin/inventory/summary'),
+
+	listItems: (params: {
+		page?: number;
+		limit?: number;
+		search?: string;
+		lowStock?: boolean;
+		outOfStock?: boolean;
+		productId?: string;
+		location?: string;
+	}) => adminFetch<PaginatedResponse<InventoryItem>>(`/admin/inventory/items${buildQuery(params)}`),
+
+	getItemById: (id: string) => adminFetch<InventoryItem>(`/admin/inventory/items/${id}`),
+
+	getItemsByProduct: (productId: string) =>
+		adminFetch<InventoryItem[]>(`/admin/inventory/products/${productId}`),
+
+	adjustInventory: (id: string, quantity: number, reason: string) =>
+		adminFetch<InventoryItem>(`/admin/inventory/items/${id}/adjust`, {
+			method: 'PATCH',
+			body: JSON.stringify({ quantity, reason }),
+		}),
+
+	listMovements: (params: {
+		page?: number;
+		limit?: number;
+		inventoryItemId?: string;
+		type?: string;
+		referenceId?: string;
+	}) => adminFetch<PaginatedResponse<InventoryMovement>>(`/admin/inventory/movements${buildQuery(params)}`),
+
+	getLowStock: () => adminFetch<InventoryItem[]>('/admin/inventory/alerts/low-stock'),
+
+	getOutOfStock: () => adminFetch<InventoryItem[]>('/admin/inventory/alerts/out-of-stock'),
 };

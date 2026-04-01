@@ -4,6 +4,7 @@ import { CreateOrderDto, UpdateOrderPaymentDto } from '../infrastructure/http/dt
 import { isAdminRole } from '../../../shared/infrastructure/auth/permissions';
 import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../domain/ports/orders-repository.port';
 import { InventoryService } from '../../inventory/application/inventory.service';
+import { randomUUID } from 'crypto';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
@@ -22,7 +23,7 @@ export class OrdersService {
     @Inject(InventoryService) private readonly inventoryService: InventoryService,
   ) {}
 
-  async create(userId: string, dto: CreateOrderDto) {
+  async create(userId: string | undefined, dto: CreateOrderDto) {
     const productIds = [...new Set(dto.items.map((item) => item.productId))];
     const products = await this.ordersRepository.findProductsByIds(productIds);
 
@@ -48,36 +49,40 @@ export class OrdersService {
     const tax = Number((subTotal * taxRate).toFixed(2));
     const total = Number((subTotal + tax).toFixed(2));
 
-    // Reserve inventory BEFORE creating order (atomic)
-    await this.inventoryService.reserveStock(
-      dto.items.map((item) => ({
-        productId: item.productId,
-        size: item.size,
-        quantity: item.quantity,
-      })),
-      'pending-order', // temporary ref, will be updated
+    const guestCheckoutToken = !userId ? randomUUID() : undefined;
+
+    const order = await this.ordersRepository.createOrderWithStockTx(
       userId,
+      dto,
+      productMap,
+      subTotal,
+      tax,
+      total,
+      itemsInOrder,
+      guestCheckoutToken,
     );
 
     try {
-      const order = await this.ordersRepository.createOrderWithStockTx(
-        userId,
-        dto,
-        productMap,
-        subTotal,
-        tax,
-        total,
-        itemsInOrder,
+      await this.inventoryService.reserveStock(
+        dto.items.map((item) => ({
+          productId: item.productId,
+          size: item.size,
+          quantity: item.quantity,
+        })),
+        order.id,
+        userId ?? `guest_${order.id}`,
       );
-
-      return order;
     } catch (error) {
-      // If order creation fails, release the reserved stock
-      await this.inventoryService.releaseStock('pending-order', userId).catch(() => {
-        // Log but don't re-throw
-      });
+      // If reserving stock fails (e.g. out of stock), mark order as cancelled
+      await this.ordersRepository.updateOrderById(order.id, { status: OrderStatus.CANCELLED });
       throw error;
     }
+
+    return order;
+  }
+
+  async validateCart(items: { productId: string; size: string; quantity: number }[]) {
+    return this.ordersRepository.validateCartStock(items);
   }
 
   getMyOrders(userId: string, page = 1, limit = 10) {
@@ -120,8 +125,6 @@ export class OrdersService {
     if (newStatus === OrderStatus.CANCELLED && !order.isPaid) {
       // Release reserved stock
       await this.inventoryService.releaseStock(orderId, userId);
-      // Also restore the old inStock field for backward compatibility
-      await this.restoreStock(orderId);
     }
 
     if (newStatus === OrderStatus.PAID) {
@@ -145,17 +148,8 @@ export class OrdersService {
     }
 
     // Commit inventory when payment is confirmed
-    await this.inventoryService.commitStock(orderId, order.userId);
+    await this.inventoryService.commitStock(orderId, order.userId ?? `guest_${order.id}`);
 
     return this.ordersRepository.markOrderPaid(orderId, dto);
   }
-
-  private async restoreStock(orderId: string) {
-    const items = await this.ordersRepository.listOrderItemsForStock(orderId);
-
-    for (const item of items) {
-      await this.ordersRepository.incrementProductStock(item.productId, item.quantity);
-    }
-  }
 }
-

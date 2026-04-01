@@ -7,30 +7,34 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { PasswordInput } from '@/components/shared/PasswordInput';
+import { getRoleBadgeClass } from '@/lib/format-role-label';
 
 const showAuthDemoHints = process.env.NODE_ENV === 'development';
 
 const DEMO_PASSWORD = 'Qwert.12345';
 
-const SEED_TEST_USERS: { label: string; email: string; badgeClass: string }[] = [
-	{ label: 'SUPER_ADMIN', email: 'superadmin@nexstore.com', badgeClass: 'bg-violet-100 text-violet-800' },
-	{ label: 'ADMIN', email: 'admin@nexstore.com', badgeClass: 'bg-blue-100 text-blue-700' },
-	{ label: 'MANAGER', email: 'manager@nexstore.com', badgeClass: 'bg-amber-100 text-amber-800' },
-	{ label: 'SUPPORT', email: 'support@nexstore.com', badgeClass: 'bg-teal-100 text-teal-800' },
-	{ label: 'CUSTOMER', email: 'cliente@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
-	{ label: 'CUSTOMER', email: 'maria@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
-	{ label: 'CUSTOMER', email: 'carlos@nexstore.com', badgeClass: 'bg-green-100 text-green-700' },
+const SEED_TEST_USERS: { label: string; email: string; role: string }[] = [
+	{ label: 'SUPER_ADMIN', email: 'superadmin@nexstore.com', role: 'SUPER_ADMIN' },
+	{ label: 'ADMIN', email: 'admin@nexstore.com', role: 'ADMIN' },
+	{ label: 'MANAGER', email: 'manager@nexstore.com', role: 'MANAGER' },
+	{ label: 'SUPPORT', email: 'support@nexstore.com', role: 'SUPPORT' },
+	{ label: 'CUSTOMER', email: 'cliente@nexstore.com', role: 'CUSTOMER' },
+	{ label: 'CUSTOMER', email: 'maria@nexstore.com', role: 'CUSTOMER' },
+	{ label: 'CUSTOMER', email: 'carlos@nexstore.com', role: 'CUSTOMER' },
 ];
 
 export default function AuthPage() {
-	const { login, register, user } = useAuth();
+	const { login, register, resendVerification, user } = useAuth();
 	const router = useRouter();
 
 	const [loginError, setLoginError] = useState('');
 	const [loginLoading, setLoginLoading] = useState(false);
 
 	const [registerError, setRegisterError] = useState('');
+	const [registerMessage, setRegisterMessage] = useState('');
 	const [registerLoading, setRegisterLoading] = useState(false);
+	const [resendLoading, setResendLoading] = useState(false);
+	const [lastRegisteredEmail, setLastRegisteredEmail] = useState('');
 	const [demoUsersOpen, setDemoUsersOpen] = useState(false);
 	const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 	const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,6 +87,7 @@ export default function AuthPage() {
 	const onRegister = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setRegisterError('');
+		setRegisterMessage('');
 		setRegisterLoading(true);
 		const fd = new FormData(e.currentTarget);
 		const name = fd.get('name') as string;
@@ -90,12 +95,28 @@ export default function AuthPage() {
 		const password = fd.get('password') as string;
 
 		try {
-			await register(name, email, password);
-			router.push('/');
+			const message = await register(name, email, password);
+			setLastRegisteredEmail(email.trim());
+			setRegisterMessage(message);
+			e.currentTarget.reset();
 		} catch (err) {
 			setRegisterError(err instanceof Error ? err.message : 'Error al registrarse');
 		} finally {
 			setRegisterLoading(false);
+		}
+	};
+
+	const onResendVerification = async () => {
+		if (!lastRegisteredEmail) return;
+		setRegisterError('');
+		setResendLoading(true);
+		try {
+			const message = await resendVerification(lastRegisteredEmail);
+			setRegisterMessage(message);
+		} catch (err) {
+			setRegisterError(err instanceof Error ? err.message : 'No fue posible reenviar la verificación');
+		} finally {
+			setResendLoading(false);
 		}
 	};
 
@@ -111,10 +132,13 @@ export default function AuthPage() {
 							name='password'
 							label='Contraseña'
 							placeholder='Ingresa tu contraseña'
-							minLength={6}
+							minLength={10}
 						/>
 						<Link href='/auth/forgot-password' className='mt-1 text-sm text-gray-600 hover:underline'>
 							¿Olvidaste tu contraseña?
+						</Link>
+						<Link href='/auth/resend-verification' className='text-sm text-gray-600 hover:underline'>
+							¿No te llegó el correo de verificación?
 						</Link>
 						{loginError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{loginError}</p>}
 						<Button className='bg-primary w-full text-white' type='submit' isLoading={loginLoading}>
@@ -142,10 +166,22 @@ export default function AuthPage() {
 						isRequired
 						name='password'
 						label='Contraseña'
-						placeholder='Mínimo 6 caracteres'
-						minLength={6}
+						placeholder='Mínimo 10 caracteres'
+						minLength={10}
 					/>
+					{registerMessage && <p className='rounded-lg bg-green-50 p-3 text-sm text-green-700'>{registerMessage}</p>}
 					{registerError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{registerError}</p>}
+					{lastRegisteredEmail ? (
+						<Button
+							type='button'
+							variant='flat'
+							className='w-full'
+							onPress={() => void onResendVerification()}
+							isLoading={resendLoading}
+						>
+							Reenviar correo de verificación
+						</Button>
+					) : null}
 					<p className='mb-2 text-sm text-gray-600'>
 						Tu información se empleará para brindarte una experiencia personalizada, administrar tu cuenta y
 						cumplir con lo establecido en nuestra <span className='font-bold'>Política de Privacidad.</span>
@@ -177,7 +213,7 @@ export default function AuthPage() {
 											>
 												<div className='min-w-0 flex-1'>
 													<span
-														className={`rounded px-1.5 py-0.5 text-xs font-semibold ${u.badgeClass}`}
+														className={`rounded px-1.5 py-0.5 text-xs font-semibold ${getRoleBadgeClass(u.role)}`}
 													>
 														{u.label}
 													</span>

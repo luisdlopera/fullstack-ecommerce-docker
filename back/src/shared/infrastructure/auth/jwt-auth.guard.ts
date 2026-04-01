@@ -20,13 +20,12 @@ export class JwtAuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (isPublic) return true;
-
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const authHeader = request.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
 
     if (!token) {
+      if (isPublic) return true;
       throw new UnauthorizedException('Missing bearer token');
     }
 
@@ -42,6 +41,7 @@ export class JwtAuthGuard implements CanActivate {
       request.user = payload;
       return true;
     } catch {
+      if (isPublic) return true;
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

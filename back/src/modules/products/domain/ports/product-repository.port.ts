@@ -66,10 +66,19 @@ export type ProductListResult = {
   meta: ProductListMeta;
 };
 
+export type ProductStockSizeEntry = {
+  size: string;
+  available: number;
+  reserved: number;
+};
+
 export type ProductStockRecord = {
   id: string;
   slug: string;
+  /** @deprecated Legacy aggregate field — use sizeStock instead */
   inStock: number;
+  sizeStock: ProductStockSizeEntry[];
+  totalAvailable: number;
 };
 
 export type ProductFacetsResult = {
@@ -88,12 +97,32 @@ export type CountryRecord = {
   allowsPurchase: boolean;
 };
 
+export type ValidateCartItem = {
+  productId: string;
+  size: string;
+  quantity: number;
+};
+
+export type CartValidationError = {
+  productId: string;
+  size: string;
+  requested: number;
+  available: number;
+  message: string;
+};
+
+export type CartValidationResult = {
+  valid: boolean;
+  errors: CartValidationError[];
+};
+
 export interface ProductRepositoryPort {
   findFeatured(limit: number): Promise<FeaturedProductRecord[]>;
   list(filters: ProductListFilters): Promise<ProductListResult>;
   facets(filters: ProductListFilters): Promise<ProductFacetsResult>;
   findBySlug(slug: string): Promise<ProductListItem | null>;
   findStockBySlug(slug: string): Promise<ProductStockRecord | null>;
+  validateCartItems(items: ValidateCartItem[]): Promise<CartValidationResult>;
   findAllCategories(): Promise<CategoryRecord[]>;
   findAllCountries(): Promise<CountryRecord[]>;
 }

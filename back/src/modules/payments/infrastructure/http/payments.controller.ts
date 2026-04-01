@@ -1,4 +1,4 @@
-import { Body, Controller, Headers, Inject, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Headers, Inject, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
@@ -12,14 +12,24 @@ import { PaymentsService } from '../../application/payments.service';
 export class PaymentsController {
   constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
+  @Public()
   @Post('mercadopago/init')
-  initMercadoPagoCheckout(@CurrentUser() user: JwtPayload, @Body() dto: InitMercadoPagoDto) {
-    return this.paymentsService.initMercadoPagoCheckout(dto.orderId, user.sub, user.email);
+  initMercadoPagoCheckout(@CurrentUser() user: JwtPayload | undefined, @Body() dto: InitMercadoPagoDto) {
+    return this.paymentsService.initMercadoPagoCheckout(dto.orderId, user?.sub, user?.email ?? dto.guestEmail, dto.guestCheckoutToken);
   }
 
   @Post('mercadopago/verify')
   verifyMercadoPago(@Body() dto: VerifyMercadoPagoDto) {
     return this.paymentsService.verifyMercadoPagoPayment(dto.paymentId);
+  }
+
+  @Public()
+  @Post('simulate')
+  simulatePayment(@CurrentUser() user: JwtPayload | undefined, @Body() body: { orderId: string, guestCheckoutToken?: string }) {
+    if (!body.orderId) {
+      throw new BadRequestException('orderId is required');
+    }
+    return this.paymentsService.simulatePayment(body.orderId, user?.sub, body.guestCheckoutToken);
   }
 
   @Public()

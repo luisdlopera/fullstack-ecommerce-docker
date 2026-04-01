@@ -5,7 +5,7 @@ import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@
 import { Heart, LogOut, Package, Search, ShoppingBag, ShoppingCart, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCart } from '@/features/cart';
+import { CartDrawer, useCart } from '@/features/cart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { isAdminRole } from '@/features/admin';
@@ -19,7 +19,7 @@ const HEADER_SOLID_BG_SCROLL_Y = 648;
 export function Header() {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { totalItems } = useCart();
+	const { totalItems, openCart } = useCart();
 	const { items: favoriteItems } = useFavorites();
 	const { user, logout } = useAuth();
 	const [scrolled, setScrolled] = useState(false);
@@ -126,7 +126,7 @@ export function Header() {
 					</div>
 					<div className='flex'>
 						<div className='relative inline-flex'>
-							<Button as={Link} href='/cart' isIconOnly aria-label='Cart' color='default'>
+							<Button onPress={openCart} isIconOnly aria-label='Cart' color='default'>
 								<ShoppingCart />
 							</Button>
 							{totalItems > 0 && (
@@ -222,7 +222,9 @@ export function Header() {
 				cartCount={totalItems}
 				onLogout={handleLogout}
 				onNavigate={(href) => router.push(href)}
+				onOpenCart={openCart}
 			/>
+			<CartDrawer />
 		</header>
 	);
 }

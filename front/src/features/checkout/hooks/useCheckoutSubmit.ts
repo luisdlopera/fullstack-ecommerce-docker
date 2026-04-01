@@ -15,6 +15,7 @@ export type CheckoutAddressPayload = {
 	city: string;
 	phone: string;
 	countryId: string;
+	guestEmail?: string;
 };
 
 export function useCheckoutSubmit() {
@@ -27,7 +28,43 @@ export function useCheckoutSubmit() {
 	const tax = totalPrice * 0.15;
 	const total = totalPrice + tax;
 
-	const submit = useCallback(
+	const validateCartStock = useCallback(async () => {
+		setSubmitting(true);
+		setError('');
+		try {
+			const orderItems = items.map((item) => ({
+				productId: item.productId,
+				quantity: item.quantity,
+				size: item.size,
+			}));
+
+			const res = await bffFetch('/orders/validate-cart', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ items: orderItems }),
+			});
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				const msg = (body as { message?: string | string[] }).message;
+				const text = typeof msg === 'string' ? msg : Array.isArray(msg) ? msg.join('. ') : 'Error al validar el carrito';
+				throw new Error(text);
+			}
+
+			const validation = (await res.json()) as { valid: boolean; errors: { message: string }[] };
+			if (!validation.valid) {
+				const errorMsgs = validation.errors.map((e) => e.message).join(' | ');
+				throw new Error('Lo sentimos: ' + errorMsgs);
+			}
+			return true;
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Error al verificar disponibilidad');
+			return false;
+		} finally {
+			setSubmitting(false);
+		}
+	}, [items]);
+
+	const submitAddress = useCallback(
 		async (address: CheckoutAddressPayload) => {
 			setError('');
 			setSubmitting(true);
@@ -39,9 +76,8 @@ export function useCheckoutSubmit() {
 			}));
 
 			try {
-				if (!user) {
-					setError('Debes iniciar sesión para completar tu compra.');
-					return;
+				if (!user && !address.guestEmail) {
+					throw new Error('Debes iniciar sesión o proveer un correo para completar tu compra.');
 				}
 
 				const res = await bffFetch('/orders', {
@@ -49,7 +85,7 @@ export function useCheckoutSubmit() {
 					headers: {
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify({ items: orderItems, address }),
+					body: JSON.stringify({ items: orderItems, address, guestEmail: address.guestEmail }),
 				});
 
 				if (!res.ok) {
@@ -60,26 +96,18 @@ export function useCheckoutSubmit() {
 					throw new Error(text);
 				}
 
-				const order = (await res.json()) as { id: string };
+				const order = (await res.json()) as { id: string; guestCheckoutToken?: string };
 
 				const initPaymentRes = await bffFetch('/payments/mercadopago/init', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify({ orderId: order.id }),
+					body: JSON.stringify({ orderId: order.id, guestCheckoutToken: order.guestCheckoutToken }),
 				});
 
 				if (!initPaymentRes.ok) {
-					const body = await initPaymentRes.json().catch(() => ({}));
-					const msg = (body as { message?: string | string[] }).message;
-					const text =
-						typeof msg === 'string'
-							? msg
-							: Array.isArray(msg)
-								? msg.join('. ')
-								: 'Error al inicializar el pago';
-					throw new Error(text);
+					throw new Error('Error al inicializar el pago en Mercado Pago');
 				}
 
 				const initPayment = (await initPaymentRes.json()) as {
@@ -108,5 +136,14 @@ export function useCheckoutSubmit() {
 		[items, clearCart, router, user],
 	);
 
-	return { submit, submitting, error, totalPrice, tax, total, items };
+	return {
+		submitAddress,
+		validateCartStock,
+		submitting,
+		error,
+		totalPrice,
+		tax,
+		total,
+		items,
+	};
 }

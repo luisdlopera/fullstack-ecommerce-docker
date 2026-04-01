@@ -61,6 +61,10 @@ export class CreateOrderDto {
   @ValidateNested()
   @Type(() => CreateOrderAddressDto)
   address!: CreateOrderAddressDto;
+
+  @IsOptional()
+  @IsString()
+  guestEmail?: string;
 }
 
 export class UpdateOrderPaymentDto {

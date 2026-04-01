@@ -15,6 +15,7 @@ type HeaderMobileNavProps = {
 	cartCount: number;
 	onLogout: () => void;
 	onNavigate: (href: string) => void;
+	onOpenCart: () => void;
 };
 
 export function HeaderMobileNav({
@@ -26,6 +27,7 @@ export function HeaderMobileNav({
 	cartCount,
 	onLogout,
 	onNavigate,
+	onOpenCart,
 }: HeaderMobileNavProps) {
 	const go = (href: string) => {
 		onNavigate(href);
@@ -95,10 +97,13 @@ export function HeaderMobileNav({
 							</span>
 						)}
 					</Link>
-					<Link
-						href='/cart'
-						onClick={onClose}
-						className='flex items-center gap-3 rounded-xl px-4 py-3 text-neutral-800 hover:bg-neutral-100'
+					<button
+						type='button'
+						onClick={() => {
+							onClose();
+							onOpenCart();
+						}}
+						className='flex items-center gap-3 rounded-xl px-4 py-3 text-left text-neutral-800 hover:bg-neutral-100'
 					>
 						<ShoppingCart className='h-5 w-5 shrink-0' />
 						Carrito
@@ -107,7 +112,7 @@ export function HeaderMobileNav({
 								{cartCount > 99 ? '99+' : cartCount}
 							</span>
 						)}
-					</Link>
+					</button>
 					<hr className='my-2 border-neutral-100' />
 					{user ? (
 						<>

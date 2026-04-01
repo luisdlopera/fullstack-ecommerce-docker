@@ -180,6 +180,24 @@ describe('PaymentsService', () => {
     });
   });
 
+  describe('simulatePayment', () => {
+    it('should successfully simulate a payment', async () => {
+      mockPaymentOrders.findOrderById.mockResolvedValue({
+        id: 'order-sim',
+        userId: 'user-sim',
+        total: 100,
+        isPaid: false,
+        transactionId: null,
+      });
+      mockPaymentOrders.markOrderPaidAtomic.mockResolvedValue({ status: 'paid' });
+
+      const res = await service.simulatePayment('order-sim', 'user-sim');
+      expect(res.simulated).toBe(true);
+      expect(res.transactionId).toMatch(/^sim_/);
+      expect(mockPaymentOrders.markOrderPaidAtomic).toHaveBeenCalled();
+    });
+  });
+
   describe('handleWebhook signature', () => {
     it('rejects when verification is required but MP_WEBHOOK_SECRET is missing', async () => {
       delete process.env.MP_WEBHOOK_SKIP_VERIFY;

@@ -7,6 +7,7 @@ import { InventoryService } from '../../inventory/application/inventory.service'
 
 const mockRepo: jest.Mocked<OrdersRepositoryPort> = {
   findProductsByIds: jest.fn(),
+  validateCartStock: jest.fn(),
   createOrderWithStockTx: jest.fn(),
   findOrdersForUser: jest.fn(),
   findOrderDetailById: jest.fn(),
@@ -133,7 +134,7 @@ describe('OrdersService', () => {
       const result = await service.updateStatus('o1', OrderStatus.CANCELLED, 'user-1', Role.CUSTOMER);
 
       expect(result.status).toBe(OrderStatus.CANCELLED);
-      expect(mockRepo.incrementProductStock).toHaveBeenCalledWith('p1', 2);
+      expect(mockInventoryService.releaseStock).toHaveBeenCalledWith('o1', 'user-1');
     });
 
     it('should reject non-owner user trying to cancel', async () => {

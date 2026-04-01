@@ -15,7 +15,9 @@ type AuthContextType = {
 	user: AuthUser | null;
 	loading: boolean;
 	login: (email: string, password: string) => Promise<void>;
-	register: (name: string, email: string, password: string) => Promise<void>;
+	register: (name: string, email: string, password: string) => Promise<string>;
+	verifyEmail: (token: string) => Promise<string>;
+	resendVerification: (email: string) => Promise<string>;
 	forgotPassword: (email: string) => Promise<void>;
 	resetPassword: (token: string, newPassword: string) => Promise<void>;
 	logout: () => Promise<void>;
@@ -110,8 +112,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			throw new Error(nestErrorMessage(body, 'Error al registrarse'));
 		}
 
-		const data = (await res.json()) as { user: AuthUserResponse };
-		setUser(normalizeAuthUser(data.user));
+		const data = (await res.json()) as { message?: string };
+		setUser(null);
+		return data.message ?? 'Revisa tu correo para verificar tu cuenta.';
+	}, []);
+
+	const verifyEmail = useCallback(async (token: string) => {
+		const res = await fetch('/api/auth/verify-email', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ token }),
+		});
+
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			throw new Error(nestErrorMessage(body, 'No fue posible verificar tu correo'));
+		}
+
+		const data = (await res.json()) as { message?: string };
+		return data.message ?? 'Correo verificado. Ya puedes iniciar sesión.';
+	}, []);
+
+	const resendVerification = useCallback(async (email: string) => {
+		const res = await fetch('/api/auth/resend-verification', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email: email.trim() }),
+		});
+
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			throw new Error(nestErrorMessage(body, 'No fue posible reenviar la verificación'));
+		}
+
+		const data = (await res.json()) as { message?: string };
+		return data.message ?? 'Si el correo existe, enviamos una nueva verificación.';
 	}, []);
 
 	const logout = useCallback(async () => {
@@ -150,8 +185,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	const value = useMemo(
-		() => ({ user, loading, login, register, forgotPassword, resetPassword, logout, refreshSession }),
-		[user, loading, login, register, forgotPassword, resetPassword, logout, refreshSession],
+		() => ({
+			user,
+			loading,
+			login,
+			register,
+			verifyEmail,
+			resendVerification,
+			forgotPassword,
+			resetPassword,
+			logout,
+			refreshSession,
+		}),
+		[ user, loading, login, register, verifyEmail, resendVerification, forgotPassword, resetPassword, logout, refreshSession ],
 	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

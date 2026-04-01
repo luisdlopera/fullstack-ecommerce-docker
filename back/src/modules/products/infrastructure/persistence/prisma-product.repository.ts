@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type {
+  CartValidationError,
+  CartValidationResult,
   CategoryRecord,
   CountryRecord,
   FeaturedProductRecord,
@@ -10,6 +12,7 @@ import type {
   ProductListResult,
   ProductRepositoryPort,
   ProductStockRecord,
+  ValidateCartItem,
 } from '../../domain/ports/product-repository.port';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { buildProductListWhere } from './build-product-list-where';
@@ -138,9 +141,65 @@ export class PrismaProductRepository implements ProductRepositoryPort {
   async findStockBySlug(slug: string): Promise<ProductStockRecord | null> {
     const row = await this.prisma.product.findFirst({
       where: { slug, deletedAt: null, isActive: true },
-      select: { id: true, slug: true, inStock: true },
+      select: {
+        id: true,
+        slug: true,
+        inStock: true,
+        inventoryItems: {
+          where: { location: 'MAIN' },
+          select: { size: true, available: true, reserved: true },
+          orderBy: { size: 'asc' },
+        },
+      },
     });
-    return row;
+    if (!row) return null;
+    const totalAvailable = row.inventoryItems.reduce((sum, i) => sum + i.available, 0);
+    return {
+      id: row.id,
+      slug: row.slug,
+      inStock: row.inStock,
+      sizeStock: row.inventoryItems.map((i) => ({
+        size: String(i.size),
+        available: i.available,
+        reserved: i.reserved,
+      })),
+      totalAvailable,
+    };
+  }
+
+  async validateCartItems(items: ValidateCartItem[]): Promise<CartValidationResult> {
+    const errors: CartValidationError[] = [];
+
+    for (const item of items) {
+      const inv = await this.prisma.inventoryItem.findFirst({
+        where: {
+          productId: item.productId,
+          size: item.size as never,
+          location: 'MAIN',
+        },
+        select: { available: true },
+      });
+
+      if (!inv) {
+        errors.push({
+          productId: item.productId,
+          size: item.size,
+          requested: item.quantity,
+          available: 0,
+          message: `No inventory record for product ${item.productId} size ${item.size}`,
+        });
+      } else if (inv.available < item.quantity) {
+        errors.push({
+          productId: item.productId,
+          size: item.size,
+          requested: item.quantity,
+          available: inv.available,
+          message: `Insufficient stock for size ${item.size}: requested ${item.quantity}, available ${inv.available}`,
+        });
+      }
+    }
+
+    return { valid: errors.length === 0, errors };
   }
 
   async findAllCategories(): Promise<CategoryRecord[]> {

@@ -18,13 +18,19 @@ const mockPrisma = {
   refreshToken: {
     create: jest.fn(),
     findUnique: jest.fn(),
-    delete: jest.fn(),
-    deleteMany: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
   },
   passwordResetToken: {
     create: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+  },
+  emailVerificationToken: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
   },
   $transaction: jest.fn(),
 };
@@ -36,6 +42,7 @@ const mockJwt = {
 
 const mockEmailService = {
   sendPasswordResetEmail: jest.fn(),
+  sendEmailVerificationEmail: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -43,6 +50,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     process.env.JWT_SECRET = 'test-secret';
+    process.env.EMAIL_MX_REQUIRED = 'false';
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -59,34 +67,29 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('should create a new user and return tokens', async () => {
+    it('should create a new user and return verification pending response', async () => {
       mockPrisma.user.findUnique
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          id: 'user-1',
-          name: 'Test',
-          email: 'test@test.com',
-          role: 'CUSTOMER',
-        });
       mockPrisma.user.create.mockResolvedValue({
         id: 'user-1',
         name: 'Test',
         email: 'test@test.com',
         role: 'CUSTOMER',
       });
-      mockPrisma.refreshToken.create.mockResolvedValue({});
-      mockPrisma.refreshToken.deleteMany.mockResolvedValue({});
+      mockPrisma.emailVerificationToken.updateMany.mockResolvedValue({ count: 0 });
+      mockPrisma.emailVerificationToken.create.mockResolvedValue({});
+      mockEmailService.sendEmailVerificationEmail.mockResolvedValue(undefined);
 
       const result = await service.register({
         name: 'Test',
         email: 'test@test.com',
-        password: 'password123',
+        password: 'StrongPass.123',
       });
 
-      expect(result.user.email).toBe('test@test.com');
-      expect(result.accessToken).toBeDefined();
-      expect(result.refreshToken).toBeDefined();
+      expect(result.ok).toBe(true);
+      expect(result.message).toContain('verification');
       expect(mockPrisma.user.create).toHaveBeenCalledTimes(1);
+      expect(mockEmailService.sendEmailVerificationEmail).toHaveBeenCalledTimes(1);
     });
 
     it('should throw ConflictException for duplicate email', async () => {
@@ -96,7 +99,7 @@ describe('AuthService', () => {
         service.register({
           name: 'Test',
           email: 'test@test.com',
-          password: 'password123',
+          password: 'StrongPass.123',
         }),
       ).rejects.toThrow(ConflictException);
     });
@@ -109,12 +112,15 @@ describe('AuthService', () => {
         name: 'Test',
         email: 'test@test.com',
         password: bcryptjs.hashSync('password123', 10),
-        role: 'USER',
+        role: 'CUSTOMER',
         isActive: true,
+        emailVerified: new Date(),
+        mfaEnabled: false,
+        mfaSecret: null,
       });
       mockPrisma.user.update.mockResolvedValue({});
       mockPrisma.refreshToken.create.mockResolvedValue({});
-      mockPrisma.refreshToken.deleteMany.mockResolvedValue({});
+      mockPrisma.refreshToken.updateMany.mockResolvedValue({});
 
       const result = await service.login({
         email: 'test@test.com',
@@ -131,6 +137,10 @@ describe('AuthService', () => {
         email: 'test@test.com',
         password: bcryptjs.hashSync('password123', 10),
         role: 'CUSTOMER',
+        isActive: true,
+        emailVerified: new Date(),
+        mfaEnabled: false,
+        mfaSecret: null,
       });
 
       await expect(service.login({ email: 'test@test.com', password: 'wrong' })).rejects.toThrow(UnauthorizedException);
@@ -147,24 +157,33 @@ describe('AuthService', () => {
 
   describe('logout', () => {
     it('should delete refresh tokens for user', async () => {
-      mockPrisma.refreshToken.deleteMany.mockResolvedValue({ count: 1 });
+      mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.logout('user-1');
 
       expect(result).toEqual({ ok: true });
-      expect(mockPrisma.refreshToken.deleteMany).toHaveBeenCalledWith({
-        where: { userId: 'user-1' },
+      expect(mockPrisma.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
       });
     });
 
     it('should delete specific refresh token if provided', async () => {
-      mockPrisma.refreshToken.deleteMany.mockResolvedValue({ count: 1 });
+      mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.logout('user-1', 'specific-token');
 
       expect(result).toEqual({ ok: true });
-      expect(mockPrisma.refreshToken.deleteMany).toHaveBeenCalledWith({
-        where: { token: 'specific-token' },
+      expect(mockPrisma.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-1',
+          revokedAt: null,
+          OR: [
+            { tokenHash: expect.any(String) },
+            { token: 'specific-token' },
+          ],
+        },
+        data: { revokedAt: expect.any(Date) },
       });
     });
   });

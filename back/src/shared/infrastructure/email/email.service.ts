@@ -7,6 +7,12 @@ type PasswordResetEmailInput = {
   ttlMinutes: number;
 };
 
+type EmailVerificationInput = {
+  to: string;
+  verifyUrl: string;
+  ttlMinutes: number;
+};
+
 @Injectable()
 export class EmailService {
   private readonly transport = nodemailer.createTransport({
@@ -50,6 +56,31 @@ export class EmailService {
       to: input.to,
       subject: 'Restablece tu contraseña - NexStore',
       text: `Restablece tu contraseña con este enlace: ${input.resetUrl}. El enlace expira en ${input.ttlMinutes} minutos.`,
+      html,
+    });
+  }
+
+  async sendEmailVerificationEmail(input: EmailVerificationInput): Promise<void> {
+    this.ensureConfigured();
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+        <h2>Verifica tu correo</h2>
+        <p>Confirma tu correo para activar tu cuenta en NexStore.</p>
+        <p>
+          <a href="${input.verifyUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
+            Verificar correo
+          </a>
+        </p>
+        <p>Este enlace expira en ${input.ttlMinutes} minutos y solo puede usarse una vez.</p>
+      </div>
+    `;
+
+    await this.transport.sendMail({
+      from: process.env.SMTP_FROM,
+      to: input.to,
+      subject: 'Verifica tu correo - NexStore',
+      text: `Verifica tu correo con este enlace: ${input.verifyUrl}. El enlace expira en ${input.ttlMinutes} minutos.`,
       html,
     });
   }

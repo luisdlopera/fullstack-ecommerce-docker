@@ -324,12 +324,21 @@ async function main() {
   for (const u of users) {
     await prisma.user.upsert({
       where: { email: u.email },
-      update: { name: u.name, password: bcryptjs.hashSync('Qwert.12345', 10), role: u.role },
+      update: {
+        name: u.name,
+        password: bcryptjs.hashSync('Qwert.12345', 10),
+        role: u.role,
+        emailVerified: new Date(),
+        mfaEnabled: false,
+        mfaSecret: null,
+      },
       create: {
         email: u.email,
         name: u.name,
         password: bcryptjs.hashSync('Qwert.12345', 10),
         role: u.role,
+        emailVerified: new Date(),
+        mfaEnabled: false,
       },
     });
   }

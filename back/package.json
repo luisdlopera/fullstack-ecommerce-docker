@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/src/main.js",
-    "start:dev": "tsx watch src/main.ts",
+    "start": "npm run prisma:generate && node dist/src/main.js",
+    "start:dev": "npm run prisma:generate && tsx watch src/main.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"prisma/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"prisma/**/*.ts\"",
@@ -46,7 +46,8 @@
     "nodemailer": "^8.0.4",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
@@ -56,6 +57,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20.17.19",
     "@types/nodemailer": "^7.0.11",
+    "@types/speakeasy": "^2.0.10",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",

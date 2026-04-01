@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Headers, Inject, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Post, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
@@ -6,13 +7,27 @@ import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payl
 import { AuthService } from '../../application/auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { MfaVerifyDto } from './dto/mfa-verify.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+
+  private extractClientIp(request: Request): string | undefined {
+    const forwarded = request.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0]?.trim();
+    }
+    if (Array.isArray(forwarded) && forwarded.length) {
+      return forwarded[0];
+    }
+    return request.ip;
+  }
 
   @Public()
   @UseGuards(ThrottlerGuard)
@@ -26,16 +41,38 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 12, ttl: 60000 } })
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  login(@Body() dto: LoginDto, @Req() request: Request) {
+    return this.authService.login(dto, {
+      ip: this.extractClientIp(request),
+      userAgent: request.headers['user-agent'],
+    });
   }
 
   @Public()
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post('refresh')
-  refresh(@Body() dto: RefreshDto) {
-    return this.authService.refresh(dto.refreshToken);
+  refresh(@Body() dto: RefreshDto, @Req() request: Request) {
+    return this.authService.refresh(dto.refreshToken, {
+      ip: this.extractClientIp(request),
+      userAgent: request.headers['user-agent'],
+    });
+  }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 12, ttl: 60000 } })
+  @Post('verify-email')
+  verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto.token);
+  }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('resend-verification')
+  resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerification(dto.email);
   }
 
   @Public()
@@ -62,5 +99,20 @@ export class AuthController {
   @Post('logout')
   logout(@CurrentUser() user: JwtPayload, @Headers('x-refresh-token') refreshToken?: string) {
     return this.authService.logout(user.sub, refreshToken);
+  }
+
+  @Post('mfa/enroll')
+  enrollMfa(@CurrentUser() user: JwtPayload) {
+    return this.authService.enrollMfa(user.sub);
+  }
+
+  @Post('mfa/verify')
+  verifyMfa(@CurrentUser() user: JwtPayload, @Body() dto: MfaVerifyDto) {
+    return this.authService.verifyMfaEnrollment(user.sub, dto.code);
+  }
+
+  @Post('mfa/disable')
+  disableMfa(@CurrentUser() user: JwtPayload, @Body() dto: MfaVerifyDto) {
+    return this.authService.disableMfa(user.sub, dto.code);
   }
 }

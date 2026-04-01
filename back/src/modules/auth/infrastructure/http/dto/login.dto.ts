@@ -1,10 +1,15 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
   email!: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(10)
   password!: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{6}$/)
+  mfaCode?: string;
 }

@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { EmailService } from '../../../../shared/infrastructure/email/email.service';
 import { QueueService, type JobProcessor } from '../../../../shared/infrastructure/queues/queue.service';
-import { JOB_NAMES, QUEUE_NAMES } from '../../../../shared/infrastructure/queues/queue.constants';
+import { QUEUE_NAMES } from '../../../../shared/infrastructure/queues/queue.constants';
 import type { LowStockJobData } from './low-stock.types';
 
 @Injectable()

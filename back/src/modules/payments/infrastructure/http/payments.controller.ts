@@ -6,21 +6,38 @@ import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payl
 import { InitMercadoPagoDto } from './dto/init-mercadopago.dto';
 import { VerifyMercadoPagoDto } from './dto/verify-mercadopago.dto';
 import { MercadoPagoWebhookBodyDto } from './dto/mercadopago-webhook.dto';
-import { PaymentsService } from '../../application/payments.service';
+import { InitMercadoPagoCheckoutUseCase } from '../../application/use-cases/init-mercadopago-checkout.use-case';
+import { VerifyMercadoPagoPaymentUseCase } from '../../application/use-cases/verify-mercadopago-payment.use-case';
+import { SimulatePaymentUseCase } from '../../application/use-cases/simulate-payment.use-case';
+import { HandleMercadoPagoWebhookUseCase } from '../../application/use-cases/handle-mercadopago-webhook.use-case';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
+  constructor(
+    @Inject(InitMercadoPagoCheckoutUseCase)
+    private readonly initCheckoutUseCase: InitMercadoPagoCheckoutUseCase,
+    @Inject(VerifyMercadoPagoPaymentUseCase)
+    private readonly verifyPaymentUseCase: VerifyMercadoPagoPaymentUseCase,
+    @Inject(SimulatePaymentUseCase)
+    private readonly simulatePaymentUseCase: SimulatePaymentUseCase,
+    @Inject(HandleMercadoPagoWebhookUseCase)
+    private readonly webhookUseCase: HandleMercadoPagoWebhookUseCase,
+  ) {}
 
   @Public()
   @Post('mercadopago/init')
   initMercadoPagoCheckout(@CurrentUser() user: JwtPayload | undefined, @Body() dto: InitMercadoPagoDto) {
-    return this.paymentsService.initMercadoPagoCheckout(dto.orderId, user?.sub, user?.email ?? dto.guestEmail, dto.guestCheckoutToken);
+    return this.initCheckoutUseCase.execute(
+      dto.orderId,
+      user?.sub,
+      user?.email ?? dto.guestEmail,
+      dto.guestCheckoutToken,
+    );
   }
 
   @Post('mercadopago/verify')
   verifyMercadoPago(@Body() dto: VerifyMercadoPagoDto) {
-    return this.paymentsService.verifyMercadoPagoPayment(dto.paymentId);
+    return this.verifyPaymentUseCase.execute(dto.paymentId);
   }
 
   @Public()
@@ -29,7 +46,7 @@ export class PaymentsController {
     if (!body.orderId) {
       throw new BadRequestException('orderId is required');
     }
-    return this.paymentsService.simulatePayment(body.orderId, user?.sub, body.guestCheckoutToken);
+    return this.simulatePaymentUseCase.execute(body.orderId, user?.sub, body.guestCheckoutToken);
   }
 
   @Public()
@@ -42,6 +59,6 @@ export class PaymentsController {
     @Headers('x-request-id') xRequestId?: string,
     @Query('data.id') dataIdQuery?: string,
   ) {
-    return this.paymentsService.handleWebhook(body, { xSignature, xRequestId, dataIdQuery });
+    return this.webhookUseCase.execute(body, { xSignature, xRequestId, dataIdQuery });
   }
 }

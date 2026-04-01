@@ -9,7 +9,7 @@
 
 - **Casos de uso / servicios de dominio**: mockear puertos con objetos fake o `jest.fn()`.
 - **No** levantar base de datos para unit tests.
-- Ejemplo existente: `auth.service.spec.ts`, `payments.service.spec.ts`, `orders.service.spec.ts` — mantener el mismo estilo de mocks de `PrismaService`.
+- Ejemplo existente: `auth.service.spec.ts` — mantener el mismo estilo de mocks de `PrismaService`.
 
 ## Integración
 

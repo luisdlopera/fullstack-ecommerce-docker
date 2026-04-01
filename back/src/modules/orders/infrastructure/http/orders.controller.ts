@@ -6,14 +6,28 @@ import { ADMIN_ROLES } from '../../../../shared/infrastructure/auth/permissions'
 import { CreateOrderDto, UpdateOrderPaymentDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { OrdersService } from '../../application/orders.service';
+import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
+import { BadRequestException } from '@nestjs/common';
 
 @Controller('orders')
 export class OrdersController {
   constructor(@Inject(OrdersService) private readonly ordersService: OrdersService) {}
 
+  @Public()
   @Post()
-  createOrder(@CurrentUser() user: JwtPayload, @Body() dto: CreateOrderDto) {
-    return this.ordersService.create(user.sub, dto);
+  createOrder(@CurrentUser() user: JwtPayload | undefined, @Body() dto: CreateOrderDto) {
+    if (!user && !dto.guestEmail) {
+      throw new BadRequestException('Guest email is required if not logged in');
+    }
+    return this.ordersService.create(user?.sub, dto);
+  }
+
+  @Post('validate-cart')
+  validateCart(@Body() body: { items: { productId: string; size: string; quantity: number }[] }) {
+    if (!body.items || !Array.isArray(body.items)) {
+      return { valid: false, errors: [{ message: 'Items array is required' }] };
+    }
+    return this.ordersService.validateCart(body.items);
   }
 
   @Get()

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { PERMISSIONS, type PermissionKey } from '@/features/admin';
 import { usePermissions } from '@/hooks/usePermissions';
-import { formatRoleLabel } from '@/lib/format-role-label';
+import { formatRoleLabel, getRoleBadgeClass } from '@/lib/format-role-label';
 import {
 	LayoutDashboard,
 	Users,
@@ -117,7 +117,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 					<Link href='/admin' className='text-xl font-bold tracking-tight text-black'>
 						NEXSTORE
 					</Link>
-					<span className='rounded bg-black px-1.5 py-0.5 text-[10px] font-semibold text-white'>ADMIN</span>
+					<span className={`rounded px-1.5 py-0.5 text-[10px] uppercase font-bold tracking-wider shadow-sm ${getRoleBadgeClass(user.role)}`}>
+						{formatRoleLabel(user.role)}
+					</span>
 					<button className='ml-auto lg:hidden' onClick={() => setSidebarOpen(false)}>
 						<X size={20} />
 					</button>

@@ -45,7 +45,12 @@ export class PaymentsService {
     return this.processPayment(payment);
   }
 
-  async initMercadoPagoCheckout(orderId: string, userId: string, userEmail?: string) {
+  async initMercadoPagoCheckout(
+    orderId: string, 
+    userId: string | undefined, 
+    userEmail?: string,
+    guestCheckoutToken?: string
+  ) {
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
       throw new InternalServerErrorException('Missing MP_ACCESS_TOKEN');
@@ -53,7 +58,10 @@ export class PaymentsService {
 
     const order = await this.paymentOrders.findOrderById(orderId);
     if (!order) throw new NotFoundException('Order not found');
-    if (order.userId !== userId) {
+    
+    const isAuthorized = order.userId ? order.userId === userId : (order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken);
+    
+    if (!isAuthorized) {
       throw new ForbiddenException('You cannot pay this order');
     }
 
@@ -100,6 +108,39 @@ export class PaymentsService {
       checkoutId: checkout.id,
       checkoutUrl: checkout.initPoint,
       sandboxCheckoutUrl: checkout.sandboxInitPoint,
+    };
+  }
+
+  async simulatePayment(orderId: string, userId?: string, guestCheckoutToken?: string) {
+    const order = await this.paymentOrders.findOrderById(orderId);
+    if (!order) throw new NotFoundException('Order not found');
+
+    const isAuthorized = order.userId ? order.userId === userId : (order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken);
+
+    if (!isAuthorized) {
+      throw new ForbiddenException('You cannot pay this order');
+    }
+
+    if (order.isPaid) {
+      return { ok: true, orderId: order.id, alreadyPaid: true };
+    }
+
+    const fakeTransactionId = 'sim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const markPaidResult = await this.paymentOrders.markOrderPaidAtomic(order.id, fakeTransactionId);
+
+    if (markPaidResult.status === 'already_paid') {
+      return { ok: true, orderId: order.id, alreadyProcessed: true };
+    }
+
+    if (markPaidResult.status === 'conflict') {
+      throw new BadRequestException('Order is already paid with another transaction');
+    }
+
+    return {
+      ok: true,
+      orderId: order.id,
+      transactionId: fakeTransactionId,
+      simulated: true,
     };
   }
 

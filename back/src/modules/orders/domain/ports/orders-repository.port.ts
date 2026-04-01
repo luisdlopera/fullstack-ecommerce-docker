@@ -22,16 +22,33 @@ export type OrderDetailPayload = Prisma.OrderGetPayload<{
   };
 }>;
 
+export type CartValidationError = {
+  productId: string;
+  size: string;
+  requested: number;
+  available: number;
+  message: string;
+};
+
+export type CartValidationResult = {
+  valid: boolean;
+  errors: CartValidationError[];
+};
+
 export interface OrdersRepositoryPort {
   findProductsByIds(ids: string[]): Promise<CheckoutProductRow[]>;
+
+  validateCartStock(items: { productId: string; size: string; quantity: number }[]): Promise<CartValidationResult>;
+
   createOrderWithStockTx(
-    userId: string,
+    userId: string | undefined,
     dto: CreateOrderDto,
     productMap: Map<string, CheckoutProductRow>,
     subTotal: number,
     tax: number,
     total: number,
     itemsInOrder: number,
+    guestCheckoutToken?: string,
   ): Promise<OrderWithItemsAndAddress>;
 
   findOrdersForUser(userId: string, skip: number, take: number): Promise<OrderWithItemsAndAddress[]>;

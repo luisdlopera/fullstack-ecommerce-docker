@@ -3,9 +3,11 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { OrderStatus, Role } from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../domain/ports/orders-repository.port';
+import { InventoryService } from '../../inventory/application/inventory.service';
 
 const mockRepo: jest.Mocked<OrdersRepositoryPort> = {
   findProductsByIds: jest.fn(),
+  validateCartStock: jest.fn(),
   createOrderWithStockTx: jest.fn(),
   findOrdersForUser: jest.fn(),
   findOrderDetailById: jest.fn(),
@@ -16,6 +18,12 @@ const mockRepo: jest.Mocked<OrdersRepositoryPort> = {
   incrementProductStock: jest.fn(),
 };
 
+const mockInventoryService = {
+  reserveStock: jest.fn(),
+  releaseStock: jest.fn(),
+  commitStock: jest.fn(),
+};
+
 describe('OrdersService', () => {
   let service: OrdersService;
 
@@ -23,7 +31,11 @@ describe('OrdersService', () => {
     process.env.TAX_RATE = '0.15';
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [OrdersService, { provide: ORDERS_REPOSITORY, useValue: mockRepo }],
+      providers: [
+        OrdersService,
+        { provide: ORDERS_REPOSITORY, useValue: mockRepo },
+        { provide: InventoryService, useValue: mockInventoryService },
+      ],
     }).compile();
 
     service = module.get<OrdersService>(OrdersService);
@@ -122,7 +134,7 @@ describe('OrdersService', () => {
       const result = await service.updateStatus('o1', OrderStatus.CANCELLED, 'user-1', Role.CUSTOMER);
 
       expect(result.status).toBe(OrderStatus.CANCELLED);
-      expect(mockRepo.incrementProductStock).toHaveBeenCalledWith('p1', 2);
+      expect(mockInventoryService.releaseStock).toHaveBeenCalledWith('o1', 'user-1');
     });
 
     it('should reject non-owner user trying to cancel', async () => {

@@ -7,6 +7,8 @@ import type {
   OrderDetailPayload,
   OrderWithItemsAndAddress,
   OrdersRepositoryPort,
+  CartValidationResult,
+  CartValidationError,
 } from '../../domain/ports/orders-repository.port';
 
 @Injectable()
@@ -21,29 +23,58 @@ export class PrismaOrdersRepository implements OrdersRepositoryPort {
     return rows;
   }
 
+  async validateCartStock(items: { productId: string; size: string; quantity: number }[]): Promise<CartValidationResult> {
+    const errors: CartValidationError[] = [];
+
+    for (const item of items) {
+      const inv = await this.prisma.inventoryItem.findFirst({
+        where: {
+          productId: item.productId,
+          size: item.size as never,
+          location: 'MAIN',
+        },
+        select: { available: true },
+      });
+
+      if (!inv) {
+        errors.push({
+          productId: item.productId,
+          size: item.size,
+          requested: item.quantity,
+          available: 0,
+          message: `Product size ${item.size} not found in inventory`,
+        });
+      } else if (inv.available < item.quantity) {
+        errors.push({
+          productId: item.productId,
+          size: item.size,
+          requested: item.quantity,
+          available: inv.available,
+          message: `Insufficient stock for size ${item.size}`,
+        });
+      }
+    }
+
+    return { valid: errors.length === 0, errors };
+  }
+
   async createOrderWithStockTx(
-    userId: string,
+    userId: string | undefined,
     dto: CreateOrderDto,
     productMap: Map<string, CheckoutProductRow>,
     subTotal: number,
     tax: number,
     total: number,
     itemsInOrder: number,
+    guestCheckoutToken?: string,
   ): Promise<OrderWithItemsAndAddress> {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      for (const item of dto.items) {
-        const updated = await tx.product.updateMany({
-          where: { id: item.productId, inStock: { gte: item.quantity } },
-          data: { inStock: { decrement: item.quantity } },
-        });
-        if (updated.count === 0) {
-          throw new BadRequestException(`Stock changed while processing product: ${item.productId}`);
-        }
-      }
 
       const order = await tx.order.create({
         data: {
           userId,
+          guestEmail: !userId ? dto.guestEmail : undefined,
+          guestCheckoutToken,
           subTotal,
           tax,
           total,

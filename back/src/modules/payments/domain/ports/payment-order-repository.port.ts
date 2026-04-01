@@ -2,10 +2,12 @@ export const PAYMENT_ORDER_REPOSITORY = Symbol('PAYMENT_ORDER_REPOSITORY');
 
 export type OrderPaymentRow = {
   id: string;
-  userId: string;
+  userId: string | null;
   total: number;
   isPaid: boolean;
   transactionId: string | null;
+  guestEmail: string | null;
+  guestCheckoutToken: string | null;
 };
 
 export type MarkOrderPaidAtomicResult =

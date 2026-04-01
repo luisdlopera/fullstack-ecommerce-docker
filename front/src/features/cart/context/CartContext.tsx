@@ -21,6 +21,9 @@ type CartContextType = {
 	clearCart: () => void;
 	totalItems: number;
 	totalPrice: number;
+	isOpen: boolean;
+	openCart: () => void;
+	closeCart: () => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -45,6 +48,7 @@ function saveCart(items: CartItem[]) {
 export function CartProvider({ children }: { children: React.ReactNode }) {
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [hydrated, setHydrated] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 
 	useEffect(() => {
 		queueMicrotask(() => {
@@ -60,6 +64,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 	const addItem = useCallback((newItem: CartItem) => {
 		setItems((prev) => addOrMergeCartLine(prev, newItem));
+		setIsOpen(true);
 	}, []);
 
 	const removeItem = useCallback((productId: string, size: string) => {
@@ -76,9 +81,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 	const totalItems = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
 	const totalPrice = useMemo(() => items.reduce((sum, i) => sum + i.price * i.quantity, 0), [items]);
 
+	const openCart = useCallback(() => setIsOpen(true), []);
+	const closeCart = useCallback(() => setIsOpen(false), []);
+
 	const value = useMemo(
-		() => ({ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice }),
-		[items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice],
+		() => ({ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice, isOpen, openCart, closeCart }),
+		[items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice, isOpen, openCart, closeCart],
 	);
 
 	return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

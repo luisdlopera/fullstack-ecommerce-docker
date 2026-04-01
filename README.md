@@ -256,3 +256,12 @@ npm run test:cov -w back      # con cobertura
 - Escaneo de secretos en `.github/workflows/secret-scan.yml`.
 - Auditoría de dependencias en `.github/workflows/security-audit.yml`.
 - Actualizaciones automáticas de dependencias en `.github/dependabot.yml`.
+
+## Architecture
+
+This project follows Spec-Driven Development using GitHub Spec Kit.
+
+See:
+- .specify/spec.md
+- .specify/plan.md
+- .specify/tasks/

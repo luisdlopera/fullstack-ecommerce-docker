@@ -48,6 +48,16 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  TRANSFER
+  RESERVE
+  RELEASE
+  COMMIT
+}
+
 model Category {
   id          String    @id @default(uuid())
   name        String    @unique
@@ -92,7 +102,8 @@ model Product {
   ProductImage ProductImage[]
   OrderItem    OrderItem[]
   favorites    UserFavorite[]
-  inventoryItems InventoryItem[]
+  inventories  Inventory[]
+  stockMovements StockMovement[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -140,6 +151,7 @@ model User {
   RefreshToken RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   favorites    UserFavorite[]
+  stockMovements StockMovement[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -321,56 +333,68 @@ model AuditLog {
   @@index([createdAt])
 }
 
-// ─── Inventory ──────────────────────────────────────────────────────────
+model Warehouse {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  location    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-enum InventoryMovementType {
-  IN
-  OUT
-  ADJUSTMENT
-  RESERVATION
-  COMMIT
-  RELEASE
-  RETURN
+  inventories            Inventory[]
+  stockMovements         StockMovement[] @relation("StockMovementWarehouse")
+  stockMovementsSource   StockMovement[] @relation("StockMovementSourceWarehouse")
+
+  @@index([isActive])
+  @@index([name])
 }
 
-model InventoryItem {
-  id        String  @id @default(uuid())
-  productId String
-  size      Size
-  location  String  @default("MAIN")
-  available Int     @default(0)
-  reserved  Int     @default(0)
-  committed Int     @default(0)
-  minStock  Int     @default(5)
+model Inventory {
+  id                 String   @id @default(uuid())
+  productId          String
+  warehouseId        String
+  availableQuantity  Int      @default(0)
+  reservedQuantity   Int      @default(0)
+  lowStockThreshold  Int      @default(5)
+  allowNegativeStock Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  movements InventoryMovement[]
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  warehouse  Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  movements  StockMovement[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([productId, size, location])
+  @@unique([productId, warehouseId])
   @@index([productId])
-  @@index([available])
-  @@index([location])
+  @@index([warehouseId])
+  @@index([availableQuantity])
 }
 
-model InventoryMovement {
-  id              String                @id @default(uuid())
-  inventoryItemId String
-  type            InventoryMovementType
-  quantity        Int
-  reason          String
-  referenceType   String?
-  referenceId     String?
-  userId          String?
+model StockMovement {
+  id                String                @id @default(uuid())
+  type              InventoryMovementType
+  quantity          Int
+  productId         String
+  warehouseId       String
+  sourceWarehouseId String?
+  inventoryId       String
+  reference         String?
+  note              String?
+  userId            String?
+  createdAt         DateTime              @default(now())
 
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  inventory       Inventory  @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+  product         Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  warehouse       Warehouse  @relation("StockMovementWarehouse", fields: [warehouseId], references: [id], onDelete: Restrict)
+  sourceWarehouse Warehouse? @relation("StockMovementSourceWarehouse", fields: [sourceWarehouseId], references: [id], onDelete: SetNull)
+  user            User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  createdAt DateTime @default(now())
-
-  @@index([inventoryItemId])
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([sourceWarehouseId])
+  @@index([inventoryId])
   @@index([type])
-  @@index([referenceType, referenceId])
+  @@index([reference])
   @@index([createdAt])
 }

@@ -19,7 +19,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
-} from '../../shared/domain/errors/domain-error';
+} from '../../../shared/domain/errors/domain-error';
 
 const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],

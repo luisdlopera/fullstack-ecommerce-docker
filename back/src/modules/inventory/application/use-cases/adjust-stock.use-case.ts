@@ -54,9 +54,9 @@ export class AdjustStockUseCase {
         adjustment: command.quantity,
         newBalance: updated.availableQuantity,
         reference: command.reference,
-        notes: command.notes,
+        note: command.note,
       },
-      userId: command.actorId,
+      userId: command.userId,
     });
 
     if (updated.availableQuantity <= updated.lowStockThreshold) {

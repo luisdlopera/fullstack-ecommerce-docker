@@ -5,6 +5,7 @@ import { config as loadEnv } from 'dotenv';
 import { resolve } from 'node:path';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/infrastructure/filters/http-exception.filter';
 import { buildCorsOptions } from './shared/infrastructure/http/cors';
@@ -39,7 +40,7 @@ async function bootstrap() {
   });
 
   app.enableCors(corsOptions);
-  app.use((req, _res, next) => {
+  app.use((req: Request, _res: Response, next: NextFunction) => {
     const url = req.url ?? '';
     if (!url.startsWith('/api')) {
       next();

@@ -87,8 +87,8 @@ export class PrismaUsersRepository implements UsersRepositoryPort {
     });
   }
 
-  createAddress(userId: string, input: AddressInput): Promise<UserAddressRecord> {
-    return this.prisma.userAddress.create({
+  async createAddress(userId: string, input: AddressInput): Promise<UserAddressRecord> {
+    const row = await this.prisma.userAddress.create({
       data: {
         userId,
         firstName: input.firstName,
@@ -97,11 +97,12 @@ export class PrismaUsersRepository implements UsersRepositoryPort {
         address2: input.address2 ?? null,
         postalCode: input.postalCode,
         city: input.city,
-        phone: input.phone ?? null,
+        phone: input.phone ?? '',
         countryId: input.countryId,
       },
       include: { country: true },
     });
+    return row as UserAddressRecord;
   }
 
   findAddressById(userId: string, addressId: string): Promise<{ id: string } | null> {
@@ -111,8 +112,8 @@ export class PrismaUsersRepository implements UsersRepositoryPort {
     });
   }
 
-  updateAddress(addressId: string, input: AddressInput): Promise<UserAddressRecord> {
-    return this.prisma.userAddress.update({
+  async updateAddress(addressId: string, input: AddressInput): Promise<UserAddressRecord> {
+    const row = await this.prisma.userAddress.update({
       where: { id: addressId },
       data: {
         firstName: input.firstName,
@@ -121,11 +122,12 @@ export class PrismaUsersRepository implements UsersRepositoryPort {
         address2: input.address2 ?? null,
         postalCode: input.postalCode,
         city: input.city,
-        phone: input.phone ?? null,
+        phone: input.phone ?? '',
         countryId: input.countryId,
       },
       include: { country: true },
     });
+    return row as UserAddressRecord;
   }
 
   async deleteAddressById(userId: string, addressId: string): Promise<number> {

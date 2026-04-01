@@ -1,4 +1,5 @@
-import { BadRequestException, PayloadTooLargeException, UnsupportedMediaTypeException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
+import { BadRequestError, ValidationError } from '../../../../shared/domain/errors/domain-error';
 import { validateProductImageFile } from './product-image-file-validation.util';
 import type { UploadFile } from './upload-file.type';
 
@@ -22,7 +23,7 @@ describe('validateProductImageFile', () => {
       buffer: Buffer.from('abc'),
     } as UploadFile;
 
-    expect(() => validateProductImageFile(file, maxBytes)).toThrow(UnsupportedMediaTypeException);
+    expect(() => validateProductImageFile(file, maxBytes)).toThrow(ValidationError);
   });
 
   it('rejects oversized files', () => {
@@ -32,7 +33,7 @@ describe('validateProductImageFile', () => {
       buffer: Buffer.from('abc'),
     } as UploadFile;
 
-    expect(() => validateProductImageFile(file, maxBytes)).toThrow(PayloadTooLargeException);
+    expect(() => validateProductImageFile(file, maxBytes)).toThrow(ValidationError);
   });
 
   it('rejects empty buffers', () => {
@@ -42,6 +43,6 @@ describe('validateProductImageFile', () => {
       buffer: Buffer.alloc(0),
     } as UploadFile;
 
-    expect(() => validateProductImageFile(file, maxBytes)).toThrow(BadRequestException);
+    expect(() => validateProductImageFile(file, maxBytes)).toThrow(BadRequestError);
   });
 });

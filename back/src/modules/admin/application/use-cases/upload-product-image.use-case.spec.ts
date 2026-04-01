@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundError } from '../../../../shared/domain/errors/domain-error';
 import { UploadProductImageUseCase } from './upload-product-image.use-case';
 import type { StoragePort } from '../../../../shared/domain/ports/storage.port';
 import type { AdminProductImageRepositoryPort } from '../../domain/ports/admin-product-image.repository.port';
@@ -80,7 +80,7 @@ describe('UploadProductImageUseCase', () => {
       buffer: Buffer.from('abc'),
     } as UploadFile;
 
-    await expect(useCase.execute({ productId: 'missing', file })).rejects.toThrow(NotFoundException);
+    await expect(useCase.execute({ productId: 'missing', file })).rejects.toThrow(NotFoundError);
     expect(storage.upload).not.toHaveBeenCalled();
   });
 });

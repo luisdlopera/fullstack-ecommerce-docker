@@ -145,23 +145,21 @@ export class PrismaProductRepository implements ProductRepositoryPort {
         id: true,
         slug: true,
         inStock: true,
-        inventoryItems: {
-          where: { location: 'MAIN' },
-          select: { size: true, available: true, reserved: true },
-          orderBy: { size: 'asc' },
+        inventories: {
+          select: { availableQuantity: true, reservedQuantity: true },
         },
       },
     });
     if (!row) return null;
-    const totalAvailable = row.inventoryItems.reduce((sum, i) => sum + i.available, 0);
+    const totalAvailable = row.inventories.reduce((sum: number, i: any) => sum + i.availableQuantity, 0);
     return {
       id: row.id,
       slug: row.slug,
       inStock: row.inStock,
-      sizeStock: row.inventoryItems.map((i) => ({
-        size: String(i.size),
-        available: i.available,
-        reserved: i.reserved,
+      sizeStock: row.inventories.map((i: any) => ({
+        size: 'UNIFIED',
+        available: i.availableQuantity,
+        reserved: i.reservedQuantity,
       })),
       totalAvailable,
     };
@@ -171,13 +169,11 @@ export class PrismaProductRepository implements ProductRepositoryPort {
     const errors: CartValidationError[] = [];
 
     for (const item of items) {
-      const inv = await this.prisma.inventoryItem.findFirst({
+      const inv = await this.prisma.inventory.findFirst({
         where: {
           productId: item.productId,
-          size: item.size as never,
-          location: 'MAIN',
         },
-        select: { available: true },
+        select: { availableQuantity: true },
       });
 
       if (!inv) {
@@ -186,15 +182,15 @@ export class PrismaProductRepository implements ProductRepositoryPort {
           size: item.size,
           requested: item.quantity,
           available: 0,
-          message: `No inventory record for product ${item.productId} size ${item.size}`,
+          message: `No inventory record for product ${item.productId}`,
         });
-      } else if (inv.available < item.quantity) {
+      } else if (inv.availableQuantity < item.quantity) {
         errors.push({
           productId: item.productId,
           size: item.size,
           requested: item.quantity,
-          available: inv.available,
-          message: `Insufficient stock for size ${item.size}: requested ${item.quantity}, available ${inv.available}`,
+          available: inv.availableQuantity,
+          message: `Insufficient stock: requested ${item.quantity}, available ${inv.availableQuantity}`,
         });
       }
     }

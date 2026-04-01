@@ -27,13 +27,11 @@ export class PrismaOrdersRepository implements OrdersRepositoryPort {
     const errors: CartValidationError[] = [];
 
     for (const item of items) {
-      const inv = await this.prisma.inventoryItem.findFirst({
+      const inv = await this.prisma.inventory.findFirst({
         where: {
           productId: item.productId,
-          size: item.size as never,
-          location: 'MAIN',
         },
-        select: { available: true },
+        select: { availableQuantity: true },
       });
 
       if (!inv) {
@@ -42,15 +40,15 @@ export class PrismaOrdersRepository implements OrdersRepositoryPort {
           size: item.size,
           requested: item.quantity,
           available: 0,
-          message: `Product size ${item.size} not found in inventory`,
+          message: `Product not found in inventory`,
         });
-      } else if (inv.available < item.quantity) {
+      } else if (inv.availableQuantity < item.quantity) {
         errors.push({
           productId: item.productId,
           size: item.size,
           requested: item.quantity,
-          available: inv.available,
-          message: `Insufficient stock for size ${item.size}`,
+          available: inv.availableQuantity,
+          message: `Insufficient stock for product`,
         });
       }
     }

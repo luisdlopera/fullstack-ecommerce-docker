@@ -3,7 +3,9 @@
 ## Prefijo global
 
 - Todas las rutas bajo **`/api`**, configurado en `main.ts` con `app.setGlobalPrefix('api')`.
-- El cliente público usa `NEXT_PUBLIC_API_URL` apuntando a `http://host:port/api` (o equivalente).
+- Versionado por URI habilitado: **`/api/v1`** es el prefijo recomendado.
+- Por compatibilidad, **`/api/*`** sin versión se reescribe a **`/api/v1/*`** (excepto Swagger en `/api/docs`).
+- El cliente público puede usar `NEXT_PUBLIC_API_URL` apuntando a `http://host:port/api` o `http://host:port/api/v1`.
 
 ## Nombres y recursos
 
@@ -47,4 +49,5 @@
 
 ## Versionado
 
-- Sin `/v1` por ahora; si se introduce, documentar en este archivo y en el front.
+- `v1` es la versión actual activa.
+- Nuevas versiones deben agregarse con prefijo `/api/v2` y mantener compatibilidad en `v1`.

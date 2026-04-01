@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { config as loadEnv } from 'dotenv';
 import { resolve } from 'node:path';
@@ -15,6 +15,10 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('api');
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+    });
   const httpInstance = app.getHttpAdapter().getInstance();
   if (typeof httpInstance?.disable === 'function') {
     httpInstance.disable('x-powered-by');
@@ -34,6 +38,34 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
   });
+    app.use((req, _res, next) => {
+      const url = req.url ?? '';
+      if (!url.startsWith('/api')) {
+        next();
+        return;
+      }
+
+      if (
+        url.startsWith('/api/v1') ||
+        url.startsWith('/api/docs') ||
+        url.startsWith('/api/docs-json')
+      ) {
+        next();
+        return;
+      }
+
+      if (url === '/api' || url.startsWith('/api?')) {
+        req.url = url.replace('/api', '/api/v1');
+        next();
+        return;
+      }
+
+      if (url.startsWith('/api/')) {
+        req.url = url.replace('/api/', '/api/v1/');
+      }
+
+      next();
+    });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

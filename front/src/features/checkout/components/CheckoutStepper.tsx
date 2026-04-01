@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Dot } from 'lucide-react';
+import { Check } from 'lucide-react';
 import type { CheckoutStep } from '../hooks/useCheckoutFlow';
 
 export function CheckoutStepper({ currentStep }: { currentStep: CheckoutStep }) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/features/cart';
@@ -21,7 +21,7 @@ export function useProductCardActions(
 
 	const slug = model.slug;
 	const favorite = slug ? isFavorite(slug) : false;
-	const cartMatches = slug ? cartItems.filter((i) => i.slug === slug) : [];
+	const cartMatches = useMemo(() => (slug ? cartItems.filter((i) => i.slug === slug) : []), [cartItems, slug]);
 	const inCart = cartMatches.length > 0;
 	const productHref = slug ? `/products/${slug}` : '#';
 

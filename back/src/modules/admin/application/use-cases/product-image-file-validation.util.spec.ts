@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { BadRequestError, ValidationError } from '../../../../shared/domain/errors/domain-error';
 import { validateProductImageFile } from './product-image-file-validation.util';
 import type { UploadFile } from './upload-file.type';

@@ -1,7 +1,7 @@
-import { ConflictException, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { resolveMx } from 'node:dns/promises';
 import speakeasy from 'speakeasy';
 import { LoginDto } from '../infrastructure/http/dto/login.dto';

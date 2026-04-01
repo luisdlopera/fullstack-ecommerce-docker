@@ -24,9 +24,9 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
 		const newPassword = String(formData.get('newPassword') ?? '');
 		const confirmPassword = String(formData.get('confirmPassword') ?? '');
 
-		if (newPassword.length < 8) {
+		if (newPassword.length < 10) {
 			setLoading(false);
-			setError('La contraseña debe tener al menos 8 caracteres.');
+			setError('La contraseña debe tener al menos 10 caracteres.');
 			return;
 		}
 		if (newPassword !== confirmPassword) {
@@ -51,8 +51,8 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
 			<Form className='flex flex-col gap-3' onSubmit={handleSubmit}>
 				<h1 className='text-3xl font-bold'>Restablecer contraseña</h1>
 				<p className='text-sm text-gray-600'>Crea una nueva contraseña para tu cuenta.</p>
-				<PasswordInput isRequired name='newPassword' label='Nueva contraseña' minLength={8} />
-				<PasswordInput isRequired name='confirmPassword' label='Confirmar contraseña' minLength={8} />
+				<PasswordInput isRequired name='newPassword' label='Nueva contraseña' minLength={10} />
+				<PasswordInput isRequired name='confirmPassword' label='Confirmar contraseña' minLength={10} />
 				{message ? <p className='rounded-lg bg-green-50 p-3 text-sm text-green-700'>{message}</p> : null}
 				{error ? <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{error}</p> : null}
 				<Button type='submit' color='primary' isLoading={loading}>

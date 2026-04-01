@@ -10,6 +10,14 @@ export type OrderPaymentRow = {
   guestCheckoutToken: string | null;
 };
 
+export type PaymentRecipient = {
+  orderId: string;
+  total: number;
+  transactionId: string | null;
+  email: string | null;
+  name: string | null;
+};
+
 export type MarkOrderPaidAtomicResult =
   | { status: 'paid' }
   | { status: 'already_paid'; existingTransactionId: string | null }
@@ -17,5 +25,6 @@ export type MarkOrderPaidAtomicResult =
 
 export interface PaymentOrderRepositoryPort {
   findOrderById(orderId: string): Promise<OrderPaymentRow | null>;
+  findPaymentRecipient(orderId: string): Promise<PaymentRecipient | null>;
   markOrderPaidAtomic(orderId: string, transactionId: string): Promise<MarkOrderPaidAtomicResult>;
 }

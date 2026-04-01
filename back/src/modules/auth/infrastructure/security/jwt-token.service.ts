@@ -1,6 +1,6 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import type { SignedTokens, TokenPayload, TokenServicePort } from '../../domain/ports/token-service.port';
 
@@ -35,5 +35,9 @@ export class JwtTokenService implements TokenServicePort {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new UnauthorizedException('Missing JWT_SECRET');
     return this.jwtService.verifyAsync(token, { secret });
+  }
+
+  hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 }

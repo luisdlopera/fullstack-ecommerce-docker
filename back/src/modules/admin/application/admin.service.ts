@@ -1,13 +1,25 @@
-import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
-import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
 import { CreateUserDto } from '../infrastructure/http/dto/create-user.dto';
 import { UpdateUserDto } from '../infrastructure/http/dto/update-user.dto';
 import { UpdateUserRoleDto } from '../infrastructure/http/dto/update-user-role.dto';
 import { UpsertProductDto } from '../infrastructure/http/dto/upsert-product.dto';
 import { UpsertCategoryDto } from '../infrastructure/http/dto/upsert-category.dto';
 import { UpsertCountryDto } from '../infrastructure/http/dto/upsert-country.dto';
+import { ADMIN_AUDIT_REPOSITORY, type AdminAuditRepositoryPort } from '../domain/ports/admin-audit.repository.port';
+import { ADMIN_CATEGORY_REPOSITORY, type AdminCategoryRepositoryPort } from '../domain/ports/admin-category.repository.port';
+import { ADMIN_COUNTRY_REPOSITORY, type AdminCountryRepositoryPort } from '../domain/ports/admin-country.repository.port';
+import { ADMIN_METRICS_REPOSITORY, type AdminMetricsRepositoryPort } from '../domain/ports/admin-metrics.repository.port';
+import { ADMIN_ORDER_REPOSITORY, type AdminOrderRepositoryPort } from '../domain/ports/admin-order.repository.port';
+import { ADMIN_PRODUCT_REPOSITORY, type AdminProductRepositoryPort } from '../domain/ports/admin-product.repository.port';
+import { ADMIN_USER_REPOSITORY, type AdminUserRepositoryPort } from '../domain/ports/admin-user.repository.port';
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../shared/domain/errors/domain-error';
 
 const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
@@ -21,57 +33,40 @@ const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 @Injectable()
 export class AdminService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(ADMIN_METRICS_REPOSITORY) private readonly metricsRepository: AdminMetricsRepositoryPort,
+    @Inject(ADMIN_USER_REPOSITORY) private readonly userRepository: AdminUserRepositoryPort,
+    @Inject(ADMIN_ORDER_REPOSITORY) private readonly orderRepository: AdminOrderRepositoryPort,
+    @Inject(ADMIN_PRODUCT_REPOSITORY) private readonly productRepository: AdminProductRepositoryPort,
+    @Inject(ADMIN_CATEGORY_REPOSITORY) private readonly categoryRepository: AdminCategoryRepositoryPort,
+    @Inject(ADMIN_COUNTRY_REPOSITORY) private readonly countryRepository: AdminCountryRepositoryPort,
+    @Inject(ADMIN_AUDIT_REPOSITORY) private readonly auditRepository: AdminAuditRepositoryPort,
+  ) {}
 
   // ─── Dashboard ────────────────────────────────────────────────────────
 
   async getDashboardSummary(period: string = '30d') {
     const dateFrom = this.resolvePeriodDate(period);
 
-    const [totalSales, totalOrders, totalUsers, activeProducts, pendingOrders, outOfStock, periodOrders] =
-      await Promise.all([
-        this.prisma.order.aggregate({
-          where: { isPaid: true },
-          _sum: { total: true },
-        }),
-        this.prisma.order.count(),
-        this.prisma.user.count({ where: { deletedAt: null } }),
-        this.prisma.product.count({ where: { isActive: true, deletedAt: null } }),
-        this.prisma.order.count({ where: { status: OrderStatus.PENDING } }),
-        this.prisma.product.count({ where: { inStock: 0, isActive: true, deletedAt: null } }),
-        this.prisma.order.aggregate({
-          where: { isPaid: true, createdAt: { gte: dateFrom } },
-          _sum: { total: true },
-          _count: true,
-        }),
-      ]);
-
-    const revenue = totalSales._sum.total ?? 0;
-    const periodRevenue = periodOrders._sum.total ?? 0;
-    const periodCount = periodOrders._count ?? 0;
-    const avgTicket = totalOrders > 0 ? revenue / totalOrders : 0;
+    const snapshot = await this.metricsRepository.getDashboardSnapshot(dateFrom);
+    const avgTicket = snapshot.totalOrders > 0 ? snapshot.totalSales / snapshot.totalOrders : 0;
 
     return {
-      totalSales: revenue,
-      totalOrders,
-      totalUsers,
-      activeProducts,
+      totalSales: snapshot.totalSales,
+      totalOrders: snapshot.totalOrders,
+      totalUsers: snapshot.totalUsers,
+      activeProducts: snapshot.activeProducts,
       avgTicket: Math.round(avgTicket * 100) / 100,
-      pendingOrders,
-      periodRevenue,
-      periodOrders: periodCount,
-      outOfStock,
+      pendingOrders: snapshot.pendingOrders,
+      periodRevenue: snapshot.periodRevenue,
+      periodOrders: snapshot.periodOrders,
+      outOfStock: snapshot.outOfStock,
     };
   }
 
   async getSalesChart(period: string = '30d') {
     const dateFrom = this.resolvePeriodDate(period);
-
-    const orders = await this.prisma.order.findMany({
-      where: { isPaid: true, createdAt: { gte: dateFrom } },
-      select: { total: true, createdAt: true },
-      orderBy: { createdAt: 'asc' },
-    });
+    const orders = await this.metricsRepository.listPaidOrdersSince(dateFrom);
 
     const grouped = new Map<string, { revenue: number; count: number }>();
     for (const order of orders) {
@@ -90,35 +85,11 @@ export class AdminService {
   }
 
   async getRecentOrders(limit = 10) {
-    return this.prisma.order.findMany({
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-      },
-    });
+    return this.metricsRepository.listRecentOrders(limit);
   }
 
   async getTopProducts(limit = 10) {
-    const items = await this.prisma.orderItem.groupBy({
-      by: ['productId'],
-      _sum: { quantity: true },
-      orderBy: { _sum: { quantity: 'desc' } },
-      take: limit,
-    });
-
-    const productIds = items.map((i) => i.productId);
-    const products = await this.prisma.product.findMany({
-      where: { id: { in: productIds } },
-      include: { ProductImage: { take: 1 } },
-    });
-
-    const productMap = new Map(products.map((p) => [p.id, p]));
-
-    return items.map((item) => ({
-      product: productMap.get(item.productId),
-      totalSold: item._sum.quantity ?? 0,
-    }));
+    return this.metricsRepository.listTopProducts(limit);
   }
 
   // ─── Users ────────────────────────────────────────────────────────────
@@ -126,150 +97,79 @@ export class AdminService {
   async getUsers(page = 1, limit = 20, search?: string, role?: Role, isActive?: boolean, actorRole?: Role) {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), 100);
-    const skip = (safePage - 1) * safeLimit;
-
-    const where: Record<string, unknown> = { deletedAt: null };
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { id: search },
-      ];
-    }
-    if (actorRole === Role.SUPPORT) {
-      where.role = Role.CUSTOMER;
-    } else if (role) {
-      where.role = role;
-    }
-    if (isActive !== undefined) where.isActive = isActive;
-
-    const [rows, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        where,
-        skip,
-        take: safeLimit,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          isActive: true,
-          phone: true,
-          emailVerified: true,
-          lastLoginAt: true,
-          createdAt: true,
-          _count: { select: { Order: true } },
-        },
-      }),
-      this.prisma.user.count({ where }),
-    ]);
+    const { data, total } = await this.userRepository.list({
+      page: safePage,
+      limit: safeLimit,
+      search,
+      role,
+      isActive,
+      actorRole,
+    });
 
     return {
-      data: rows,
+      data,
       meta: { page: safePage, limit: safeLimit, total, totalPages: Math.max(Math.ceil(total / safeLimit), 1) },
     };
   }
 
   async getUserById(userId: string, actorRole?: Role) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        phone: true,
-        image: true,
-        emailVerified: true,
-        lastLoginAt: true,
-        createdAt: true,
-        updatedAt: true,
-        addresses: {
-          include: { country: true },
-          orderBy: { id: 'desc' },
-          take: 1,
-        },
-        _count: { select: { Order: true } },
-      },
-    });
-    if (!user) throw new NotFoundException('User not found');
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new NotFoundError('User not found');
     if (actorRole === Role.SUPPORT && user.role !== Role.CUSTOMER) {
-      throw new ForbiddenException('Support can only access customers');
+      throw new ForbiddenError('Support can only access customers');
     }
 
-    const address = user.addresses[0] ?? null;
-    return {
-      ...user,
-      address,
-      addresses: undefined,
-    };
+    return user;
   }
 
   async createUser(dto: CreateUserDto, actorRole?: Role) {
     if (actorRole === Role.ADMIN && dto.role === Role.SUPER_ADMIN) {
-      throw new ForbiddenException('ADMIN cannot manage SUPER_ADMIN users');
+      throw new ForbiddenError('ADMIN cannot manage SUPER_ADMIN users');
     }
 
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
-    });
-    if (existing) throw new ConflictException('Email is already in use');
+    const email = dto.email.toLowerCase();
+    const existing = await this.userRepository.findByEmail(email);
+    if (existing) throw new ConflictError('Email is already in use');
 
-    const user = await this.prisma.user.create({
-      data: {
-        name: dto.name,
-        email: dto.email.toLowerCase(),
-        password: bcryptjs.hashSync(dto.password, 10),
-        phone: dto.phone,
-        role: dto.role ?? Role.CUSTOMER,
-      },
-      select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
+    return this.userRepository.create({
+      name: dto.name,
+      email,
+      passwordHash: bcryptjs.hashSync(dto.password, 10),
+      phone: dto.phone,
+      role: dto.role ?? Role.CUSTOMER,
     });
-
-    return user;
   }
 
   async updateUser(userId: string, dto: UpdateUserDto, actorRole?: Role) {
     await this.assertCanManageTargetUser(userId, actorRole);
 
     if (dto.email) {
-      const existing = await this.prisma.user.findFirst({
-        where: { email: dto.email.toLowerCase(), id: { not: userId } },
-      });
-      if (existing) throw new ConflictException('Email is already in use');
+      const email = dto.email.toLowerCase();
+      const existing = await this.userRepository.findByEmail(email);
+      if (existing && existing.id !== userId) throw new ConflictError('Email is already in use');
     }
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: dto.name,
-        email: dto.email?.toLowerCase(),
-        phone: dto.phone,
-        isActive: dto.isActive,
-      },
-      select: { id: true, name: true, email: true, role: true, isActive: true, phone: true },
+    return this.userRepository.update(userId, {
+      name: dto.name,
+      email: dto.email?.toLowerCase(),
+      phone: dto.phone,
+      isActive: dto.isActive,
     });
   }
 
   async updateUserRole(userId: string, dto: UpdateUserRoleDto, actorId: string, actorRole: Role) {
     if (userId === actorId) {
-      throw new BadRequestException('You cannot change your own role');
+      throw new BadRequestError('You cannot change your own role');
     }
 
     await this.assertCanManageTargetUser(userId, actorRole);
 
     if (actorRole === Role.ADMIN && dto.role === Role.SUPER_ADMIN) {
-      throw new ForbiddenException('ADMIN cannot assign SUPER_ADMIN role');
+      throw new ForbiddenError('ADMIN cannot assign SUPER_ADMIN role');
     }
 
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: { role: dto.role },
-      select: { id: true, name: true, email: true, role: true },
-    });
+    const updated = await this.userRepository.updateRole(userId, dto.role);
+    if (!updated) throw new NotFoundError('User not found');
 
     await this.logAction(actorId, 'user.role.changed', 'user', userId, { nextRole: dto.role });
 
@@ -278,29 +178,22 @@ export class AdminService {
 
   async updateUserStatus(userId: string, isActive: boolean, actorId: string, actorRole: Role) {
     if (userId === actorId) {
-      throw new BadRequestException('You cannot change your own status');
+      throw new BadRequestError('You cannot change your own status');
     }
 
     await this.assertCanManageTargetUser(userId, actorRole);
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { isActive },
-      select: { id: true, name: true, email: true, role: true, isActive: true },
-    });
+    return this.userRepository.updateStatus(userId, isActive);
   }
 
   async deleteUser(userId: string, actorId: string, actorRole: Role) {
     if (userId === actorId) {
-      throw new BadRequestException('You cannot delete yourself');
+      throw new BadRequestError('You cannot delete yourself');
     }
 
     await this.assertCanManageTargetUser(userId, actorRole);
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { deletedAt: new Date(), isActive: false },
-    });
+    await this.userRepository.softDelete(userId);
     return { ok: true };
   }
 
@@ -316,65 +209,34 @@ export class AdminService {
   ) {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), 100);
-    const skip = (safePage - 1) * safeLimit;
-
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (paymentStatus) where.paymentStatus = paymentStatus;
-    if (paid !== undefined) where.isPaid = paid;
-    if (search) {
-      where.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        { user: { email: { contains: search, mode: 'insensitive' } } },
-        { user: { name: { contains: search, mode: 'insensitive' } } },
-      ];
-    }
-
-    const [rows, total] = await this.prisma.$transaction([
-      this.prisma.order.findMany({
-        where,
-        skip,
-        take: safeLimit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { id: true, email: true, name: true } },
-          OrderItem: true,
-          OrderAddress: { include: { country: true } },
-        },
-      }),
-      this.prisma.order.count({ where }),
-    ]);
+    const { data, total } = await this.orderRepository.list({
+      page: safePage,
+      limit: safeLimit,
+      search,
+      status,
+      paymentStatus,
+      paid,
+    });
 
     return {
-      data: rows,
+      data,
       meta: { page: safePage, limit: safeLimit, total, totalPages: Math.max(Math.ceil(total / safeLimit), 1) },
     };
   }
 
   async getOrderById(orderId: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        user: { select: { id: true, name: true, email: true, phone: true } },
-        OrderItem: {
-          include: {
-            product: { include: { ProductImage: { take: 1 } } },
-          },
-        },
-        OrderAddress: { include: { country: true } },
-      },
-    });
-    if (!order) throw new NotFoundException('Order not found');
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) throw new NotFoundError('Order not found');
     return order;
   }
 
   async updateOrderStatus(orderId: string, newStatus: OrderStatus, actorId: string) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) throw new NotFoundException('Order not found');
+    const order = await this.orderRepository.findBasic(orderId);
+    if (!order) throw new NotFoundError('Order not found');
 
     const allowed = ORDER_TRANSITIONS[order.status];
     if (!allowed.includes(newStatus)) {
-      throw new BadRequestException(`Cannot transition from "${order.status}" to "${newStatus}"`);
+      throw new BadRequestError(`Cannot transition from "${order.status}" to "${newStatus}"`);
     }
 
     if (newStatus === OrderStatus.CANCELLED && !order.isPaid) {
@@ -393,10 +255,11 @@ export class AdminService {
       data.paymentStatus = PaymentStatus.REFUNDED;
     }
 
-    const updated = await this.prisma.order.update({
-      where: { id: orderId },
-      data,
-      include: { OrderItem: true, OrderAddress: true },
+    const updated = await this.orderRepository.updateStatus(orderId, data as {
+      status: OrderStatus;
+      isPaid?: boolean;
+      paidAt?: Date;
+      paymentStatus?: PaymentStatus;
     });
 
     await this.logAction(actorId, 'order.status.changed', 'order', orderId, {
@@ -408,8 +271,8 @@ export class AdminService {
   }
 
   async updatePaymentStatus(orderId: string, newPaymentStatus: PaymentStatus) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) throw new NotFoundException('Order not found');
+    const order = await this.orderRepository.findBasic(orderId);
+    if (!order) throw new NotFoundError('Order not found');
 
     const data: Record<string, unknown> = { paymentStatus: newPaymentStatus };
 
@@ -418,20 +281,18 @@ export class AdminService {
       data.paidAt = new Date();
     }
 
-    return this.prisma.order.update({
-      where: { id: orderId },
-      data,
+    return this.orderRepository.updatePaymentStatus(orderId, data as {
+      paymentStatus: PaymentStatus;
+      isPaid?: boolean;
+      paidAt?: Date;
     });
   }
 
   async updateOrderNotes(orderId: string, internalNotes: string | undefined) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) throw new NotFoundException('Order not found');
+    const order = await this.orderRepository.findBasic(orderId);
+    if (!order) throw new NotFoundError('Order not found');
 
-    return this.prisma.order.update({
-      where: { id: orderId },
-      data: { internalNotes: internalNotes ?? null },
-    });
+    return this.orderRepository.updateNotes(orderId, internalNotes ?? null);
   }
 
   // ─── Products ─────────────────────────────────────────────────────────
@@ -439,123 +300,77 @@ export class AdminService {
   async getProducts(page = 1, limit = 20, search?: string, categoryId?: string, isActive?: boolean, inStock?: boolean) {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), 100);
-    const skip = (safePage - 1) * safeLimit;
-
-    const where: Record<string, unknown> = { deletedAt: null };
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-        { id: search },
-      ];
-    }
-    if (categoryId) where.categoryId = categoryId;
-    if (isActive !== undefined) where.isActive = isActive;
-    if (inStock === true) where.inStock = { gt: 0 };
-    if (inStock === false) where.inStock = 0;
-
-    const [rows, total] = await this.prisma.$transaction([
-      this.prisma.product.findMany({
-        where,
-        skip,
-        take: safeLimit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          ProductImage: { orderBy: { sortOrder: 'asc' }, take: 2 },
-          category: { select: { id: true, name: true } },
-        },
-      }),
-      this.prisma.product.count({ where }),
-    ]);
+    const { data, total } = await this.productRepository.list({
+      page: safePage,
+      limit: safeLimit,
+      search,
+      categoryId,
+      isActive,
+      inStock,
+    });
 
     return {
-      data: rows,
+      data,
       meta: { page: safePage, limit: safeLimit, total, totalPages: Math.max(Math.ceil(total / safeLimit), 1) },
     };
   }
 
   async getProductById(productId: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        ProductImage: { orderBy: { sortOrder: 'asc' } },
-        category: true,
-      },
-    });
-    if (!product) throw new NotFoundException('Product not found');
+    const product = await this.productRepository.findById(productId);
+    if (!product) throw new NotFoundError('Product not found');
     return product;
   }
 
   async createProduct(dto: UpsertProductDto) {
-    const category = await this.prisma.category.findUnique({ where: { id: dto.categoryId } });
-    if (!category) throw new NotFoundException('Category not found');
+    const category = await this.categoryRepository.findById(dto.categoryId);
+    if (!category) throw new NotFoundError('Category not found');
 
-    const existingSlug = await this.prisma.product.findUnique({ where: { slug: dto.slug } });
-    if (existingSlug) throw new ConflictException('Slug is already in use');
+    const existingSlug = await this.productRepository.findBySlug(dto.slug);
+    if (existingSlug) throw new ConflictError('Slug is already in use');
 
     if (dto.sku) {
-      const existingSku = await this.prisma.product.findUnique({ where: { sku: dto.sku } });
-      if (existingSku) throw new ConflictException('SKU is already in use');
+      const existingSku = await this.productRepository.findBySku(dto.sku);
+      if (existingSku) throw new ConflictError('SKU is already in use');
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const product = await tx.product.create({
-        data: {
-          title: dto.title,
-          description: dto.description,
-          sku: dto.sku,
-          inStock: dto.inStock,
-          price: dto.price,
-          comparePrice: dto.comparePrice,
-          sizes: dto.sizes,
-          slug: dto.slug,
-          tags: dto.tags,
-          gender: dto.gender,
-          categoryId: dto.categoryId,
-          featured: dto.featured ?? false,
-          isActive: dto.isActive ?? true,
-        },
-      });
-
-      if (dto.images?.length) {
-        await tx.productImage.createMany({
-          data: dto.images.map((url, index) => ({
-            productId: product.id,
-            url,
-            sortOrder: index,
-            isPrimary: index === 0,
-          })),
-        });
-      }
-
-      return tx.product.findUnique({
-        where: { id: product.id },
-        include: { ProductImage: true, category: true },
-      });
-    });
+    return this.productRepository.create(
+      {
+        title: dto.title,
+        description: dto.description,
+        sku: dto.sku,
+        inStock: dto.inStock,
+        price: dto.price,
+        comparePrice: dto.comparePrice,
+        sizes: dto.sizes,
+        slug: dto.slug,
+        tags: dto.tags,
+        gender: dto.gender,
+        categoryId: dto.categoryId,
+        featured: dto.featured ?? false,
+        isActive: dto.isActive ?? true,
+      },
+      dto.images,
+    );
   }
 
   async updateProduct(productId: string, dto: UpsertProductDto) {
-    const existing = await this.prisma.product.findUnique({ where: { id: productId } });
-    if (!existing) throw new NotFoundException('Product not found');
+    const existing = await this.productRepository.findById(productId);
+    if (!existing) throw new NotFoundError('Product not found');
+    const existingData = existing as { slug?: string | null; sku?: string | null };
 
-    if (dto.slug !== existing.slug) {
-      const slugTaken = await this.prisma.product.findFirst({
-        where: { slug: dto.slug, id: { not: productId } },
-      });
-      if (slugTaken) throw new ConflictException('Slug is already in use');
+    if (dto.slug !== existingData.slug) {
+      const slugTaken = await this.productRepository.findBySlug(dto.slug);
+      if (slugTaken && slugTaken.id !== productId) throw new ConflictError('Slug is already in use');
     }
 
-    if (dto.sku && dto.sku !== existing.sku) {
-      const skuTaken = await this.prisma.product.findFirst({
-        where: { sku: dto.sku, id: { not: productId } },
-      });
-      if (skuTaken) throw new ConflictException('SKU is already in use');
+    if (dto.sku && dto.sku !== existingData.sku) {
+      const skuTaken = await this.productRepository.findBySku(dto.sku);
+      if (skuTaken && skuTaken.id !== productId) throw new ConflictError('SKU is already in use');
     }
 
-    await this.prisma.product.update({
-      where: { id: productId },
-      data: {
+    return this.productRepository.update(
+      productId,
+      {
         title: dto.title,
         description: dto.description,
         sku: dto.sku,
@@ -570,223 +385,151 @@ export class AdminService {
         featured: dto.featured,
         isActive: dto.isActive,
       },
-    });
-
-    if (dto.images) {
-      await this.prisma.$transaction([
-        this.prisma.productImage.deleteMany({ where: { productId } }),
-        this.prisma.productImage.createMany({
-          data: dto.images.map((url, index) => ({
-            productId,
-            url,
-            sortOrder: index,
-            isPrimary: index === 0,
-          })),
-        }),
-      ]);
-    }
-
-    return this.prisma.product.findUnique({
-      where: { id: productId },
-      include: { ProductImage: true, category: true },
-    });
+      dto.images,
+    );
   }
 
   async deleteProduct(productId: string, actorId: string) {
-    const product = await this.prisma.product.findUnique({ where: { id: productId } });
-    if (!product) throw new NotFoundException('Product not found');
+    const product = await this.productRepository.findById(productId);
+    if (!product) throw new NotFoundError('Product not found');
+    const productTitle = (product as { title?: string }).title ?? '';
 
-    await this.prisma.product.update({
-      where: { id: productId },
-      data: { deletedAt: new Date(), isActive: false },
-    });
+    await this.productRepository.softDelete(productId);
 
-    await this.logAction(actorId, 'product.deleted', 'product', productId, { title: product.title });
+    await this.logAction(actorId, 'product.deleted', 'product', productId, { title: productTitle });
 
     return { ok: true };
   }
 
   async updateProductStatus(productId: string, isActive: boolean) {
-    return this.prisma.product.update({
-      where: { id: productId },
-      data: { isActive },
-      select: { id: true, title: true, isActive: true },
-    });
+    return this.productRepository.updateStatus(productId, isActive);
   }
 
   async addProductImage(productId: string, imageUrl: string) {
-    const product = await this.prisma.product.findUnique({ where: { id: productId } });
-    if (!product) throw new NotFoundException('Product not found');
-
-    const maxSort = await this.prisma.productImage.aggregate({
-      where: { productId },
-      _max: { sortOrder: true },
-    });
-
-    const existingCount = await this.prisma.productImage.count({ where: { productId } });
-
-    return this.prisma.productImage.create({
-      data: {
-        productId,
-        url: imageUrl,
-        sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
-        isPrimary: existingCount === 0,
-      },
-    });
+    const product = await this.productRepository.findById(productId);
+    if (!product) throw new NotFoundError('Product not found');
+    return this.productRepository.addImage(productId, imageUrl);
   }
 
   async deleteProductImage(productId: string, imageId: number) {
-    const image = await this.prisma.productImage.findUnique({ where: { id: imageId } });
-    if (!image || image.productId !== productId) {
-      throw new NotFoundException('Image not found');
-    }
-    await this.prisma.productImage.delete({ where: { id: imageId } });
+    const deleted = await this.productRepository.deleteImage(productId, imageId);
+    if (!deleted) throw new NotFoundError('Image not found');
     return { ok: true };
   }
 
   // ─── Categories ───────────────────────────────────────────────────────
 
   async getCategories() {
-    return this.prisma.category.findMany({
-      where: { deletedAt: null },
-      orderBy: { sortOrder: 'asc' },
-      include: {
-        _count: { select: { Product: true } },
-        parent: { select: { id: true, name: true } },
-      },
-    });
+    return this.categoryRepository.list();
   }
 
   async getCategoryById(id: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-      include: {
-        _count: { select: { Product: true, children: true } },
-        parent: { select: { id: true, name: true } },
-        children: { select: { id: true, name: true, slug: true } },
-      },
-    });
-    if (!category) throw new NotFoundException('Category not found');
+    const category = await this.categoryRepository.findById(id);
+    if (!category) throw new NotFoundError('Category not found');
     return category;
   }
 
   async createCategory(dto: UpsertCategoryDto) {
-    const existingSlug = await this.prisma.category.findUnique({ where: { slug: dto.slug } });
-    if (existingSlug) throw new ConflictException('Category slug is already in use');
+    const existingSlug = await this.categoryRepository.findBySlug(dto.slug);
+    if (existingSlug) throw new ConflictError('Category slug is already in use');
 
-    return this.prisma.category.create({
-      data: {
-        name: dto.name,
-        slug: dto.slug,
-        description: dto.description,
-        image: dto.image,
-        parentId: dto.parentId,
-        isActive: dto.isActive ?? true,
-        sortOrder: dto.sortOrder ?? 0,
-      },
+    return this.categoryRepository.create({
+      name: dto.name,
+      slug: dto.slug,
+      description: dto.description,
+      image: dto.image,
+      parentId: dto.parentId,
+      isActive: dto.isActive ?? true,
+      sortOrder: dto.sortOrder ?? 0,
     });
   }
 
   async updateCategory(id: string, dto: UpsertCategoryDto) {
-    const existing = await this.prisma.category.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Category not found');
+    const existing = await this.categoryRepository.findById(id);
+    if (!existing) throw new NotFoundError('Category not found');
+    const existingData = existing as { slug?: string | null };
 
-    if (dto.slug !== existing.slug) {
-      const slugTaken = await this.prisma.category.findFirst({
-        where: { slug: dto.slug, id: { not: id } },
-      });
-      if (slugTaken) throw new ConflictException('Category slug is already in use');
+    if (dto.slug !== existingData.slug) {
+      const slugTaken = await this.categoryRepository.findBySlug(dto.slug);
+      if (slugTaken && slugTaken.id !== id) throw new ConflictError('Category slug is already in use');
     }
 
-    return this.prisma.category.update({
-      where: { id },
-      data: {
-        name: dto.name,
-        slug: dto.slug,
-        description: dto.description,
-        image: dto.image,
-        parentId: dto.parentId,
-        isActive: dto.isActive,
-        sortOrder: dto.sortOrder,
-      },
+    return this.categoryRepository.update(id, {
+      name: dto.name,
+      slug: dto.slug,
+      description: dto.description,
+      image: dto.image,
+      parentId: dto.parentId,
+      isActive: dto.isActive,
+      sortOrder: dto.sortOrder,
     });
   }
 
   async deleteCategory(id: string) {
-    const count = await this.prisma.product.count({ where: { categoryId: id } });
+    const count = await this.categoryRepository.countProducts(id);
     if (count > 0) {
-      throw new BadRequestException('Cannot delete category with associated products');
+      throw new BadRequestError('Cannot delete category with associated products');
     }
 
-    const children = await this.prisma.category.count({ where: { parentId: id } });
+    const children = await this.categoryRepository.countChildren(id);
     if (children > 0) {
-      throw new BadRequestException('Cannot delete category with subcategories');
+      throw new BadRequestError('Cannot delete category with subcategories');
     }
 
-    await this.prisma.category.update({
-      where: { id },
-      data: { deletedAt: new Date(), isActive: false },
-    });
+    await this.categoryRepository.softDelete(id);
     return { ok: true };
   }
 
   // ─── Countries ────────────────────────────────────────────────────────
 
   async getCountries() {
-    return this.prisma.country.findMany({
-      orderBy: [{ priority: 'desc' }, { name: 'asc' }],
-    });
+    return this.countryRepository.list();
   }
 
   async createCountry(dto: UpsertCountryDto) {
-    const existing = await this.prisma.country.findUnique({ where: { id: dto.id } });
-    if (existing) throw new ConflictException('Country ID already exists');
+    const existing = await this.countryRepository.findById(dto.id);
+    if (existing) throw new ConflictError('Country ID already exists');
 
-    return this.prisma.country.create({
-      data: {
-        id: dto.id,
-        name: dto.name,
-        isoCode: dto.isoCode,
-        currency: dto.currency ?? 'USD',
-        isActive: dto.isActive ?? true,
-        allowsShipping: dto.allowsShipping ?? true,
-        allowsPurchase: dto.allowsPurchase ?? true,
-        shippingBaseCost: dto.shippingBaseCost ?? 0,
-        etaDays: dto.etaDays ?? 7,
-        priority: dto.priority ?? 0,
-      },
+    return this.countryRepository.create({
+      id: dto.id,
+      name: dto.name,
+      isoCode: dto.isoCode,
+      currency: dto.currency ?? 'USD',
+      isActive: dto.isActive ?? true,
+      allowsShipping: dto.allowsShipping ?? true,
+      allowsPurchase: dto.allowsPurchase ?? true,
+      shippingBaseCost: dto.shippingBaseCost ?? 0,
+      etaDays: dto.etaDays ?? 7,
+      priority: dto.priority ?? 0,
     });
   }
 
   async updateCountry(id: string, dto: Partial<UpsertCountryDto>) {
-    const existing = await this.prisma.country.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Country not found');
+    const existing = await this.countryRepository.findById(id);
+    if (!existing) throw new NotFoundError('Country not found');
 
-    return this.prisma.country.update({
-      where: { id },
-      data: {
-        name: dto.name,
-        isoCode: dto.isoCode,
-        currency: dto.currency,
-        isActive: dto.isActive,
-        allowsShipping: dto.allowsShipping,
-        allowsPurchase: dto.allowsPurchase,
-        shippingBaseCost: dto.shippingBaseCost,
-        etaDays: dto.etaDays,
-        priority: dto.priority,
-      },
+    return this.countryRepository.update(id, {
+      name: dto.name,
+      isoCode: dto.isoCode,
+      currency: dto.currency,
+      isActive: dto.isActive,
+      allowsShipping: dto.allowsShipping,
+      allowsPurchase: dto.allowsPurchase,
+      shippingBaseCost: dto.shippingBaseCost,
+      etaDays: dto.etaDays,
+      priority: dto.priority,
     });
   }
 
   async deleteCountry(id: string) {
-    const addressCount = await this.prisma.userAddress.count({ where: { countryId: id } });
-    const orderAddressCount = await this.prisma.orderAddress.count({ where: { countryId: id } });
+    const addressCount = await this.countryRepository.countUserAddresses(id);
+    const orderAddressCount = await this.countryRepository.countOrderAddresses(id);
 
     if (addressCount > 0 || orderAddressCount > 0) {
-      throw new BadRequestException('Cannot delete country with associated addresses');
+      throw new BadRequestError('Cannot delete country with associated addresses');
     }
 
-    await this.prisma.country.delete({ where: { id } });
+    await this.countryRepository.delete(id);
     return { ok: true };
   }
 
@@ -799,14 +542,12 @@ export class AdminService {
     entityId: string,
     metadata?: Record<string, unknown>,
   ) {
-    return this.prisma.auditLog.create({
-      data: {
-        actorId,
-        action,
-        entityType,
-        entityId,
-        metadata: metadata as never,
-      },
+    await this.auditRepository.create({
+      actorId,
+      action,
+      entityType,
+      entityId,
+      metadata,
     });
   }
 
@@ -829,12 +570,9 @@ export class AdminService {
   }
 
   private async restoreStock(orderId: string) {
-    const items = await this.prisma.orderItem.findMany({ where: { orderId } });
+    const items = await this.orderRepository.listOrderItems(orderId);
     for (const item of items) {
-      await this.prisma.product.update({
-        where: { id: item.productId },
-        data: { inStock: { increment: item.quantity } },
-      });
+      await this.productRepository.incrementStock(item.productId, item.quantity);
     }
   }
 
@@ -842,17 +580,14 @@ export class AdminService {
     if (!actorRole) return;
     if (actorRole === Role.SUPER_ADMIN) return;
 
-    const target = await this.prisma.user.findUnique({
-      where: { id: targetUserId },
-      select: { id: true, role: true },
-    });
+    const target = await this.userRepository.findByIdWithRole(targetUserId);
 
     if (!target) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundError('User not found');
     }
 
     if (actorRole === Role.ADMIN && target.role === Role.SUPER_ADMIN) {
-      throw new ForbiddenException('ADMIN cannot manage SUPER_ADMIN users');
+      throw new ForbiddenError('ADMIN cannot manage SUPER_ADMIN users');
     }
   }
 }

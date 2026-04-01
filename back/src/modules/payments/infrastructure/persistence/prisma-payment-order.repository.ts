@@ -4,6 +4,7 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 import type {
   MarkOrderPaidAtomicResult,
   OrderPaymentRow,
+  PaymentRecipient,
   PaymentOrderRepositoryPort,
 } from '../../domain/ports/payment-order-repository.port';
 
@@ -17,6 +18,29 @@ export class PrismaPaymentOrderRepository implements PaymentOrderRepositoryPort 
       select: { id: true, userId: true, total: true, isPaid: true, transactionId: true, guestEmail: true, guestCheckoutToken: true },
     });
     return order;
+  }
+
+  async findPaymentRecipient(orderId: string): Promise<PaymentRecipient | null> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        total: true,
+        transactionId: true,
+        guestEmail: true,
+        user: { select: { email: true, name: true } },
+      },
+    });
+
+    if (!order) return null;
+
+    return {
+      orderId: order.id,
+      total: order.total,
+      transactionId: order.transactionId,
+      email: order.user?.email ?? order.guestEmail,
+      name: order.user?.name ?? null,
+    };
   }
 
   async markOrderPaidAtomic(orderId: string, transactionId: string): Promise<MarkOrderPaidAtomicResult> {

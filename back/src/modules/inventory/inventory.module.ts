@@ -12,6 +12,7 @@ import { PrismaStockMovementRepository } from './infrastructure/persistence/pris
 import { PrismaWarehouseRepository } from './infrastructure/persistence/prisma/prisma-warehouse.repository';
 import { PrismaProductRepository } from './infrastructure/persistence/prisma/prisma-product.repository';
 import { LowStockQueueNotifier } from './infrastructure/queue/low-stock-queue.notifier';
+import { LowStockProcessor } from './infrastructure/queue/low-stock.processor';
 import { GetInventoryByProductUseCase } from './application/use-cases/get-inventory-by-product.use-case';
 import { GetInventoryByWarehouseUseCase } from './application/use-cases/get-inventory-by-warehouse.use-case';
 import { IncreaseStockUseCase } from './application/use-cases/increase-stock.use-case';
@@ -51,6 +52,7 @@ import { CommitStockByReferenceUseCase } from './application/use-cases/commit-st
       provide: LOW_STOCK_NOTIFIER,
       useClass: LowStockQueueNotifier,
     },
+    LowStockProcessor,
     InventoryService,
     CreateWarehouseUseCase,
     GetInventoryByProductUseCase,

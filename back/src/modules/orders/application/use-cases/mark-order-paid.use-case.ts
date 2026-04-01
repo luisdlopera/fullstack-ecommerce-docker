@@ -1,7 +1,8 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InventoryService } from '../../../inventory/application/inventory.service';
 import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../../domain/ports/orders-repository.port';
 import { UpdateOrderPaymentDto } from '../../infrastructure/http/dto/create-order.dto';
+import { BadRequestError, NotFoundError } from '../../../../shared/domain/errors/domain-error';
 
 @Injectable()
 export class MarkOrderPaidUseCase {
@@ -12,14 +13,14 @@ export class MarkOrderPaidUseCase {
 
   async execute(orderId: string, dto: UpdateOrderPaymentDto) {
     const order = await this.ordersRepository.findOrderBasic(orderId);
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) throw new NotFoundError('Order not found');
 
     if (order.isPaid && order.transactionId === dto.transactionId) {
       return order;
     }
 
     if (order.isPaid && order.transactionId !== dto.transactionId) {
-      throw new BadRequestException('Order is already paid with another transaction');
+      throw new BadRequestError('Order is already paid with another transaction');
     }
 
     await this.inventoryService.commitStock(orderId, order.userId ?? `guest_${order.id}`);

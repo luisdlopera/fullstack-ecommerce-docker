@@ -7,6 +7,7 @@ import { LOW_STOCK_NOTIFIER, type LowStockNotifierPort } from '../ports/low-stoc
 import { PRODUCT_REPOSITORY, type ProductRepositoryPort } from '../ports/product-repository.port';
 import { WAREHOUSE_REPOSITORY, type WarehouseRepositoryPort } from '../ports/warehouse-repository.port';
 import type { InventoryCommand } from '../dto/inventory-command.dto';
+import { AUDIT_REPOSITORY, AuditEntityType, type AuditRepositoryPort } from '../../../../shared/domain/ports/audit-repository.port';
 
 @Injectable()
 export class AdjustStockUseCase {
@@ -19,6 +20,8 @@ export class AdjustStockUseCase {
     private readonly warehouseRepository: WarehouseRepositoryPort,
     @Inject(LOW_STOCK_NOTIFIER)
     private readonly lowStockNotifier: LowStockNotifierPort,
+    @Inject(AUDIT_REPOSITORY)
+    private readonly auditRepository: AuditRepositoryPort,
   ) {}
 
   async execute(command: InventoryCommand) {
@@ -40,6 +43,21 @@ export class AdjustStockUseCase {
     }
 
     const updated = await this.inventoryRepository.adjust(command);
+
+    await this.auditRepository.record({
+      action: 'STOCK_ADJUSTED',
+      entityType: AuditEntityType.INVENTORY,
+      entityId: updated.id,
+      metadata: {
+        productId: command.productId,
+        warehouseId: command.warehouseId,
+        adjustment: command.quantity,
+        newBalance: updated.availableQuantity,
+        reference: command.reference,
+        notes: command.notes,
+      },
+      userId: command.actorId,
+    });
 
     if (updated.availableQuantity <= updated.lowStockThreshold) {
       await this.lowStockNotifier.notify(updated);

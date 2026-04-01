@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Headers, Inject, Post, Req, UseGuards } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Get, Headers, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
@@ -13,6 +13,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
 
 @Controller('auth')
 export class AuthController {
@@ -41,22 +42,53 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 12, ttl: 60000 } })
   @Post('login')
-  login(@Body() dto: LoginDto, @Req() request: Request) {
-    return this.authService.login(dto, {
+  async login(@Body() dto: LoginDto, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const result = await this.authService.login(dto, {
       ip: this.extractClientIp(request),
       userAgent: request.headers['user-agent'],
     });
+
+    if (process.env.AUTH_COOKIES === 'true') {
+      response.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
+      });
+      return { user: result.user, accessToken: result.accessToken };
+    }
+
+    return result;
   }
 
   @Public()
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post('refresh')
-  refresh(@Body() dto: RefreshDto, @Req() request: Request) {
-    return this.authService.refresh(dto.refreshToken, {
+  async refresh(
+    @Body() dto: RefreshDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const token = dto.refreshToken || request.cookies?.refreshToken;
+    if (!token) throw new UnauthorizedError('Missing refresh token');
+
+    const result = await this.authService.refresh(token, {
       ip: this.extractClientIp(request),
       userAgent: request.headers['user-agent'],
     });
+
+    if (process.env.AUTH_COOKIES === 'true') {
+      response.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      return { user: result.user, accessToken: result.accessToken };
+    }
+
+    return result;
   }
 
   @Public()

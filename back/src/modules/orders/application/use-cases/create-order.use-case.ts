@@ -1,9 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { InventoryService } from '../../../inventory/application/inventory.service';
 import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../../domain/ports/orders-repository.port';
 import { CreateOrderDto } from '../../infrastructure/http/dto/create-order.dto';
+import { BadRequestError } from '../../../../shared/domain/errors/domain-error';
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -17,7 +18,7 @@ export class CreateOrderUseCase {
     const products = await this.ordersRepository.findProductsByIds(productIds);
 
     if (products.length !== productIds.length) {
-      throw new BadRequestException('One or more products do not exist');
+      throw new BadRequestError('One or more products do not exist');
     }
 
     const productMap = new Map(products.map((product) => [product.id, product]));
@@ -26,9 +27,9 @@ export class CreateOrderUseCase {
     let subTotal = 0;
     for (const item of dto.items) {
       const product = productMap.get(item.productId);
-      if (!product) throw new BadRequestException(`Product not found: ${item.productId}`);
+      if (!product) throw new BadRequestError(`Product not found: ${item.productId}`);
       if (!product.sizes.includes(item.size)) {
-        throw new BadRequestException(`Selected size is not available for product: ${item.productId}`);
+        throw new BadRequestError(`Selected size is not available for product: ${item.productId}`);
       }
       itemsInOrder += item.quantity;
       subTotal += product.price * item.quantity;

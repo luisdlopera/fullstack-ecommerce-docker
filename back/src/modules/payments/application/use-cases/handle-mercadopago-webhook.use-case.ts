@@ -1,16 +1,10 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { MercadoPagoWebhookBodyDto } from '../../infrastructure/http/dto/mercadopago-webhook.dto';
 import { verifyMercadoPagoWebhookSignature } from '../../infrastructure/http/mercadopago-webhook-signature.util';
 import type { MercadoPagoPaymentApiPort } from '../../domain/ports/mercadopago-payment-api.port';
 import { MERCADOPAGO_PAYMENT_API } from '../../domain/ports/mercadopago-payment-api.port';
 import { ProcessMercadoPagoPaymentUseCase } from './process-mercadopago-payment.use-case';
+import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
 
 export type WebhookRequestMeta = {
   xSignature?: string;
@@ -37,7 +31,7 @@ export class HandleMercadoPagoWebhookUseCase {
       const secret = process.env.MP_WEBHOOK_SECRET;
       if (!secret) {
         this.logger.warn('MP_WEBHOOK_SECRET is not configured');
-        throw new UnauthorizedException('Webhook not configured');
+        throw new UnauthorizedError('Webhook not configured');
       }
       if (
         !verifyMercadoPagoWebhookSignature({
@@ -47,7 +41,7 @@ export class HandleMercadoPagoWebhookUseCase {
           dataId,
         })
       ) {
-        throw new UnauthorizedException('Invalid webhook signature');
+        throw new UnauthorizedError('Invalid webhook signature');
       }
     }
 

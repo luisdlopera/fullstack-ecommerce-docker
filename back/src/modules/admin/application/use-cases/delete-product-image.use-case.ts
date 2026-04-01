@@ -1,5 +1,6 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { STORAGE_PORT, type StoragePort } from '../../../../shared/domain/ports/storage.port';
+import { NotFoundError } from '../../../../shared/domain/errors/domain-error';
 import {
   ADMIN_PRODUCT_IMAGE_REPOSITORY,
   type AdminProductImageRepositoryPort,
@@ -17,7 +18,7 @@ export class DeleteProductImageUseCase {
   async execute(productId: string, imageId: number): Promise<{ ok: true }> {
     const image = await this.repository.findProductImageById(imageId);
     if (!image || image.productId !== productId) {
-      throw new NotFoundException('Image not found');
+      throw new NotFoundError('Image not found');
     }
 
     if (image.storageKey) {

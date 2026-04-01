@@ -10,12 +10,18 @@ import { TOKEN_SERVICE } from './domain/ports/token-service.port';
 import { EmailSenderAdapter } from './infrastructure/email/email-sender.adapter';
 import { PrismaAuthRepository } from './infrastructure/persistence/prisma-auth.repository';
 import { JwtTokenService } from './infrastructure/security/jwt-token.service';
+import { RegisterUseCase } from './application/use-cases/register.use-case';
+import { LoginUseCase } from './application/use-cases/login.use-case';
+import { RefreshTokenUseCase } from './application/use-cases/refresh-token.use-case';
+
+const USE_CASES = [RegisterUseCase, LoginUseCase, RefreshTokenUseCase];
 
 @Module({
   imports: [JwtModule.register({}), ThrottlerModule, SharedModule],
   controllers: [AuthController],
   providers: [
     AuthService,
+    ...USE_CASES,
     {
       provide: AUTH_REPOSITORY,
       useClass: PrismaAuthRepository,

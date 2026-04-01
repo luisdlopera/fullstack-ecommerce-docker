@@ -1,7 +1,8 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Role } from '@prisma/client';
 import { isAdminRole } from '../../../../shared/infrastructure/auth/permissions';
 import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../../domain/ports/orders-repository.port';
+import { ForbiddenError, NotFoundError } from '../../../../shared/domain/errors/domain-error';
 
 @Injectable()
 export class GetOrderByIdUseCase {
@@ -10,9 +11,9 @@ export class GetOrderByIdUseCase {
   async execute(orderId: string, userId: string, role: Role) {
     const order = await this.ordersRepository.findOrderDetailById(orderId);
 
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) throw new NotFoundError('Order not found');
     if (!isAdminRole(role) && order.userId !== userId) {
-      throw new ForbiddenException('You cannot access this order');
+      throw new ForbiddenError('You cannot access this order');
     }
 
     return order;

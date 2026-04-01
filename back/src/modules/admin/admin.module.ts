@@ -37,8 +37,22 @@ import { GetCountriesUseCase } from './application/use-cases/get-countries.use-c
 import { CreateCountryUseCase } from './application/use-cases/create-country.use-case';
 import { UpdateCountryUseCase } from './application/use-cases/update-country.use-case';
 import { DeleteCountryUseCase } from './application/use-cases/delete-country.use-case';
+import { ADMIN_AUDIT_REPOSITORY } from './domain/ports/admin-audit.repository.port';
+import { ADMIN_CATEGORY_REPOSITORY } from './domain/ports/admin-category.repository.port';
+import { ADMIN_COUNTRY_REPOSITORY } from './domain/ports/admin-country.repository.port';
+import { ADMIN_METRICS_REPOSITORY } from './domain/ports/admin-metrics.repository.port';
+import { ADMIN_ORDER_REPOSITORY } from './domain/ports/admin-order.repository.port';
 import { ADMIN_PRODUCT_IMAGE_REPOSITORY } from './domain/ports/admin-product-image.repository.port';
+import { ADMIN_PRODUCT_REPOSITORY } from './domain/ports/admin-product.repository.port';
+import { ADMIN_USER_REPOSITORY } from './domain/ports/admin-user.repository.port';
+import { PrismaAdminAuditRepository } from './infrastructure/persistence/prisma-admin-audit.repository';
+import { PrismaAdminCategoryRepository } from './infrastructure/persistence/prisma-admin-category.repository';
+import { PrismaAdminCountryRepository } from './infrastructure/persistence/prisma-admin-country.repository';
+import { PrismaAdminMetricsRepository } from './infrastructure/persistence/prisma-admin-metrics.repository';
+import { PrismaAdminOrderRepository } from './infrastructure/persistence/prisma-admin-order.repository';
 import { PrismaAdminProductImageRepository } from './infrastructure/persistence/prisma-admin-product-image.repository';
+import { PrismaAdminProductRepository } from './infrastructure/persistence/prisma-admin-product.repository';
+import { PrismaAdminUserRepository } from './infrastructure/persistence/prisma-admin-user.repository';
 
 @Module({
   imports: [SharedModule],
@@ -80,6 +94,34 @@ import { PrismaAdminProductImageRepository } from './infrastructure/persistence/
     DeleteProductImageUseCase,
     ReorderProductImagesUseCase,
     SetPrimaryProductImageUseCase,
+    {
+      provide: ADMIN_METRICS_REPOSITORY,
+      useClass: PrismaAdminMetricsRepository,
+    },
+    {
+      provide: ADMIN_USER_REPOSITORY,
+      useClass: PrismaAdminUserRepository,
+    },
+    {
+      provide: ADMIN_ORDER_REPOSITORY,
+      useClass: PrismaAdminOrderRepository,
+    },
+    {
+      provide: ADMIN_PRODUCT_REPOSITORY,
+      useClass: PrismaAdminProductRepository,
+    },
+    {
+      provide: ADMIN_CATEGORY_REPOSITORY,
+      useClass: PrismaAdminCategoryRepository,
+    },
+    {
+      provide: ADMIN_COUNTRY_REPOSITORY,
+      useClass: PrismaAdminCountryRepository,
+    },
+    {
+      provide: ADMIN_AUDIT_REPOSITORY,
+      useClass: PrismaAdminAuditRepository,
+    },
     {
       provide: ADMIN_PRODUCT_IMAGE_REPOSITORY,
       useClass: PrismaAdminProductImageRepository,

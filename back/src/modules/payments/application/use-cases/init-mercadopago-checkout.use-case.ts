@@ -1,7 +1,13 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { MercadoPagoPaymentApiPort } from '../../domain/ports/mercadopago-payment-api.port';
 import { MERCADOPAGO_PAYMENT_API } from '../../domain/ports/mercadopago-payment-api.port';
 import { PAYMENT_ORDER_REPOSITORY, type PaymentOrderRepositoryPort } from '../../domain/ports/payment-order-repository.port';
+import {
+  BadRequestError,
+  ForbiddenError,
+  InternalError,
+  NotFoundError,
+} from '../../../../shared/domain/errors/domain-error';
 
 @Injectable()
 export class InitMercadoPagoCheckoutUseCase {
@@ -13,15 +19,15 @@ export class InitMercadoPagoCheckoutUseCase {
   async execute(orderId: string, userId: string | undefined, userEmail?: string, guestCheckoutToken?: string) {
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
-      throw new InternalServerErrorException('Missing MP_ACCESS_TOKEN');
+      throw new InternalError('Missing MP_ACCESS_TOKEN');
     }
 
     const order = await this.paymentOrders.findOrderById(orderId);
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) throw new NotFoundError('Order not found');
 
     const isAuthorized = order.userId ? order.userId === userId : order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken;
     if (!isAuthorized) {
-      throw new ForbiddenException('You cannot pay this order');
+      throw new ForbiddenError('You cannot pay this order');
     }
 
     if (order.isPaid) {
@@ -58,7 +64,7 @@ export class InitMercadoPagoCheckoutUseCase {
     );
 
     if (!checkout?.initPoint) {
-      throw new BadRequestException('Failed to initialize Mercado Pago checkout');
+      throw new BadRequestError('Failed to initialize Mercado Pago checkout');
     }
 
     return {

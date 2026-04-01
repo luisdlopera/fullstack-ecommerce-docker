@@ -13,4 +13,5 @@ export type TokenPayload = Omit<JwtPayload, 'type'>;
 export interface TokenServicePort {
   signTokens(payload: TokenPayload): Promise<SignedTokens>;
   verifyRefreshToken(token: string): Promise<JwtPayload & { jti?: string }>;
+  hashToken(token: string): string;
 }

@@ -9,6 +9,9 @@ import { RegisterDto } from '../infrastructure/http/dto/register.dto';
 import { AUTH_REPOSITORY, type AuthRepositoryPort } from '../domain/ports/auth-repository.port';
 import { EMAIL_SENDER, type EmailSenderPort } from '../domain/ports/email-sender.port';
 import { TOKEN_SERVICE, type TokenServicePort } from '../domain/ports/token-service.port';
+import { RegisterUseCase } from './use-cases/register.use-case';
+import { LoginUseCase } from './use-cases/login.use-case';
+import { RefreshTokenUseCase } from './use-cases/refresh-token.use-case';
 
 type AuthTokens = {
   accessToken: string;
@@ -35,6 +38,9 @@ export class AuthService {
     @Inject(AUTH_REPOSITORY) private readonly authRepository: AuthRepositoryPort,
     @Inject(TOKEN_SERVICE) private readonly tokenService: TokenServicePort,
     @Inject(EMAIL_SENDER) private readonly emailSender: EmailSenderPort,
+    private readonly registerUseCase: RegisterUseCase,
+    private readonly loginUseCase: LoginUseCase,
+    private readonly refreshTokenUseCase: RefreshTokenUseCase,
   ) {}
 
   private getPasswordResetTtlMs(): number {
@@ -124,160 +130,15 @@ export class AuthService {
   }
 
   async register(input: RegisterDto) {
-    const normalizedEmail = this.normalizeEmail(input.email);
-    await this.assertTrustedEmailAddress(normalizedEmail);
-
-    const existingUser = await this.authRepository.findUserByEmail(normalizedEmail);
-
-    if (existingUser) {
-      throw new ConflictException('Email is already in use');
-    }
-
-    const user = await this.authRepository.createUser({
-      name: input.name,
-      email: normalizedEmail,
-      password: bcryptjs.hashSync(input.password, 10),
-      role: Role.CUSTOMER,
-    });
-
-    await this.issueEmailVerification(user.id, user.email);
-
-    return {
-      ok: true,
-      message: 'We sent a verification email. Please verify your email before signing in.',
-    };
+    return this.registerUseCase.execute(input);
   }
 
   async login(input: LoginDto, clientMeta: ClientMeta = {}) {
-    const normalizedEmail = this.normalizeEmail(input.email);
-    const user = await this.authRepository.findUserByEmail(normalizedEmail);
-
-    if (!user || !bcryptjs.compareSync(input.password, user.password)) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
-    }
-
-    if (!user.emailVerified) {
-      throw new UnauthorizedException('Email address is not verified');
-    }
-
-    if (user.mfaEnabled && this.isPrivilegedRole(user.role)) {
-      if (!input.mfaCode) {
-        throw new UnauthorizedException('MFA code is required');
-      }
-      const validMfaCode =
-        !!user.mfaSecret &&
-        speakeasy.totp.verify({
-          secret: user.mfaSecret,
-          encoding: 'base32',
-          token: input.mfaCode,
-          window: 1,
-        });
-      if (!validMfaCode) {
-        throw new UnauthorizedException('Invalid MFA code');
-      }
-    }
-
-    await this.authRepository.updateUserLastLogin(user.id, new Date());
-
-    const tokens = await this.tokenService.signTokens({
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    await this.storeRefreshToken({
-      userId: user.id,
-      refreshToken: tokens.refreshToken,
-      refreshJti: tokens.refreshJti,
-      familyId: randomUUID(),
-      meta: clientMeta,
-    });
-
-    return {
-      user: await this.buildAuthUser(user.id),
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
+    return this.loginUseCase.execute(input, clientMeta);
   }
 
   async refresh(refreshToken: string, clientMeta: ClientMeta = {}): Promise<AuthTokens & { user: AuthUserPayload }> {
-    try {
-      const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-      if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Invalid token type');
-      }
-
-      if (!payload.jti) {
-        throw new UnauthorizedException('Missing refresh token identifier');
-      }
-
-      const tokenHash = this.hashValue(refreshToken);
-
-      let stored = await this.authRepository.findRefreshTokenByHash(tokenHash);
-
-      if (!stored) {
-        stored = await this.authRepository.findRefreshTokenByToken(refreshToken);
-      }
-
-      if (!stored) {
-        throw new UnauthorizedException('Refresh token expired or revoked');
-      }
-
-      if (stored.revokedAt) {
-        if (stored.familyId) {
-          await this.authRepository.revokeRefreshTokensByFamily(stored.familyId);
-        }
-        throw new UnauthorizedException('Refresh token reuse detected. Please sign in again.');
-      }
-
-      if (stored.expiresAt < new Date()) {
-        await this.authRepository.updateRefreshToken(stored.id, { revokedAt: new Date() });
-        throw new UnauthorizedException('Refresh token expired or revoked');
-      }
-
-      const user = await this.authRepository.findUserById(payload.sub);
-
-      if (!user) throw new UnauthorizedException('User not found');
-      if (!user.isActive || !user.emailVerified) {
-        throw new UnauthorizedException('User is not allowed to refresh session');
-      }
-
-      const tokens = await this.tokenService.signTokens({
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-      });
-
-      const familyId = stored.familyId ?? randomUUID();
-
-      await this.authRepository.rotateRefreshToken({
-        currentTokenId: stored.id,
-        update: { revokedAt: new Date(), replacedByJti: tokens.refreshJti, lastUsedAt: new Date(), familyId },
-        next: {
-          tokenHash: this.hashValue(tokens.refreshToken),
-          jti: tokens.refreshJti,
-          token: tokens.refreshToken,
-          familyId,
-          userId: user.id,
-          expiresAt: new Date(Date.now() + this.parseTtlToMs(process.env.JWT_REFRESH_TTL ?? '7d')),
-          userAgentHash: clientMeta.userAgent ? this.hashValue(clientMeta.userAgent) : null,
-          ipHash: clientMeta.ip ? this.hashValue(clientMeta.ip) : null,
-        },
-      });
-
-      return {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        user: await this.buildAuthUser(user.id),
-      };
-    } catch (err) {
-      if (err instanceof UnauthorizedException) throw err;
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
+    return this.refreshTokenUseCase.execute(refreshToken, clientMeta);
   }
 
   async me(userId: string) {
@@ -299,7 +160,7 @@ export class AuthService {
     const tokenHash = this.hashValue(token);
     const verification = await this.authRepository.findEmailVerificationToken(tokenHash);
 
-    if (!verification || verification.usedAt || verification.expiresAt <= new Date() || !verification.user.isActive) {
+    if (!verification || verification.usedAt || (verification.expiresAt && verification.expiresAt <= new Date()) || !verification.user?.isActive) {
       throw new UnauthorizedException('Verification token is invalid or expired');
     }
 
@@ -358,7 +219,7 @@ export class AuthService {
     const tokenHash = this.hashResetToken(token);
     const resetToken = await this.authRepository.findPasswordResetToken(tokenHash);
 
-    if (!resetToken || resetToken.usedAt || resetToken.expiresAt <= new Date() || !resetToken.user.isActive) {
+    if (!resetToken || resetToken.usedAt || (resetToken.expiresAt && resetToken.expiresAt <= new Date()) || !resetToken.user?.isActive) {
       throw new UnauthorizedException('El token es invalido o ha expirado');
     }
 

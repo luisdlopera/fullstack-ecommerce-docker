@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { config as loadEnv } from 'dotenv';
 import { resolve } from 'node:path';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/infrastructure/filters/http-exception.filter';
 import { buildCorsOptions } from './shared/infrastructure/http/cors';
@@ -29,6 +30,7 @@ async function bootstrap() {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
+  app.use(cookieParser());
 
   const corsOptions = buildCorsOptions({
     allowedOrigins: process.env.CORS_ALLOWED_ORIGINS,

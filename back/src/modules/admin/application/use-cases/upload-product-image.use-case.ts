@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { STORAGE_PORT, type StoragePort } from '../../../../shared/domain/ports/storage.port';
 import { StorageConfig } from '../../../../shared/infrastructure/storage/storage.config';
 import {
@@ -12,6 +12,7 @@ import {
 } from './product-image-file-validation.util';
 import { buildProductImageKey } from './build-product-image-key.util';
 import type { UploadFile } from './upload-file.type';
+import { InternalError, NotFoundError } from '../../../../shared/domain/errors/domain-error';
 
 export type UploadProductImageInput = {
   productId: string;
@@ -42,7 +43,7 @@ export class UploadProductImageUseCase {
 
     const productExists = await this.repository.existsProductById(input.productId);
     if (!productExists) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundError('Product not found');
     }
 
     const mimeType = normalizeMimeType(input.file.mimetype);
@@ -63,7 +64,7 @@ export class UploadProductImageUseCase {
         `Failed to upload product image to MinIO: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error.stack : undefined,
       );
-      throw new InternalServerErrorException('Error al subir la imagen al servidor de almacenamiento');
+      throw new InternalError('Error al subir la imagen al servidor de almacenamiento');
     }
 
     const url = this.storage.getPublicUrl(key);

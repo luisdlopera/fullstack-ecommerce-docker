@@ -1,8 +1,9 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { OrderStatus, type Role } from '@prisma/client';
 import { isAdminRole } from '../../../../shared/infrastructure/auth/permissions';
 import { InventoryService } from '../../../inventory/application/inventory.service';
 import { ORDERS_REPOSITORY, type OrdersRepositoryPort } from '../../domain/ports/orders-repository.port';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../../../../shared/domain/errors/domain-error';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
@@ -23,19 +24,19 @@ export class UpdateOrderStatusUseCase {
 
   async execute(orderId: string, newStatus: OrderStatus, userId: string, role: Role) {
     const order = await this.ordersRepository.findOrderBasic(orderId);
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) throw new NotFoundError('Order not found');
 
     if (newStatus === OrderStatus.CANCELLED) {
       if (!isAdminRole(role) && order.userId !== userId) {
-        throw new ForbiddenException('You cannot cancel this order');
+        throw new ForbiddenError('You cannot cancel this order');
       }
     } else if (!isAdminRole(role)) {
-      throw new ForbiddenException('Only admins can update order status');
+      throw new ForbiddenError('Only admins can update order status');
     }
 
     const allowed = ALLOWED_TRANSITIONS[order.status];
     if (!allowed.includes(newStatus)) {
-      throw new BadRequestException(`Cannot transition from "${order.status}" to "${newStatus}"`);
+      throw new BadRequestError(`Cannot transition from "${order.status}" to "${newStatus}"`);
     }
 
     if (newStatus === OrderStatus.CANCELLED && !order.isPaid) {

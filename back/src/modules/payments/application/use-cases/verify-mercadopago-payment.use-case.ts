@@ -1,7 +1,8 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { MercadoPagoPaymentApiPort } from '../../domain/ports/mercadopago-payment-api.port';
 import { MERCADOPAGO_PAYMENT_API } from '../../domain/ports/mercadopago-payment-api.port';
 import { ProcessMercadoPagoPaymentUseCase } from './process-mercadopago-payment.use-case';
+import { BadRequestError, InternalError } from '../../../../shared/domain/errors/domain-error';
 
 @Injectable()
 export class VerifyMercadoPagoPaymentUseCase {
@@ -14,12 +15,12 @@ export class VerifyMercadoPagoPaymentUseCase {
   async execute(paymentId: string) {
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
-      throw new InternalServerErrorException('Missing MP_ACCESS_TOKEN');
+      throw new InternalError('Missing MP_ACCESS_TOKEN');
     }
 
     const payment = await this.mpApi.fetchPaymentById(paymentId, accessToken);
     if (!payment) {
-      throw new BadRequestException('Mercado Pago verification failed');
+      throw new BadRequestError('Mercado Pago verification failed');
     }
 
     return this.processPayment.execute(payment);

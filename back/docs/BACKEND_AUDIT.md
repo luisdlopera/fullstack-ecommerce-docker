@@ -25,7 +25,7 @@ Cada feature bajo `src/modules/{feature}/` incluye:
 
 ### 1.3 Deuda técnica explícita (aceptada)
 
-- **Use cases vs services**: `AdminService` sigue siendo clase `@Injectable()` con acceso directo a `PrismaService`. Es **fachada de aplicación** válida como paso intermedio; la evolución es extraer casos de uso y puertos por agregado (ver §3).
+- **Use cases vs services**: `AdminService` sigue siendo clase `@Injectable()` con acceso directo a `PrismaService`; los endpoints admin ahora pasan por **use cases** que delegan en esa fachada. La evolución es extraer puertos y separar acceso a datos por agregado (ver §3).
 - **Excepciones HTTP en use cases**: `GetProductBySlugUseCase` y `GetProductStockBySlugUseCase` lanzan `NotFoundException` de Nest. Mejor: errores de dominio + filtro/mapper en HTTP (documentado en `ARCHITECTURE.md`).
 
 ---
@@ -46,7 +46,7 @@ Prefijo global: `/api` (`main.ts`). El frontend usa `NEXT_PUBLIC_API_URL` / `INT
 | `GET/PUT/DELETE /users/me/address` | `UsersController` + use cases | `account/page.tsx` |
 | `POST /orders`, `GET /orders`, … | `OrdersController` + use cases | checkout, `orders/*` |
 | `POST /payments/mercadopago/*` | `PaymentsController` + use cases | flujo pago |
-| `GET/PATCH/POST /admin/*` | `AdminController` + `AdminService` | `features/admin/services/admin-api.ts` |
+| `GET/PATCH/POST /admin/*` | `AdminController` + use cases (delegan en `AdminService`) | `features/admin/services/admin-api.ts` |
 
 **Contrato JSON**: el listado y el detalle de producto devuelven la misma forma que antes (`ProductImage`, `category`, `meta` en listados). Los tipos en `front/src/lib/api.ts` (`Product`, `ProductListResponse`, `Country`, etc.) siguen siendo la referencia de compatibilidad.
 
@@ -54,7 +54,7 @@ Prefijo global: `/api` (`main.ts`). El frontend usa `NEXT_PUBLIC_API_URL` / `INT
 
 ## 3. Services candidatos a reemplazar por use-cases (prioridad)
 
-1. **AdminService** — mayor superficie; dividir por subdominio: usuarios, catálogo admin, pedidos admin, países/categorías.
+1. **AdminService** — mayor superficie; dividir por subdominio y extraer repositorios/puertos.
 
 **Products**: el antiguo `ProductsService` fue eliminado; el catálogo público pasa por use cases + repositorio.
 
@@ -106,6 +106,7 @@ src/
     admin/
       domain/
       application/admin.service.ts
+      application/use-cases/*.use-case.ts
       infrastructure/http/admin.controller.ts, dto/*.ts
       admin.module.ts
     health/

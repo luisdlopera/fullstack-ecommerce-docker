@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/infrastructure/filters/http-exception.filter';
+import { buildCorsOptions } from './shared/infrastructure/http/cors';
 
 async function bootstrap() {
   loadEnv({ path: resolve(process.cwd(), '.env') });
@@ -25,15 +26,13 @@ async function bootstrap() {
     }),
   );
 
-  const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-
-  app.enableCors({
-    origin: allowedOrigins,
-    credentials: true,
+  const corsOptions = buildCorsOptions({
+    allowedOrigins: process.env.CORS_ALLOWED_ORIGINS,
+    legacyOrigin: process.env.CORS_ORIGIN ?? process.env.FRONTEND_ORIGIN,
+    allowLocalhost: process.env.APP_ENV !== 'production',
   });
+
+  app.enableCors(corsOptions);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

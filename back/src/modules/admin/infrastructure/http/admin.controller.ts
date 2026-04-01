@@ -20,11 +20,41 @@ import { Auth } from '../../../../shared/infrastructure/auth/auth.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import { PERMISSIONS } from '../../../../shared/infrastructure/auth/permissions';
-import { AdminService } from '../../application/admin.service';
 import { DeleteProductImageUseCase } from '../../application/use-cases/delete-product-image.use-case';
 import { ReorderProductImagesUseCase } from '../../application/use-cases/reorder-product-images.use-case';
 import { SetPrimaryProductImageUseCase } from '../../application/use-cases/set-primary-product-image.use-case';
 import { UploadProductImageUseCase } from '../../application/use-cases/upload-product-image.use-case';
+import { GetDashboardSummaryUseCase } from '../../application/use-cases/get-dashboard-summary.use-case';
+import { GetSalesChartUseCase } from '../../application/use-cases/get-sales-chart.use-case';
+import { GetRecentOrdersUseCase } from '../../application/use-cases/get-recent-orders.use-case';
+import { GetTopProductsUseCase } from '../../application/use-cases/get-top-products.use-case';
+import { GetUsersUseCase } from '../../application/use-cases/get-users.use-case';
+import { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
+import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
+import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
+import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
+import { UpdateUserStatusUseCase } from '../../application/use-cases/update-user-status.use-case';
+import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
+import { GetOrdersUseCase } from '../../application/use-cases/get-orders.use-case';
+import { GetOrderByIdUseCase } from '../../application/use-cases/get-order-by-id.use-case';
+import { UpdateOrderStatusUseCase } from '../../application/use-cases/update-order-status.use-case';
+import { UpdatePaymentStatusUseCase } from '../../application/use-cases/update-payment-status.use-case';
+import { UpdateOrderNotesUseCase } from '../../application/use-cases/update-order-notes.use-case';
+import { GetProductsUseCase } from '../../application/use-cases/get-products.use-case';
+import { GetProductByIdUseCase } from '../../application/use-cases/get-product-by-id.use-case';
+import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
+import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
+import { DeleteProductUseCase } from '../../application/use-cases/delete-product.use-case';
+import { UpdateProductStatusUseCase } from '../../application/use-cases/update-product-status.use-case';
+import { GetCategoriesUseCase } from '../../application/use-cases/get-categories.use-case';
+import { GetCategoryByIdUseCase } from '../../application/use-cases/get-category-by-id.use-case';
+import { CreateCategoryUseCase } from '../../application/use-cases/create-category.use-case';
+import { UpdateCategoryUseCase } from '../../application/use-cases/update-category.use-case';
+import { DeleteCategoryUseCase } from '../../application/use-cases/delete-category.use-case';
+import { GetCountriesUseCase } from '../../application/use-cases/get-countries.use-case';
+import { CreateCountryUseCase } from '../../application/use-cases/create-country.use-case';
+import { UpdateCountryUseCase } from '../../application/use-cases/update-country.use-case';
+import { DeleteCountryUseCase } from '../../application/use-cases/delete-country.use-case';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
@@ -44,7 +74,37 @@ export class AdminController {
   private readonly logger = new Logger(AdminController.name);
 
   constructor(
-    @Inject(AdminService) private readonly adminService: AdminService,
+    @Inject(GetDashboardSummaryUseCase) private readonly getDashboardSummaryUseCase: GetDashboardSummaryUseCase,
+    @Inject(GetSalesChartUseCase) private readonly getSalesChartUseCase: GetSalesChartUseCase,
+    @Inject(GetRecentOrdersUseCase) private readonly getRecentOrdersUseCase: GetRecentOrdersUseCase,
+    @Inject(GetTopProductsUseCase) private readonly getTopProductsUseCase: GetTopProductsUseCase,
+    @Inject(GetUsersUseCase) private readonly getUsersUseCase: GetUsersUseCase,
+    @Inject(GetUserByIdUseCase) private readonly getUserByIdUseCase: GetUserByIdUseCase,
+    @Inject(CreateUserUseCase) private readonly createUserUseCase: CreateUserUseCase,
+    @Inject(UpdateUserUseCase) private readonly updateUserUseCase: UpdateUserUseCase,
+    @Inject(UpdateUserRoleUseCase) private readonly updateUserRoleUseCase: UpdateUserRoleUseCase,
+    @Inject(UpdateUserStatusUseCase) private readonly updateUserStatusUseCase: UpdateUserStatusUseCase,
+    @Inject(DeleteUserUseCase) private readonly deleteUserUseCase: DeleteUserUseCase,
+    @Inject(GetOrdersUseCase) private readonly getOrdersUseCase: GetOrdersUseCase,
+    @Inject(GetOrderByIdUseCase) private readonly getOrderByIdUseCase: GetOrderByIdUseCase,
+    @Inject(UpdateOrderStatusUseCase) private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    @Inject(UpdatePaymentStatusUseCase) private readonly updatePaymentStatusUseCase: UpdatePaymentStatusUseCase,
+    @Inject(UpdateOrderNotesUseCase) private readonly updateOrderNotesUseCase: UpdateOrderNotesUseCase,
+    @Inject(GetProductsUseCase) private readonly getProductsUseCase: GetProductsUseCase,
+    @Inject(GetProductByIdUseCase) private readonly getProductByIdUseCase: GetProductByIdUseCase,
+    @Inject(CreateProductUseCase) private readonly createProductUseCase: CreateProductUseCase,
+    @Inject(UpdateProductUseCase) private readonly updateProductUseCase: UpdateProductUseCase,
+    @Inject(DeleteProductUseCase) private readonly deleteProductUseCase: DeleteProductUseCase,
+    @Inject(UpdateProductStatusUseCase) private readonly updateProductStatusUseCase: UpdateProductStatusUseCase,
+    @Inject(GetCategoriesUseCase) private readonly getCategoriesUseCase: GetCategoriesUseCase,
+    @Inject(GetCategoryByIdUseCase) private readonly getCategoryByIdUseCase: GetCategoryByIdUseCase,
+    @Inject(CreateCategoryUseCase) private readonly createCategoryUseCase: CreateCategoryUseCase,
+    @Inject(UpdateCategoryUseCase) private readonly updateCategoryUseCase: UpdateCategoryUseCase,
+    @Inject(DeleteCategoryUseCase) private readonly deleteCategoryUseCase: DeleteCategoryUseCase,
+    @Inject(GetCountriesUseCase) private readonly getCountriesUseCase: GetCountriesUseCase,
+    @Inject(CreateCountryUseCase) private readonly createCountryUseCase: CreateCountryUseCase,
+    @Inject(UpdateCountryUseCase) private readonly updateCountryUseCase: UpdateCountryUseCase,
+    @Inject(DeleteCountryUseCase) private readonly deleteCountryUseCase: DeleteCountryUseCase,
     @Inject(UploadProductImageUseCase)
     private readonly uploadProductImageUseCase: UploadProductImageUseCase,
     @Inject(DeleteProductImageUseCase)
@@ -60,25 +120,25 @@ export class AdminController {
   @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/summary')
   getDashboardSummary(@Query('period') period?: string) {
-    return this.adminService.getDashboardSummary(period);
+    return this.getDashboardSummaryUseCase.execute(period);
   }
 
   @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/sales-chart')
   getSalesChart(@Query('period') period?: string) {
-    return this.adminService.getSalesChart(period);
+    return this.getSalesChartUseCase.execute(period);
   }
 
   @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/recent-orders')
   getRecentOrders(@Query('limit', new ParseIntPipe({ optional: true })) limit?: number) {
-    return this.adminService.getRecentOrders(limit);
+    return this.getRecentOrdersUseCase.execute(limit);
   }
 
   @Auth(PERMISSIONS.DASHBOARD_READ)
   @Get('dashboard/top-products')
   getTopProducts(@Query('limit', new ParseIntPipe({ optional: true })) limit?: number) {
-    return this.adminService.getTopProducts(limit);
+    return this.getTopProductsUseCase.execute(limit);
   }
 
   // ─── Users ──────────────────────────────────────────────────────────
@@ -93,43 +153,43 @@ export class AdminController {
     @Query('role') role?: Role,
     @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
   ) {
-    return this.adminService.getUsers(page, limit, search, role, isActive, user.role);
+    return this.getUsersUseCase.execute(page, limit, search, role, isActive, user.role);
   }
 
   @Auth(PERMISSIONS.USERS_READ)
   @Get('users/:id')
   getUserById(@Param('id') userId: string, @CurrentUser() user: JwtPayload) {
-    return this.adminService.getUserById(userId, user.role);
+    return this.getUserByIdUseCase.execute(userId, user.role);
   }
 
   @Auth(PERMISSIONS.USERS_MANAGE)
   @Post('users')
   createUser(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
-    return this.adminService.createUser(dto, user.role);
+    return this.createUserUseCase.execute(dto, user.role);
   }
 
   @Auth(PERMISSIONS.USERS_MANAGE)
   @Patch('users/:id')
   updateUser(@Param('id') userId: string, @Body() dto: UpdateUserDto, @CurrentUser() user: JwtPayload) {
-    return this.adminService.updateUser(userId, dto, user.role);
+    return this.updateUserUseCase.execute(userId, dto, user.role);
   }
 
   @Auth(PERMISSIONS.USERS_MANAGE)
   @Patch('users/:id/role')
   updateUserRole(@Param('id') userId: string, @Body() dto: UpdateUserRoleDto, @CurrentUser() user: JwtPayload) {
-    return this.adminService.updateUserRole(userId, dto, user.sub, user.role);
+    return this.updateUserRoleUseCase.execute(userId, dto, user.sub, user.role);
   }
 
   @Auth(PERMISSIONS.USERS_MANAGE)
   @Patch('users/:id/status')
   updateUserStatus(@Param('id') userId: string, @Body() dto: UpdateUserStatusDto, @CurrentUser() user: JwtPayload) {
-    return this.adminService.updateUserStatus(userId, dto.isActive, user.sub, user.role);
+    return this.updateUserStatusUseCase.execute(userId, dto.isActive, user.sub, user.role);
   }
 
   @Auth(PERMISSIONS.USERS_MANAGE)
   @Delete('users/:id')
   deleteUser(@Param('id') userId: string, @CurrentUser() user: JwtPayload) {
-    return this.adminService.deleteUser(userId, user.sub, user.role);
+    return this.deleteUserUseCase.execute(userId, user.sub, user.role);
   }
 
   // ─── Orders ─────────────────────────────────────────────────────────
@@ -144,31 +204,31 @@ export class AdminController {
     @Query('paymentStatus') paymentStatus?: PaymentStatus,
     @Query('paid', new ParseBoolPipe({ optional: true })) paid?: boolean,
   ) {
-    return this.adminService.getOrders(page, limit, search, status, paymentStatus, paid);
+    return this.getOrdersUseCase.execute(page, limit, search, status, paymentStatus, paid);
   }
 
   @Auth(PERMISSIONS.ORDERS_READ)
   @Get('orders/:id')
   getOrderById(@Param('id') orderId: string) {
-    return this.adminService.getOrderById(orderId);
+    return this.getOrderByIdUseCase.execute(orderId);
   }
 
   @Auth(PERMISSIONS.ORDERS_UPDATE)
   @Patch('orders/:id/status')
   updateOrderStatus(@Param('id') orderId: string, @Body() dto: UpdateOrderStatusDto, @CurrentUser() user: JwtPayload) {
-    return this.adminService.updateOrderStatus(orderId, dto.status, user.sub);
+    return this.updateOrderStatusUseCase.execute(orderId, dto.status, user.sub);
   }
 
   @Auth(PERMISSIONS.PAYMENTS_READ)
   @Patch('orders/:id/payment-status')
   updatePaymentStatus(@Param('id') orderId: string, @Body() dto: UpdatePaymentStatusDto) {
-    return this.adminService.updatePaymentStatus(orderId, dto.paymentStatus);
+    return this.updatePaymentStatusUseCase.execute(orderId, dto.paymentStatus);
   }
 
   @Auth(PERMISSIONS.ORDERS_UPDATE)
   @Patch('orders/:id/notes')
   updateOrderNotes(@Param('id') orderId: string, @Body() dto: UpdateOrderNotesDto) {
-    return this.adminService.updateOrderNotes(orderId, dto.internalNotes);
+    return this.updateOrderNotesUseCase.execute(orderId, dto.internalNotes);
   }
 
   // ─── Products ───────────────────────────────────────────────────────
@@ -183,37 +243,37 @@ export class AdminController {
     @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
     @Query('inStock', new ParseBoolPipe({ optional: true })) inStock?: boolean,
   ) {
-    return this.adminService.getProducts(page, limit, search, categoryId, isActive, inStock);
+    return this.getProductsUseCase.execute(page, limit, search, categoryId, isActive, inStock);
   }
 
   @Auth(PERMISSIONS.PRODUCTS_READ)
   @Get('products/:id')
   getProductById(@Param('id') productId: string) {
-    return this.adminService.getProductById(productId);
+    return this.getProductByIdUseCase.execute(productId);
   }
 
   @Auth(PERMISSIONS.PRODUCTS_CREATE)
   @Post('products')
   createProduct(@Body() dto: UpsertProductDto) {
-    return this.adminService.createProduct(dto);
+    return this.createProductUseCase.execute(dto);
   }
 
   @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Patch('products/:id')
   updateProduct(@Param('id') productId: string, @Body() dto: UpsertProductDto) {
-    return this.adminService.updateProduct(productId, dto);
+    return this.updateProductUseCase.execute(productId, dto);
   }
 
   @Auth(PERMISSIONS.PRODUCTS_DELETE)
   @Delete('products/:id')
   deleteProduct(@Param('id') productId: string, @CurrentUser() user: JwtPayload) {
-    return this.adminService.deleteProduct(productId, user.sub);
+    return this.deleteProductUseCase.execute(productId, user.sub);
   }
 
   @Auth(PERMISSIONS.PRODUCTS_UPDATE)
   @Patch('products/:id/status')
   updateProductStatus(@Param('id') productId: string, @Body('isActive', ParseBoolPipe) isActive: boolean) {
-    return this.adminService.updateProductStatus(productId, isActive);
+    return this.updateProductStatusUseCase.execute(productId, isActive);
   }
 
   @Auth(PERMISSIONS.PRODUCTS_UPDATE)
@@ -259,31 +319,31 @@ export class AdminController {
   @Auth(PERMISSIONS.CATEGORIES_READ)
   @Get('categories')
   getCategories() {
-    return this.adminService.getCategories();
+    return this.getCategoriesUseCase.execute();
   }
 
   @Auth(PERMISSIONS.CATEGORIES_READ)
   @Get('categories/:id')
   getCategoryById(@Param('id') id: string) {
-    return this.adminService.getCategoryById(id);
+    return this.getCategoryByIdUseCase.execute(id);
   }
 
   @Auth(PERMISSIONS.CATEGORIES_CREATE)
   @Post('categories')
   createCategory(@Body() dto: UpsertCategoryDto) {
-    return this.adminService.createCategory(dto);
+    return this.createCategoryUseCase.execute(dto);
   }
 
   @Auth(PERMISSIONS.CATEGORIES_UPDATE)
   @Patch('categories/:id')
   updateCategory(@Param('id') id: string, @Body() dto: UpsertCategoryDto) {
-    return this.adminService.updateCategory(id, dto);
+    return this.updateCategoryUseCase.execute(id, dto);
   }
 
   @Auth(PERMISSIONS.CATEGORIES_DELETE)
   @Delete('categories/:id')
   deleteCategory(@Param('id') id: string) {
-    return this.adminService.deleteCategory(id);
+    return this.deleteCategoryUseCase.execute(id);
   }
 
   // ─── Countries ──────────────────────────────────────────────────────
@@ -291,24 +351,24 @@ export class AdminController {
   @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Get('countries')
   getCountries() {
-    return this.adminService.getCountries();
+    return this.getCountriesUseCase.execute();
   }
 
   @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Post('countries')
   createCountry(@Body() dto: UpsertCountryDto) {
-    return this.adminService.createCountry(dto);
+    return this.createCountryUseCase.execute(dto);
   }
 
   @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Patch('countries/:id')
   updateCountry(@Param('id') id: string, @Body() dto: UpsertCountryDto) {
-    return this.adminService.updateCountry(id, dto);
+    return this.updateCountryUseCase.execute(id, dto);
   }
 
   @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Delete('countries/:id')
   deleteCountry(@Param('id') id: string) {
-    return this.adminService.deleteCountry(id);
+    return this.deleteCountryUseCase.execute(id);
   }
 }

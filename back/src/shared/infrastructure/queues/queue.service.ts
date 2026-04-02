@@ -16,7 +16,7 @@ function getRedisConnectionConfig() {
   const url = new URL(redisUrl);
   return {
     host: url.hostname || 'localhost',
-    port: parseInt(url.port, 10) || 6379,
+    port: parseInt(url.port, 10) || 5003,
     password: url.password || undefined,
     username: url.username || undefined,
     db: url.pathname ? parseInt(url.pathname.slice(1), 10) || 0 : 0,

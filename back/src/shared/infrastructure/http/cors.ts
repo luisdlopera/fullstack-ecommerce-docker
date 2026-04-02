@@ -21,13 +21,12 @@ export function buildCorsOptions(config: CorsEnvConfig): CorsOptions {
   parseOrigins(config.legacyOrigin).forEach((origin) => origins.add(origin));
 
   if (origins.size === 0) {
-    origins.add('http://localhost:3000');
+    origins.add('http://localhost:5000');
   }
 
-  if (config.allowLocalhost) {
-    origins.add('http://localhost:3000');
-    origins.add('http://localhost:3001');
-    origins.add('http://localhost:4000');
+  if (origins.size === 0) {
+    origins.add('http://localhost:5000');
+    origins.add('http://localhost:5001');
   }
 
   return {

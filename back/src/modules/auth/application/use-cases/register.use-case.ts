@@ -51,7 +51,7 @@ export class RegisterUseCase {
   }
 
   private getFrontendBaseUrl(): string {
-    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:5000').replace(/\/$/, '');
   }
 
   private hashValue(value: string): string {

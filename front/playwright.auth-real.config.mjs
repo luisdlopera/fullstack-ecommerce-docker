@@ -4,8 +4,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const frontRoot = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(frontRoot, '..');
-const frontPort = Number(process.env.E2E_FRONT_PORT ?? 3100);
-const backPort = Number(process.env.E2E_BACK_PORT ?? 4100);
+const frontPort = Number(process.env.E2E_FRONT_PORT ?? 5100);
+const backPort = Number(process.env.E2E_BACK_PORT ?? 5101);
 const frontBaseUrl = `http://localhost:${frontPort}`;
 const backBaseUrl = `http://localhost:${backPort}/api`;
 
@@ -28,15 +28,15 @@ export default defineConfig({
 				...process.env,
 				DATABASE_URL:
 					process.env.DATABASE_URL ??
-					'postgresql://nexstore:nexstore@127.0.0.1:5432/nexstore?schema=public',
+					'postgresql://nexstore:nexstore@127.0.0.1:5002/nexstore?schema=public',
 				STORAGE_PROVIDER: process.env.STORAGE_PROVIDER ?? 'minio',
 				STORAGE_BUCKET: process.env.STORAGE_BUCKET ?? 'nexstore-products',
 				STORAGE_REGION: process.env.STORAGE_REGION ?? 'us-east-1',
-				STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT ?? 'http://localhost:9000',
+				STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT ?? 'http://localhost:5004',
 				STORAGE_ACCESS_KEY: process.env.STORAGE_ACCESS_KEY ?? 'minioadmin',
 				STORAGE_SECRET_KEY: process.env.STORAGE_SECRET_KEY ?? 'minioadmin',
 				STORAGE_PUBLIC_URL:
-					process.env.STORAGE_PUBLIC_URL ?? 'http://localhost:9000/nexstore-products',
+					process.env.STORAGE_PUBLIC_URL ?? 'http://localhost:5004/nexstore-products',
 				STORAGE_FORCE_PATH_STYLE: process.env.STORAGE_FORCE_PATH_STYLE ?? 'true',
 			},
 			url: `${backBaseUrl}/health`,

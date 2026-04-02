@@ -56,7 +56,7 @@ export class AuthService {
   }
 
   private getFrontendBaseUrl(): string {
-    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:5000').replace(/\/$/, '');
   }
 
   private hashResetToken(rawToken: string): string {

@@ -35,14 +35,14 @@ import type {
 
 const getBaseApiUrl = () => {
 	if (typeof window === 'undefined') {
-		return process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+		return process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
 	}
 
-	return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+	return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
 };
 
 export function getClientApiUrl() {
-	return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+	return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
 }
 
 type FeaturedApiRow = {

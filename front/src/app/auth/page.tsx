@@ -3,13 +3,19 @@
 import { Button, Form, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { getRoleBadgeClass } from '@/lib/format-role-label';
 
 const showAuthDemoHints = process.env.NODE_ENV === 'development';
+const AUTH_DEBUG = process.env.NEXT_PUBLIC_AUTH_DEBUG_LOGS === 'true';
+
+function authPageLog(event: string, payload: Record<string, unknown> = {}) {
+	if (!AUTH_DEBUG) return;
+	console.log(`[AUTH-FRONT] ${event}`, payload);
+}
 
 const DEMO_PASSWORD = 'Qwert.12345';
 
@@ -26,6 +32,7 @@ const SEED_TEST_USERS: { label: string; email: string; role: string }[] = [
 export default function AuthPage() {
 	const { login, register, resendVerification, user } = useAuth();
 	const router = useRouter();
+	const searchParams = useSearchParams();
 
 	const [loginError, setLoginError] = useState('');
 	const [loginLoading, setLoginLoading] = useState(false);
@@ -58,6 +65,7 @@ export default function AuthPage() {
 
 	useEffect(() => {
 		if (user) {
+			authPageLog('user already logged in', { redirect: '/account' });
 			router.replace('/account');
 		}
 	}, [user, router]);
@@ -73,12 +81,30 @@ export default function AuthPage() {
 		const fd = new FormData(e.currentTarget);
 		const email = fd.get('email') as string;
 		const password = fd.get('password') as string;
+		const redirectParam = searchParams.get('redirect') ?? searchParams.get('next');
+		authPageLog('login submit', {
+			email: email?.trim(),
+			passwordLength: password?.length ?? 0,
+			redirectParam,
+			pathname: window.location.pathname,
+			hostname: window.location.hostname,
+		});
 
 		try {
 			await login(email, password);
-			router.push('/');
+			const redirectTo = redirectParam || '/';
+			console.log('[AUTH-REDIRECT] landing decision', {
+				redirectTo,
+				redirectParam,
+				hostname: window.location.hostname,
+				pathname: window.location.pathname,
+			});
+			router.push(redirectTo);
 		} catch (err) {
 			setLoginError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+			console.log('[AUTH-FRONT] login error', {
+				message: err instanceof Error ? err.message : String(err),
+			});
 		} finally {
 			setLoginLoading(false);
 		}

@@ -1,8 +1,8 @@
 import net from 'node:net';
 import { spawn } from 'node:child_process';
 
-const FRONT_DEFAULT_PORT = Number(process.env.FRONT_PORT ?? 3000);
-const BACK_DEFAULT_PORT = Number(process.env.BACK_PORT ?? 4000);
+const FRONT_DEFAULT_PORT = Number(process.env.FRONT_PORT ?? 5000);
+const BACK_DEFAULT_PORT = Number(process.env.BACK_PORT ?? 5001);
 const MAX_PORT_SCAN = 50;
 
 function isValidPort(port) {

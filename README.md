@@ -24,10 +24,12 @@ NexStore es un e-commerce organizado como monorepo con separación clara entre f
 nexstore/
   front/                  # Next.js app
   back/                   # NestJS API + Prisma
-  docker-compose.yml      # servicios Docker (en local: postgres)
-  docker-compose.dev.yml  # overrides legacy
-  .env.template
+  docker-compose.yml      # servicios Docker (en local: postgres, redis, minio)
+  docker-compose.dev.yml  # desarrollo con hot reload
+  .env.example            # plantilla de variables de entorno
 ```
+
+> **Seguridad**: El archivo `.env.example` contiene placeholders seguros. Nunca uses secretos reales en archivos versionables. Copia a `.env` y reemplaza los valores.
 
 ## Paso a paso en otro PC (o instalación desde cero)
 
@@ -41,8 +43,8 @@ cd nexstore
 2) Crea el archivo de entorno:
 
 ```bash
-copy .env.template .env       # Windows
-cp .env.template .env         # Linux/Mac
+copy .env.example .env       # Windows
+cp .env.example .env         # Linux/Mac
 ```
 
 3) Edita `.env` y cambia `JWT_SECRET` por un valor seguro:
@@ -72,9 +74,9 @@ npm run dev:apps
 
 7) Abre:
 
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:4000/api/health`
-- Swagger docs: `http://localhost:4000/api/docs`
+- Frontend: `http://localhost:5000`
+- Backend API: `http://localhost:5001/api/health`
+- Swagger docs: `http://localhost:5001/api/docs`
 
 8) Cargar datos de prueba (usuarios, productos, países, etc.) cuando lo necesites:
 
@@ -108,7 +110,7 @@ npm run dev:stack
 npm run dev:apps
 ```
 
-Si `3000` o `4000` están ocupados, `dev:apps` elige automáticamente el siguiente puerto libre.
+Si `5000` o `5001` están ocupados, `dev:apps` elige automáticamente el siguiente puerto libre.
 
 3) Si hubo cambios de schema ya migrados en git (pull/CI):
 
@@ -157,7 +159,7 @@ npm run dev:down
 
 ### Puertos en desarrollo
 
-- Puertos por defecto: `front=3000`, `back=4000`.
+- Puertos por defecto: `front=5000`, `back=5001`.
 - Si están ocupados, `npm run dev:apps` hace fallback automático al siguiente puerto libre.
 - Puedes forzar puertos base con variables de entorno:
 
@@ -172,13 +174,13 @@ npm run dev:apps
 
 | Servicio | URL |
 |---|---|
-| Frontend | `http://localhost:3000` |
-| Backend API | `http://localhost:4000/api` |
-| Swagger Docs | `http://localhost:4000/api/docs` |
-| Health check | `http://localhost:4000/api/health` |
-| PostgreSQL | `localhost:5432` |
-| MinIO API (S3) | `http://localhost:9000` |
-| MinIO Console | `http://localhost:9001` |
+| Frontend | `http://localhost:5000` |
+| Backend API | `http://localhost:5001/api` |
+| Swagger Docs | `http://localhost:5001/api/docs` |
+| Health check | `http://localhost:5001/api/health` |
+| PostgreSQL | `localhost:5002` |
+| MinIO API (S3) | `http://localhost:5004` |
+| MinIO Console | `http://localhost:5005` |
 
 ## Usuarios de prueba
 

@@ -4,7 +4,7 @@ services:
     container_name: nexstore_db
     restart: unless-stopped
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '${POSTGRES_PORT:-5002}:5432'
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-nexstore}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexstore}
@@ -22,7 +22,7 @@ services:
     container_name: nexstore_redis
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT:-5003}:6379'
     volumes:
       - redis_data:/var/lib/redis/data
 
@@ -35,8 +35,8 @@ services:
       MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin}
     command: server /data --console-address ':9001'
     ports:
-      - '${MINIO_PORT:-9000}:9000'
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+      - '${MINIO_PORT:-5004}:9000'
+      - '${MINIO_CONSOLE_PORT:-5005}:9001'
     volumes:
       - minio_data:/data
     healthcheck:
@@ -75,10 +75,9 @@ services:
     env_file:
       - .env
     environment:
-      PORT: 4000
+      PORT: 5001
       DATABASE_URL: postgresql://${POSTGRES_USER:-nexstore}:${POSTGRES_PASSWORD:-nexstore}@postgres:5432/${POSTGRES_DB:-nexstore}?schema=public
-      CORS_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
-      # Real secret fallback para validación local rápida
+      CORS_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5000}
       JWT_SECRET: ${JWT_SECRET:-11f5a3ee55273d281c78c1329e73c52e37c359b19a0ebc36338904fb78ebb0f06dca1422b53d7fa1ececc4c2ed622e53edf3587d4f67e18a4c89250f8d3372ba}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
@@ -88,14 +87,14 @@ services:
       STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-http://minio:9000}
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-minioadmin}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-minioadmin}
-      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/nexstore-products}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:5004/nexstore-products}
       STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE:-true}
       STORAGE_MAX_FILE_SIZE_BYTES: ${STORAGE_MAX_FILE_SIZE_BYTES:-5242880}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     ports:
-      - '4000:4000'
+      - '5001:5001'
     healthcheck:
-      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:4000/api/health || exit 1']
+      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:5001/api/health || exit 1']
       interval: 15s
       timeout: 5s
       retries: 10
@@ -110,10 +109,10 @@ services:
       back:
         condition: service_healthy
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
-      INTERNAL_API_URL: http://back:4000/api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5001/api}
+      INTERNAL_API_URL: http://back:5001/api/v1
     ports:
-      - '3000:3000'
+      - '5000:5000'
 
 volumes:
   pg_data:

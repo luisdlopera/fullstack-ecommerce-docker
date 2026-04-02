@@ -70,11 +70,14 @@ Complete reference for all environment variables used in the Nexstore applicatio
 |----------|----------|---------|-------------|
 | `TAX_RATE` | No | `0.15` | Tax rate (15% for Colombia IVA) |
 
-## CORS / Security
+## URLs and CORS
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `FRONTEND_ORIGIN` | Yes | — | Frontend URL for CORS |
+| `FRONTEND_URL` | Yes | — | Frontend URL for CORS and email redirects |
+| `NEXT_PUBLIC_APP_URL` | No | — | Alternative frontend URL (fallback for FRONTEND_URL) |
+| `FRONTEND_ORIGIN` | Yes | — | Frontend origin for CORS (Docker/legacy) |
+| `CORS_ORIGIN` | No | — | Legacy CORS origin variable |
 | `CORS_ALLOWED_ORIGINS` | No | — | Additional CORS origins (comma-separated) |
 
 ## Development Ports
@@ -99,7 +102,8 @@ Complete reference for all environment variables used in the Nexstore applicatio
 
 1. **Never commit `.env` files**
    - Add `.env` to `.gitignore`
-   - Only commit `.env.template` or `.env.example`
+   - Only commit `.env.example` as template
+   - Run gitleaks to catch accidental commits: `gitleaks detect --source .`
 
 2. **Generate strong JWT secrets**
    ```bash
@@ -107,7 +111,7 @@ Complete reference for all environment variables used in the Nexstore applicatio
    ```
 
 3. **Use different secrets per environment**
-   - Development: Simple/random
+   - Development: Simple/random placeholders
    - Staging: Generated
    - Production: Strong, rotated periodically
 
@@ -115,6 +119,12 @@ Complete reference for all environment variables used in the Nexstore applicatio
    - Use secret management (AWS Secrets Manager, Azure Key Vault)
    - Never log secrets
    - Restrict production .env access
+
+5. **Variables marked as placeholders in .env.example**
+   - `JWT_SECRET=change-me-generate-with-openssl-rand-hex-64`
+   - `SMTP_PASS=your-resend-api-key`
+   - `MP_ACCESS_TOKEN=your-mercadopago-access-token`
+   - Always replace these with real values in your local `.env`
 
 ## References
 

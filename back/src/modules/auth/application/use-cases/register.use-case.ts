@@ -51,7 +51,13 @@ export class RegisterUseCase {
   }
 
   private getFrontendBaseUrl(): string {
-    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:5000').replace(/\/$/, '');
+    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(/\/$/, '');
+  }
+
+  private buildFallbackFrontendUrl(): string {
+    const port = process.env.FRONTEND_PORT || process.env.FRONT_PORT || '5006';
+    const host = process.env.FRONTEND_HOST || 'localhost';
+    return `http://${host}:${port}`;
   }
 
   private hashValue(value: string): string {

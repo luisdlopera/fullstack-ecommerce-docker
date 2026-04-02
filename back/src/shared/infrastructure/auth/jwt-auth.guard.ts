@@ -24,6 +24,18 @@ export class JwtAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
 
+    // Debug logging
+    if (process.env.AUTH_DEBUG_LOGS === 'true') {
+      console.log('[AUTH DEBUG] JwtAuthGuard check:', {
+        url: request.url,
+        method: request.method,
+        isPublic,
+        hasAuthHeader: !!authHeader,
+        hasToken: !!token,
+        origin: request.headers.origin,
+      });
+    }
+
     if (!token) {
       if (isPublic) return true;
       throw new UnauthorizedException('Missing bearer token');
@@ -39,9 +51,17 @@ export class JwtAuthGuard implements CanActivate {
       }
 
       request.user = payload;
+
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] Token valid:', { userId: payload.sub, email: payload.email, role: payload.role });
+      }
+
       return true;
-    } catch {
+    } catch (err: any) {
       if (isPublic) return true;
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] Token verification failed:', { error: err?.message });
+      }
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

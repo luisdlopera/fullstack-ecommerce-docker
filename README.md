@@ -31,6 +31,30 @@ nexstore/
 
 > **Seguridad**: El archivo `.env.example` contiene placeholders seguros. Nunca uses secretos reales en archivos versionables. Copia a `.env` y reemplaza los valores.
 
+## Puertos Estándar (Estrictos)
+
+Este monorepo usa puertos **fijos y estrictos** - sin fallback automático:
+
+| Servicio | Puerto | Variable |
+|----------|--------|----------|
+| **Frontend** | 5006 | `FRONTEND_PORT` |
+| **Backend** | 5007 | `BACKEND_PORT` |
+| **PostgreSQL** | 5008 | `DATABASE_PORT` |
+| **Redis** | 5009 | `REDIS_PORT` |
+| **MinIO** | 5010 | `MINIO_PORT` |
+
+**Reglas críticas:**
+- Si un puerto está ocupado, el proceso **falla** (no cambia de puerto)
+- Usa `npm run dev:clean` antes de arrancar si hay conflictos
+- Frontend siempre en 5006, Backend siempre en 5007
+
+**Comandos de limpieza:**
+```bash
+npm run dev:clean        # Mata procesos en 5006 y 5007
+npm run dev              # Limpia y arranca apps
+npm run dev:stack        # Limpia, arranca DB y apps
+```
+
 ## Paso a paso en otro PC (o instalación desde cero)
 
 1) Clona el repositorio:
@@ -74,9 +98,9 @@ npm run dev:apps
 
 7) Abre:
 
-- Frontend: `http://localhost:5000`
-- Backend API: `http://localhost:5001/api/health`
-- Swagger docs: `http://localhost:5001/api/docs`
+- Frontend: `http://localhost:5006`
+- Backend API: `http://localhost:5007/api/health`
+- Swagger docs: `http://localhost:5007/api/docs`
 
 8) Cargar datos de prueba (usuarios, productos, países, etc.) cuando lo necesites:
 
@@ -235,8 +259,84 @@ Equivale a formatear el frontend (`prettier --write .` en `front/`) y el backend
 
 ## Problemas frecuentes
 
+### Error: "Cannot start server - port already in use" o ECONNREFUSED
+
+**Síntoma:** Frontend o backend no arrancan, o hay conflictos de puerto.
+
+**Causa:** Dos servicios intentan usar el mismo puerto (ej: frontend y backend ambos en 5001).
+
+**Solución:**
+```bash
+# 1. Mata procesos huérfanos
+pkill -f "next dev"
+pkill -f "tsx watch"
+
+# 2. Reinicia con puertos explícitos
+FRONTEND_PORT=5000 BACKEND_PORT=5001 npm run dev:apps
+```
+
+### Error: Frontend 404 en /api/* (Next.js intenta resolver rutas locales)
+
+**Síntoma:** El frontend muestra 404 al llamar `/api/products/featured` o similares.
+
+**Causa:** Next.js intercepta rutas `/api/*` y las trata como API routes locales en lugar de enviarlas al backend.
+
+**Solución:**
+- Verifica que `NEXT_PUBLIC_API_URL` apunte al backend (port 5001), no al frontend:
+  ```bash
+  # front/.env.local
+  NEXT_PUBLIC_API_URL=http://localhost:5001/api
+  ```
+- Nunca uses rutas relativas `/api/...` en fetch del frontend - usa la URL completa del backend.
+
+### Error: "Backend no responde" o timeouts
+
+**Verificación paso a paso:**
+```bash
+# 1. Verifica infraestructura
+docker ps  # Debe mostrar postgres, redis, minio
+
+# 2. Verifica puertos
+lsof -i :5000  # Frontend
+lsof -i :5001  # Backend
+
+# 3. Test health endpoints
+curl http://localhost:5001/api/v1/health/simple
+
+# 4. Verifica variables de entorno
+cat front/.env.local | grep API_URL
+cat back/.env | grep PORT
+```
+
+### Error: CORS bloqueando requests
+
+**Síntoma:** El navegador bloquea requests al backend.
+
+**Solución:**
+- Verifica `CORS_ORIGIN` en backend apunte al frontend correcto:
+  ```bash
+  # back/.env
+  CORS_ORIGIN=http://localhost:5000
+  ```
+
+### Error: Prisma/Database connection failed
+
+**Síntoma:** Backend logs muestran errores de conexión a PostgreSQL.
+
+**Verificación:**
+```bash
+# Test directo a la base
+docker exec nexstore_db psql -U nexstore -d nexstore -c "SELECT 1;"
+
+# Verifica DATABASE_URL
+# Debe ser: postgresql://nexstore:nexstore@localhost:5002/nexstore?schema=public
+```
+
+### Otros errores comunes
+
 - **Login responde 500:** Comprueba que el API tenga `JWT_SECRET` (en Docker, el `docker-compose.yml` carga `.env` y define JWT). Reinicia el contenedor o el proceso de Nest tras cambios en auth.
 - **Seed sin datos / sin usuarios:** Ejecuta `npm run prisma:seed -w back` o el `docker exec` indicado arriba con la base ya levantada.
+- **Redis connection error:** Verifica que el contenedor redis esté corriendo: `docker ps | grep redis`
 
 ## Tests (backend)
 

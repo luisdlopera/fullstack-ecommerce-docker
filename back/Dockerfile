@@ -18,5 +18,5 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY from=builder /app/dist ./dist
 COPY prisma ./prisma
 COPY scripts ./scripts
-EXPOSE 5001
+EXPOSE 5007
 CMD ["npm", "run", "docker:start"]

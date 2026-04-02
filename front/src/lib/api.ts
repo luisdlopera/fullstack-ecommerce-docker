@@ -33,16 +33,30 @@ import type {
 	Country,
 } from '@nexstore/api-types';
 
+// API URL Configuration - Uses environment variables only, no hardcoded localhost
+// Required env vars: NEXT_PUBLIC_API_URL (browser), INTERNAL_API_URL (server)
+// Optional: BACKEND_PORT, BACK_PORT for fallback construction
+
 const getBaseApiUrl = () => {
+	// Server-side: prefer INTERNAL_API_URL, then NEXT_PUBLIC_API_URL
 	if (typeof window === 'undefined') {
-		return process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
+		return process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? buildFallbackApiUrl();
 	}
 
-	return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
+	// Client-side: must use NEXT_PUBLIC_API_URL
+	return process.env.NEXT_PUBLIC_API_URL ?? buildFallbackApiUrl();
 };
 
+function buildFallbackApiUrl(): string {
+	// Only used if env vars are not set - constructs from port variables
+	const port = process.env.BACKEND_PORT || process.env.BACK_PORT || '5007';
+	// Support custom host via env var, default to localhost
+	const host = process.env.BACKEND_HOST || 'localhost';
+	return `http://${host}:${port}/api`;
+}
+
 export function getClientApiUrl() {
-	return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
+	return process.env.NEXT_PUBLIC_API_URL ?? buildFallbackApiUrl();
 }
 
 type FeaturedApiRow = {

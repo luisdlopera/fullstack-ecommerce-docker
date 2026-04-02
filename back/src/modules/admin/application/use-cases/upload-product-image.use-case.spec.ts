@@ -35,11 +35,11 @@ describe('UploadProductImageUseCase', () => {
 
   it('uploads image and persists metadata through repository', async () => {
     repository.existsProductById.mockResolvedValue(true);
-    storage.getPublicUrl.mockReturnValue('http://localhost:5004/nexstore-products/products/p1/a.jpg');
+    storage.getPublicUrl.mockReturnValue('http://localhost:5010/nexstore-products/products/p1/a.jpg');
     repository.createProductImage.mockResolvedValue({
       id: 10,
       productId: 'p1',
-      url: 'http://localhost:5004/nexstore-products/products/p1/a.jpg',
+      url: 'http://localhost:5010/nexstore-products/products/p1/a.jpg',
       storageProvider: 'minio',
       storageKey: 'products/p1/a.jpg',
       contentType: 'image/jpeg',

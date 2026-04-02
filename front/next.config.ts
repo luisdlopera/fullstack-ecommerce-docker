@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 
+const minioPort = process.env.MINIO_PORT || '5010';
+
 const nextConfig: NextConfig = {
 	turbopack: {
 		root: path.resolve(configDir, '..'),
@@ -15,13 +17,13 @@ const nextConfig: NextConfig = {
 			{
 				protocol: 'http',
 				hostname: 'localhost',
-				port: '5004',
+				port: minioPort,
 				pathname: '/**',
 			},
 			{
 				protocol: 'http',
 				hostname: '127.0.0.1',
-				port: '5004',
+				port: minioPort,
 				pathname: '/**',
 			},
 			{

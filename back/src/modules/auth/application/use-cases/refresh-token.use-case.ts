@@ -4,6 +4,7 @@ import { TOKEN_SERVICE, type TokenServicePort } from '../../domain/ports/token-s
 import { AuthUserPayload, ClientMeta } from './login.use-case';
 import { randomUUID } from 'node:crypto';
 import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
+import { authDebugLog } from '../../../../shared/infrastructure/observability/auth-debug';
 
 @Injectable()
 export class RefreshTokenUseCase {
@@ -13,6 +14,11 @@ export class RefreshTokenUseCase {
   ) {}
 
   async execute(refreshToken: string, clientMeta: ClientMeta = {}) {
+    authDebugLog('[AUTH-BACK] refresh use-case start', {
+      refreshTokenLength: refreshToken ? refreshToken.length : 0,
+      clientIp: clientMeta.ip,
+      hasUserAgent: Boolean(clientMeta.userAgent),
+    });
     try {
       const payload = await this.tokenService.verifyRefreshToken(refreshToken);
       if (payload.type !== 'refresh') {
@@ -27,24 +33,40 @@ export class RefreshTokenUseCase {
       }
 
       if (!stored) {
+        authDebugLog('[AUTH-BACK] refresh lookup', { found: false });
         throw new UnauthorizedError('Refresh token expired or revoked');
       }
+
+      authDebugLog('[AUTH-BACK] refresh lookup', {
+        found: true,
+        tokenId: stored.id,
+        userId: stored.userId,
+        revokedAt: stored.revokedAt ? stored.revokedAt.toISOString() : null,
+        expiresAt: stored.expiresAt ? stored.expiresAt.toISOString() : null,
+      });
 
       if (stored.revokedAt) {
         if (stored.familyId) {
           await this.authRepository.revokeRefreshTokensByFamily(stored.familyId);
         }
+        authDebugLog('[AUTH-BACK] refresh revoked', { tokenId: stored.id, familyId: stored.familyId ?? null });
         throw new UnauthorizedError('Refresh token reuse detected. Please sign in again.');
       }
 
       if (stored.expiresAt < new Date()) {
         await this.authRepository.updateRefreshToken(stored.id, { revokedAt: new Date() });
+        authDebugLog('[AUTH-BACK] refresh expired', { tokenId: stored.id, expiresAt: stored.expiresAt.toISOString() });
         throw new UnauthorizedError('Refresh token expired or revoked');
       }
 
       const user = await this.authRepository.findUserById(payload.sub);
       if (!user) throw new UnauthorizedError('User not found');
       if (!user.isActive || !user.emailVerified) {
+        authDebugLog('[AUTH-BACK] refresh user blocked', {
+          userId: user?.id,
+          isActive: user?.isActive,
+          emailVerified: Boolean(user?.emailVerified),
+        });
         throw new UnauthorizedError('User is not allowed to refresh session');
       }
 
@@ -52,6 +74,14 @@ export class RefreshTokenUseCase {
         sub: user.id,
         email: user.email,
         role: user.role,
+      });
+
+      authDebugLog('[AUTH-BACK] refresh tokens issued', {
+        userId: user.id,
+        hasAccessToken: Boolean(tokens.accessToken),
+        accessTokenLength: tokens.accessToken ? tokens.accessToken.length : 0,
+        hasRefreshToken: Boolean(tokens.refreshToken),
+        refreshTokenLength: tokens.refreshToken ? tokens.refreshToken.length : 0,
       });
 
       const familyId = stored.familyId || randomUUID();
@@ -77,6 +107,9 @@ export class RefreshTokenUseCase {
         user: await this.buildAuthUser(user.id),
       };
     } catch (err) {
+      authDebugLog('[AUTH-BACK] refresh error', {
+        message: err instanceof Error ? err.message : String(err),
+      });
       if (err instanceof UnauthorizedError) throw err;
       throw new UnauthorizedError('Invalid or expired refresh token');
     }

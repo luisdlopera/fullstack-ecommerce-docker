@@ -7,6 +7,7 @@ import { AUTH_REPOSITORY, type AuthRepositoryPort } from '../../domain/ports/aut
 import { TOKEN_SERVICE, type TokenServicePort } from '../../domain/ports/token-service.port';
 import { LoginDto } from '../../infrastructure/http/dto/login.dto';
 import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
+import { authDebugLog } from '../../../../shared/infrastructure/observability/auth-debug';
 
 export type AuthUserPayload = {
   id: string;
@@ -31,22 +32,54 @@ export class LoginUseCase {
 
   async execute(input: LoginDto, clientMeta: ClientMeta = {}) {
     const normalizedEmail = this.normalizeEmail(input.email);
+    authDebugLog('[AUTH-BACK] login use-case start', {
+      email: normalizedEmail,
+      passwordLength: input.password ? input.password.length : 0,
+      hasMfaCode: Boolean(input.mfaCode),
+      clientIp: clientMeta.ip,
+      hasUserAgent: Boolean(clientMeta.userAgent),
+    });
     const user = await this.authRepository.findUserByEmail(normalizedEmail);
 
-    if (!user || !bcryptjs.compareSync(input.password, user.password)) {
+    let isPasswordValid = false;
+    if (!user) {
+      authDebugLog('[AUTH-BACK] user lookup', { email: normalizedEmail, found: false });
+      // Prevent timing attacks by hashing a static string
+      await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
       throw new UnauthorizedError('Invalid email or password');
     }
 
+    authDebugLog('[AUTH-BACK] user lookup', {
+      email: normalizedEmail,
+      found: true,
+      userId: user.id,
+      role: user.role,
+      isActive: user.isActive,
+      emailVerified: Boolean(user.emailVerified),
+      mfaEnabled: user.mfaEnabled,
+    });
+
+    isPasswordValid = await bcryptjs.compare(input.password, user.password);
+    if (!isPasswordValid) {
+      authDebugLog('[AUTH-BACK] password check', { userId: user.id, ok: false });
+      throw new UnauthorizedError('Invalid email or password');
+    }
+
+    authDebugLog('[AUTH-BACK] password check', { userId: user.id, ok: true });
+
     if (!user.isActive) {
+      authDebugLog('[AUTH-BACK] user blocked', { userId: user.id, reason: 'inactive' });
       throw new UnauthorizedError('Account is deactivated');
     }
 
     if (!user.emailVerified) {
+      authDebugLog('[AUTH-BACK] user blocked', { userId: user.id, reason: 'email_unverified' });
       throw new UnauthorizedError('Email address is not verified');
     }
 
-    if (user.mfaEnabled && this.isPrivilegedRole(user.role)) {
+    if (user.mfaEnabled) {
       if (!input.mfaCode) {
+        authDebugLog('[AUTH-BACK] mfa required', { userId: user.id, provided: false });
         throw new UnauthorizedError('MFA code is required');
       }
       const validMfaCode =
@@ -58,8 +91,11 @@ export class LoginUseCase {
           window: 1,
         });
       if (!validMfaCode) {
+        authDebugLog('[AUTH-BACK] mfa check', { userId: user.id, ok: false });
         throw new UnauthorizedError('Invalid MFA code');
       }
+
+      authDebugLog('[AUTH-BACK] mfa check', { userId: user.id, ok: true });
     }
 
     await this.authRepository.updateUserLastLogin(user.id, new Date());
@@ -69,6 +105,14 @@ export class LoginUseCase {
       sub: user.id,
       email: user.email,
       role: user.role,
+    });
+
+    authDebugLog('[AUTH-BACK] tokens issued', {
+      userId: user.id,
+      hasAccessToken: Boolean(tokens.accessToken),
+      accessTokenLength: tokens.accessToken ? tokens.accessToken.length : 0,
+      hasRefreshToken: Boolean(tokens.refreshToken),
+      refreshTokenLength: tokens.refreshToken ? tokens.refreshToken.length : 0,
     });
 
     await this.storeRefreshToken({

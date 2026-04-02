@@ -1,27 +1,30 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { config as loadEnv } from 'dotenv';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/infrastructure/filters/http-exception.filter';
 import { buildCorsOptions } from './shared/infrastructure/http/cors';
 
 async function bootstrap() {
-  loadEnv({ path: resolve(process.cwd(), '.env') });
-  loadEnv({ path: resolve(process.cwd(), '..', '.env') });
+  const localEnvPath = resolve(process.cwd(), '.env');
+  if (existsSync(localEnvPath)) {
+    loadEnv({ path: localEnvPath });
+  }
+
+  const rootEnvPath = resolve(process.cwd(), '..', '.env');
+  if (!existsSync(localEnvPath) && existsSync(rootEnvPath)) {
+    loadEnv({ path: rootEnvPath });
+  }
 
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('api');
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
   const httpInstance = app.getHttpAdapter().getInstance();
   if (typeof httpInstance?.disable === 'function') {
     httpInstance.disable('x-powered-by');
@@ -40,30 +43,6 @@ async function bootstrap() {
   });
 
   app.enableCors(corsOptions);
-  app.use((req: Request, _res: Response, next: NextFunction) => {
-    const url = req.url ?? '';
-    if (!url.startsWith('/api')) {
-      next();
-      return;
-    }
-
-    if (url.startsWith('/api/v1') || url.startsWith('/api/docs') || url.startsWith('/api/docs-json')) {
-      next();
-      return;
-    }
-
-    if (url === '/api' || url.startsWith('/api?')) {
-      req.url = url.replace('/api', '/api/v1');
-      next();
-      return;
-    }
-
-    if (url.startsWith('/api/')) {
-      req.url = url.replace('/api/', '/api/v1/');
-    }
-
-    next();
-  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

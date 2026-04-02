@@ -16,6 +16,7 @@ import { HealthModule } from './modules/health/health.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { CorrelationIdMiddleware } from './shared/infrastructure/observability/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './shared/infrastructure/observability/request-logging.middleware';
+import { LegacyVersionController } from './shared/infrastructure/http/legacy-version.controller';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RequestLoggingMiddleware } from './shared/infrastructure/observability/
     AdminModule,
     InventoryModule,
   ],
+  controllers: [LegacyVersionController],
   providers: [
     {
       provide: APP_GUARD,

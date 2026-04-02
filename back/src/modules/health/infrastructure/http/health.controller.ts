@@ -2,7 +2,6 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import {
   HealthCheck,
   HealthCheckService,
-  HttpHealthIndicator,
   PrismaHealthIndicator,
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
@@ -14,7 +13,6 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 export class HealthController {
   constructor(
     private health: HealthCheckService,
-    private http: HttpHealthIndicator,
     private prismaHealth: PrismaHealthIndicator,
     private memory: MemoryHealthIndicator,
     @Inject(PrismaService) private readonly prisma: PrismaService,

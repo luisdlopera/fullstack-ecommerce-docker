@@ -2,10 +2,13 @@
   "name": "nexstore-back",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "22"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "npm run prisma:generate && node dist/src/main.js",
-    "start:dev": "npm run prisma:generate && tsx watch src/main.ts",
+    "start:dev": "npm run prisma:generate && prisma migrate deploy && tsx watch src/main.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"prisma/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"prisma/**/*.ts\"",
@@ -42,7 +45,6 @@
     "bullmq": "^5.72.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
-    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "helmet": "^8.1.0",
     "mercadopago": "^2.12.0",
@@ -50,7 +52,8 @@
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "speakeasy": "^2.0.0"
+    "speakeasy": "^2.0.0",
+    "cookie-parser": "^1.4.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
@@ -62,6 +65,7 @@
     "@types/node": "^20.17.19",
     "@types/nodemailer": "^7.0.11",
     "@types/speakeasy": "^2.0.10",
+
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",

@@ -1,4 +1,4 @@
-import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/;
 
@@ -12,6 +12,7 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(10)
+  @MaxLength(100)
   @Matches(PASSWORD_POLICY, {
     message:
       'Password must include at least one uppercase letter, one lowercase letter, one number and one symbol',

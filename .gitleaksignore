@@ -1,2 +1,5 @@
 a1a93f508bfc12cf8515c1f0efed2695490ec326:back/src/modules/users/application/users.service.spec.ts:generic-api-key:74
 348d0120ec6ec6b95478333502137389d890d2da:back/src/modules/users/application/users.service.spec.ts:generic-api-key:74
+b790d4eaa950bd4e7c22dd5da75d4956ae27de7e:back/.env.example:generic-api-key:17
+a18fad44edbd0d07131e04d55170dca012ae166d:back/src/modules/auth/application/auth.service.spec.ts:generic-api-key:102
+b790d4eaa950bd4e7c22dd5da75d4956ae27de7e:front/.env.example:generic-api-key:17

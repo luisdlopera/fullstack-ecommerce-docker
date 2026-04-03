@@ -1,6 +1,5 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import {
-  HealthCheck,
   HealthCheckService,
   PrismaHealthIndicator,
   MemoryHealthIndicator,

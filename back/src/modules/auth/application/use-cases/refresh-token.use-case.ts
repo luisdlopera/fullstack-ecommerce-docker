@@ -4,6 +4,7 @@ import { TOKEN_SERVICE, type TokenServicePort } from '../../domain/ports/token-s
 import { AuthUserPayload, ClientMeta } from './login.use-case';
 import { randomUUID } from 'node:crypto';
 import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
+import { AuthMessages } from '../../domain/enums/auth-messages.enum';
 
 @Injectable()
 export class RefreshTokenUseCase {
@@ -16,7 +17,7 @@ export class RefreshTokenUseCase {
     try {
       const payload = await this.tokenService.verifyRefreshToken(refreshToken);
       if (payload.type !== 'refresh') {
-        throw new UnauthorizedError('Invalid token type');
+        throw new UnauthorizedError(AuthMessages.INVALID_TOKEN_TYPE);
       }
 
       const tokenHash = this.tokenService.hashToken(refreshToken);
@@ -27,25 +28,25 @@ export class RefreshTokenUseCase {
       }
 
       if (!stored) {
-        throw new UnauthorizedError('Refresh token expired or revoked');
+        throw new UnauthorizedError(AuthMessages.SESSION_EXPIRED);
       }
 
       if (stored.revokedAt) {
         if (stored.familyId) {
           await this.authRepository.revokeRefreshTokensByFamily(stored.familyId);
         }
-        throw new UnauthorizedError('Refresh token reuse detected. Please sign in again.');
+        throw new UnauthorizedError(AuthMessages.TOKEN_REUSE_DETECTED);
       }
 
       if (stored.expiresAt < new Date()) {
         await this.authRepository.updateRefreshToken(stored.id, { revokedAt: new Date() });
-        throw new UnauthorizedError('Refresh token expired or revoked');
+        throw new UnauthorizedError(AuthMessages.SESSION_EXPIRED);
       }
 
       const user = await this.authRepository.findUserById(payload.sub);
-      if (!user) throw new UnauthorizedError('User not found');
+      if (!user) throw new UnauthorizedError(AuthMessages.USER_NOT_FOUND);
       if (!user.isActive || !user.emailVerified) {
-        throw new UnauthorizedError('User is not allowed to refresh session');
+        throw new UnauthorizedError(AuthMessages.UNAUTHORIZED);
       }
 
       const tokens = await this.tokenService.signTokens({
@@ -78,7 +79,7 @@ export class RefreshTokenUseCase {
       };
     } catch (err) {
       if (err instanceof UnauthorizedError) throw err;
-      throw new UnauthorizedError('Invalid or expired refresh token');
+      throw new UnauthorizedError(AuthMessages.SESSION_EXPIRED);
     }
   }
 
@@ -95,7 +96,7 @@ export class RefreshTokenUseCase {
 
   private async buildAuthUser(userId: string): Promise<AuthUserPayload> {
     const user = await this.authRepository.findUserById(userId);
-    if (!user) throw new UnauthorizedError('User not found');
+    if (!user) throw new UnauthorizedError(AuthMessages.USER_NOT_FOUND);
     return {
       id: user.id,
       name: user.name,

@@ -7,6 +7,7 @@ import { AUTH_REPOSITORY, type AuthRepositoryPort } from '../../domain/ports/aut
 import { TOKEN_SERVICE, type TokenServicePort } from '../../domain/ports/token-service.port';
 import { LoginDto } from '../../infrastructure/http/dto/login.dto';
 import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
+import { AuthMessages } from '../../domain/enums/auth-messages.enum';
 
 export type AuthUserPayload = {
   id: string;
@@ -43,7 +44,7 @@ export class LoginUseCase {
       
       if (!user) {
         console.log('[LOGIN USE CASE] User not found, throwing UnauthorizedError');
-        throw new UnauthorizedError('Invalid email or password');
+        throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
       
       console.log('[LOGIN USE CASE] User found:', {
@@ -63,24 +64,24 @@ export class LoginUseCase {
       
       if (!passwordMatch) {
         console.log('[LOGIN USE CASE] Password mismatch, throwing UnauthorizedError');
-        throw new UnauthorizedError('Invalid email or password');
+        throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
 
       if (!user.isActive) {
         console.log('[LOGIN USE CASE] Account deactivated, throwing UnauthorizedError');
-        throw new UnauthorizedError('Account is deactivated');
+        throw new UnauthorizedError(AuthMessages.USER_INACTIVE);
       }
 
       if (!user.emailVerified) {
         console.log('[LOGIN USE CASE] Email not verified, throwing UnauthorizedError');
-        throw new UnauthorizedError('Email address is not verified');
+        throw new UnauthorizedError(AuthMessages.EMAIL_NOT_VERIFIED);
       }
 
       if (user.mfaEnabled && this.isPrivilegedRole(user.role)) {
         console.log('[LOGIN USE CASE] MFA required for privileged role');
         if (!input.mfaCode) {
           console.log('[LOGIN USE CASE] MFA code missing, throwing UnauthorizedError');
-          throw new UnauthorizedError('MFA code is required');
+          throw new UnauthorizedError(AuthMessages.MFA_REQUIRED);
         }
         const validMfaCode =
           !!user.mfaSecret &&
@@ -93,7 +94,7 @@ export class LoginUseCase {
         console.log('[LOGIN USE CASE] MFA code validation:', validMfaCode);
         if (!validMfaCode) {
           console.log('[LOGIN USE CASE] Invalid MFA code, throwing UnauthorizedError');
-          throw new UnauthorizedError('Invalid MFA code');
+          throw new UnauthorizedError(AuthMessages.MFA_INVALID);
         }
       }
 
@@ -191,7 +192,7 @@ export class LoginUseCase {
 
   private async buildAuthUser(userId: string): Promise<AuthUserPayload> {
     const user = await this.authRepository.findUserById(userId);
-    if (!user) throw new UnauthorizedError('User not found');
+    if (!user) throw new UnauthorizedError(AuthMessages.USER_NOT_FOUND);
 
     return {
       id: user.id,

@@ -1,0 +1,4 @@
+## 2024-05-24 - [Bcrypt Timing Attack with Invalid Dummy Hash]
+**Vulnerability:** A timing attack vulnerability in `login.use-case.ts` where `bcryptjs.compare` was given an invalid hash format (`$2a$12$dummyhash...`) for non-existent users, causing it to return instantly (0ms) instead of taking the typical time to compute a bcrypt hash (~100ms).
+**Learning:** `bcryptjs.compare` fails fast if the hash provided is not a valid bcrypt hash format, bypassing the intended artificial delay meant to prevent timing attacks. An attacker could measure the response time to determine if an email address exists in the database.
+**Prevention:** Always use a valid, pre-computed bcrypt hash with the same work factor (e.g., `$2b$10$...`) as real user passwords when creating dummy comparisons to mitigate timing attacks.

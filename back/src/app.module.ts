@@ -11,7 +11,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
-// import { AdminModule } from './modules/admin/admin.module';
+import { AdminModule } from './modules/admin/admin.module';
 // import { HealthModule } from './modules/health/health.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { CorrelationIdMiddleware } from './shared/infrastructure/observability/correlation-id.middleware';
@@ -32,6 +32,8 @@ import { RequestLoggingMiddleware } from './shared/infrastructure/observability/
     InventoryModule,
     // Paso 5: PaymentsModule
     PaymentsModule,
+    // Paso 6: AdminModule
+    AdminModule,
   ],
   // Guards desactivados temporalmente para diagnóstico
 })

@@ -44,8 +44,8 @@ export class LoginUseCase {
     let isPasswordValid = false;
     if (!user) {
       authDebugLog('[AUTH-BACK] user lookup', { email: normalizedEmail, found: false });
-      // Prevent timing attacks by hashing a static string
-      await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
+      // Prevent timing attacks by hashing a static string against a valid bcrypt hash
+      await bcryptjs.compare(input.password, '$2b$12$BRBq1oEEKsSLX8wIxDJXk.HaKId4rc7V3Xo5mU1kw89G9GoablM/y');
       throw new UnauthorizedError('Invalid email or password');
     }
 

@@ -40,12 +40,12 @@ export function HeaderMobileNav({
 		<>
 			<button
 				type='button'
-				className='fixed inset-0 z-60 bg-black/40 lg:hidden'
+				className='fixed inset-0 z-[100] bg-black/40 lg:hidden'
 				aria-label='Cerrar menú'
 				onClick={onClose}
 			/>
 			<div
-				className='fixed inset-y-0 right-0 z-70 flex w-full max-w-80 flex-col border-l border-neutral-200 bg-white shadow-xl lg:hidden'
+				className='fixed inset-y-0 right-0 z-[110] flex h-screen w-full max-w-80 flex-col border-l border-neutral-200 bg-white shadow-xl lg:hidden'
 				role='dialog'
 				aria-modal='true'
 				aria-labelledby='mobile-nav-title'

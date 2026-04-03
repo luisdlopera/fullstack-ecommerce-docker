@@ -30,21 +30,29 @@ export class QueueService implements OnModuleDestroy {
   private readonly queues = new Map<string, Queue>();
   private readonly workers = new Map<string, Worker>();
   private readonly queueEvents = new Map<string, QueueEvents>();
-  private readonly connectionConfig: ReturnType<typeof getRedisConnectionConfig>;
+  private connectionConfig: ReturnType<typeof getRedisConnectionConfig> | null = null;
 
   constructor() {
-    console.log('[QueueService] Inicializando...');
-    this.connectionConfig = getRedisConnectionConfig();
-    console.log('[QueueService] Configuración Redis cargada');
-    // Las colas se crean lazy en getQueue para evitar bloqueos durante bootstrap
+    console.log('[QueueService] Inicializado (lazy - sin conexión aún)');
+    // La conexión se establece lazy en getQueue para evitar bloqueos
+  }
+
+  private getConnectionConfig(): ReturnType<typeof getRedisConnectionConfig> {
+    if (!this.connectionConfig) {
+      console.log('[QueueService] Cargando configuración Redis (lazy)...');
+      this.connectionConfig = getRedisConnectionConfig();
+      console.log('[QueueService] Configuración Redis cargada');
+    }
+    return this.connectionConfig;
   }
 
   getQueue(name: QueueName): Queue {
     let queue = this.queues.get(name);
     if (!queue) {
       console.log(`[QueueService] Creando cola "${name}" (lazy)...`);
+      const connection = this.getConnectionConfig();
       queue = new Queue(name, {
-        connection: this.connectionConfig,
+        connection,
         defaultJobOptions: DEFAULT_JOB_OPTIONS,
       });
       this.queues.set(name, queue);
@@ -61,7 +69,7 @@ export class QueueService implements OnModuleDestroy {
       return;
     }
 
-    const connection = getRedisConnectionConfig();
+    const connection = this.getConnectionConfig();
 
     const worker = new Worker(
       queueName,

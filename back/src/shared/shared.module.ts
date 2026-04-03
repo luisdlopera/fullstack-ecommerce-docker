@@ -5,13 +5,13 @@ import { S3CompatibleStorageAdapter } from './infrastructure/storage/s3-compatib
 import { StorageConfig } from './infrastructure/storage/storage.config';
 import { EmailService } from './infrastructure/email/email.service';
 import { PrismaService } from './infrastructure/prisma/prisma.service';
-// import { QueueModule } from './infrastructure/queues/queue.module';
+import { QueueModule } from './infrastructure/queues/queue.module';
 import { PrismaAuditRepository } from './infrastructure/persistence/prisma-audit.repository';
 
 @Global()
 @Module({
-  // QueueModule desactivado temporalmente
-  // imports: [QueueModule],
+  // QueueModule activado con lazy initialization
+  imports: [QueueModule],
   providers: [
     PrismaService,
     EmailService,
@@ -27,6 +27,7 @@ import { PrismaAuditRepository } from './infrastructure/persistence/prisma-audit
     },
   ],
   exports: [
+    QueueModule,
     PrismaService,
     EmailService,
     StorageConfig,

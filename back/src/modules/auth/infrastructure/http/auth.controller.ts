@@ -75,15 +75,16 @@ export class AuthController {
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
       });
+      console.log(`[AUTH_DEBUG] Successfully set refreshToken cookie for request ${requestId}`);
       authDebugLog('[AUTH-COOKIE] refresh cookie set', {
         requestId,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAgeSeconds: 7 * 24 * 60 * 60,
       });
-      return { user: result.user, accessToken: result.accessToken };
     }
 
+    console.log(`[AUTH_DEBUG] Returning JSON response with tokens and user object`);
     authDebugLog('[AUTH-BACK] login response', {
       requestId,
       hasAccessToken: Boolean(result.accessToken),
@@ -92,6 +93,8 @@ export class AuthController {
       role: result.user?.role,
     });
 
+    // We always return the refreshToken in the payload even if cookies are set
+    // so that the Next.js BFF does not break due to missing tokens in the payload.
     return result;
   }
 
@@ -135,15 +138,16 @@ export class AuthController {
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
+      console.log(`[AUTH_DEBUG] Successfully set refreshToken cookie for request ${requestId}`);
       authDebugLog('[AUTH-COOKIE] refresh cookie set', {
         requestId,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAgeSeconds: 7 * 24 * 60 * 60,
       });
-      return { user: result.user, accessToken: result.accessToken };
     }
 
+    console.log(`[AUTH_DEBUG] Returning JSON response with tokens and user object on refresh`);
     authDebugLog('[AUTH-BACK] refresh response', {
       requestId,
       hasAccessToken: Boolean(result.accessToken),

@@ -2,7 +2,7 @@
 
 import { Button, Form, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
 import { Check, Copy } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,7 +29,7 @@ const SEED_TEST_USERS: { label: string; email: string; role: string }[] = [
 	{ label: 'CUSTOMER', email: 'carlos@nexstore.com', role: 'CUSTOMER' },
 ];
 
-export default function AuthPage() {
+function AuthPageContent() {
 	const { login, register, resendVerification, user } = useAuth();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -280,5 +280,13 @@ export default function AuthPage() {
 				</Modal>
 			)}
 		</>
+	);
+}
+
+export default function AuthPage() {
+	return (
+		<Suspense fallback={<div className="flex justify-center items-center h-screen">Cargando...</div>}>
+			<AuthPageContent />
+		</Suspense>
 	);
 }

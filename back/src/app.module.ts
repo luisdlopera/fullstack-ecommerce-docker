@@ -1,11 +1,10 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-// import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SharedModule } from './shared/shared.module';
-// import { JwtAuthGuard } from './shared/infrastructure/auth/jwt-auth.guard';
-// import { AuthorizationGuard } from './shared/infrastructure/auth/authorization.guard';
-// import { RolesGuard } from './shared/infrastructure/auth/roles.guard';
+import { JwtAuthGuard } from './shared/infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from './shared/infrastructure/auth/roles.guard';
 import { ProductsModule } from './modules/products/products.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -35,7 +34,18 @@ import { RequestLoggingMiddleware } from './shared/infrastructure/observability/
     // Paso 6: AdminModule
     AdminModule,
   ],
-  // Guards desactivados temporalmente para diagnóstico
+  providers: [
+    // Global JWT Auth Guard - protege todos los endpoints excepto @Public()
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    // Global Roles Guard - verifica permisos donde se use @Roles()
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
 	const payload = data.data ?? data;
 
 	if (!res.ok) {
+		console.log('[AUTH_DEBUG] BFF login failed with upstream error', { status: res.status });
 		console.log('[auth.login] upstream error', {
 			status: res.status,
 			message: data.message,
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
 	}
 
 	if (!payload.accessToken || !payload.refreshToken || !payload.user) {
+		console.log('[AUTH_DEBUG] BFF login failed: Missing accessToken or refreshToken in JSON payload');
 		console.log('[auth.login] invalid payload', {
 			status: res.status,
 			hasUser: Boolean(payload.user),
@@ -67,6 +69,7 @@ export async function POST(request: NextRequest) {
 
 	const response = NextResponse.json({ user: payload.user });
 	applyAuthCookies(response, { accessToken: payload.accessToken, refreshToken: payload.refreshToken });
+	console.log('[AUTH_DEBUG] Successfully set httpOnly cookies for Next.js session');
 	authRouteLog('api login cookies set', {
 		hasAccessToken: Boolean(payload.accessToken),
 		hasRefreshToken: Boolean(payload.refreshToken),

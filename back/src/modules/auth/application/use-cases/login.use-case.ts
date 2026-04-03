@@ -32,6 +32,7 @@ export class LoginUseCase {
 
   async execute(input: LoginDto, clientMeta: ClientMeta = {}) {
     const normalizedEmail = this.normalizeEmail(input.email);
+    console.log(`[AUTH_DEBUG] Received login request for email: ${normalizedEmail}`);
     authDebugLog('[AUTH-BACK] login use-case start', {
       email: normalizedEmail,
       passwordLength: input.password ? input.password.length : 0,
@@ -45,7 +46,8 @@ export class LoginUseCase {
     if (!user) {
       authDebugLog('[AUTH-BACK] user lookup', { email: normalizedEmail, found: false });
       // Prevent timing attacks by hashing a static string
-      await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
+      console.log('[AUTH_DEBUG] User not found, executing dummy bcrypt compare');
+      await bcryptjs.compare(input.password, '$2a$10$XUaE2o.8.vR.1W1oW8qF3ucH/qH6kXq5lA.pXQvP3x.o.lqZ6g3G6');
       throw new UnauthorizedError('Invalid email or password');
     }
 
@@ -60,6 +62,7 @@ export class LoginUseCase {
     });
 
     isPasswordValid = await bcryptjs.compare(input.password, user.password);
+    console.log(`[AUTH_DEBUG] Password comparison result for user ${user.id}: ${isPasswordValid}`);
     if (!isPasswordValid) {
       authDebugLog('[AUTH-BACK] password check', { userId: user.id, ok: false });
       throw new UnauthorizedError('Invalid email or password');
@@ -107,6 +110,7 @@ export class LoginUseCase {
       role: user.role,
     });
 
+    console.log(`[AUTH_DEBUG] Generated token payload for user ${user.id}`);
     authDebugLog('[AUTH-BACK] tokens issued', {
       userId: user.id,
       hasAccessToken: Boolean(tokens.accessToken),

@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AUTH_PERMISSIONS_KEY } from './auth.decorator';
 import type { JwtPayload } from './jwt-payload';
 import { isCustomerRole, type PermissionKey } from './permissions';
+import { AuthMessages } from '../../../modules/auth/domain/enums/auth-messages.enum';
 
 type RequestWithUser = {
   url?: string;
@@ -44,7 +45,7 @@ export class AuthorizationGuard implements CanActivate {
     }
 
     if (!payload?.sub) {
-      throw new UnauthorizedException('Missing authenticated user');
+      throw new UnauthorizedException(AuthMessages.UNAUTHORIZED);
     }
 
     const user = await this.prisma.user.findUnique({
@@ -61,14 +62,14 @@ export class AuthorizationGuard implements CanActivate {
       if (process.env.AUTH_DEBUG_LOGS === 'true') {
         console.log('[AUTH DEBUG] User forbidden:', { userId: payload.sub, exists: !!user, isActive: user?.isActive, deletedAt: user?.deletedAt });
       }
-      throw new ForbiddenException('Account is not allowed');
+      throw new ForbiddenException(AuthMessages.ACCOUNT_NOT_ALLOWED);
     }
 
     if (isCustomerRole(user.role)) {
       if (process.env.AUTH_DEBUG_LOGS === 'true') {
         console.log('[AUTH DEBUG] Customer role forbidden for admin resource:', { userId: user.id, role: user.role });
       }
-      throw new ForbiddenException('CUSTOMER role cannot access admin resources');
+      throw new ForbiddenException(AuthMessages.CUSTOMER_ROLE_RESTRICTED);
     }
 
     if (user.role === Role.SUPER_ADMIN) {
@@ -95,7 +96,7 @@ export class AuthorizationGuard implements CanActivate {
           userPermissions: rolePermissions.map(p => p.permissionId),
         });
       }
-      throw new ForbiddenException('Insufficient permissions');
+      throw new ForbiddenException(AuthMessages.INSUFFICIENT_PERMISSIONS);
     }
 
     if (process.env.AUTH_DEBUG_LOGS === 'true') {

@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import type { JwtPayload } from './jwt-payload';
+import { AuthMessages } from '../../../modules/auth/domain/enums/auth-messages.enum';
 
 type RequestWithUser = Request & { user?: JwtPayload };
 
@@ -38,7 +39,7 @@ export class JwtAuthGuard implements CanActivate {
 
     if (!token) {
       if (isPublic) return true;
-      throw new UnauthorizedException('Missing bearer token');
+      throw new UnauthorizedException(AuthMessages.MISSING_AUTH_HEADER);
     }
 
     try {
@@ -47,7 +48,7 @@ export class JwtAuthGuard implements CanActivate {
       });
 
       if (payload.type !== 'access') {
-        throw new UnauthorizedException('Invalid token type');
+        throw new UnauthorizedException(AuthMessages.INVALID_TOKEN_TYPE);
       }
 
       request.user = payload;
@@ -62,7 +63,7 @@ export class JwtAuthGuard implements CanActivate {
       if (process.env.AUTH_DEBUG_LOGS === 'true') {
         console.log('[AUTH DEBUG] Token verification failed:', { error: err?.message });
       }
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException(AuthMessages.INVALID_TOKEN);
     }
   }
 }

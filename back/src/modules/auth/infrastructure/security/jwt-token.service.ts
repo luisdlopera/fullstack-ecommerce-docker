@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { randomUUID, createHash } from 'node:crypto';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import type { SignedTokens, TokenPayload, TokenServicePort } from '../../domain/ports/token-service.port';
+import { AuthMessages } from '../../domain/enums/auth-messages.enum';
 
 @Injectable()
 export class JwtTokenService implements TokenServicePort {
@@ -10,7 +11,7 @@ export class JwtTokenService implements TokenServicePort {
 
   async signTokens(payload: TokenPayload): Promise<SignedTokens> {
     const secret = process.env.JWT_SECRET;
-    if (!secret) throw new UnauthorizedException('Missing JWT_SECRET');
+    if (!secret) throw new UnauthorizedException(AuthMessages.JWT_SECRET_MISSING);
 
     const accessPayload: JwtPayload = { ...payload, type: 'access' };
     const refreshPayload: JwtPayload = { ...payload, type: 'refresh' };
@@ -33,7 +34,7 @@ export class JwtTokenService implements TokenServicePort {
 
   async verifyRefreshToken(token: string): Promise<JwtPayload & { jti?: string }> {
     const secret = process.env.JWT_SECRET;
-    if (!secret) throw new UnauthorizedException('Missing JWT_SECRET');
+    if (!secret) throw new UnauthorizedException(AuthMessages.JWT_SECRET_MISSING);
     return this.jwtService.verifyAsync(token, { secret });
   }
 

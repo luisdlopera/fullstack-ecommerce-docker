@@ -29,7 +29,17 @@ const SEED_TEST_USERS: { label: string; email: string; role: string }[] = [
 	{ label: 'CUSTOMER', email: 'carlos@nexstore.com', role: 'CUSTOMER' },
 ];
 
+import { Suspense } from 'react';
+
 export default function AuthPage() {
+	return (
+		<Suspense fallback={<div>Loading...</div>}>
+			<AuthPageContent />
+		</Suspense>
+	);
+}
+
+function AuthPageContent() {
 	const { login, register, resendVerification, user } = useAuth();
 	const router = useRouter();
 	const searchParams = useSearchParams();

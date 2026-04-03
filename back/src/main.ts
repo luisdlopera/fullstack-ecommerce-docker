@@ -112,15 +112,15 @@ async function bootstrap() {
   // Limpiar timeout ya que el servidor inició correctamente
   clearTimeout(bootstrapTimeout);
 
-  // eslint-disable-next-line no-console
+   
   console.log('');
-  // eslint-disable-next-line no-console
+   
   console.log('╔════════════════════════════════════════════════════════════╗');
-  // eslint-disable-next-line no-console
+   
   console.log(`║  🚀 BACK running on http://localhost:${port}                     ║`);
-  // eslint-disable-next-line no-console
+   
   console.log('╚════════════════════════════════════════════════════════════╝');
-  // eslint-disable-next-line no-console
+   
   console.log('');
 }
 

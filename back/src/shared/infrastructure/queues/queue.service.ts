@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Job, Queue, QueueEvents, Worker } from 'bullmq';
-import { DEFAULT_CONCURRENCY, DEFAULT_JOB_OPTIONS, QUEUE_NAMES, type QueueName } from './queue.constants';
+import { DEFAULT_CONCURRENCY, DEFAULT_JOB_OPTIONS, type QueueName } from './queue.constants';
 
 export interface JobProcessor {
   queueName: QueueName;

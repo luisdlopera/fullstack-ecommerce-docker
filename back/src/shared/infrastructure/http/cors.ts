@@ -87,9 +87,9 @@ export function buildCorsOptions(config: CorsEnvConfig): CorsOptions {
 
       // Log rejected origins in development for debugging
       if (process.env.APP_ENV === 'development' || process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
+         
         console.warn(`[CORS] Rejected origin: ${origin}`);
-        // eslint-disable-next-line no-console
+         
         console.warn(`[CORS] Allowed origins: ${originArray.join(', ')}`);
       }
 

@@ -38,9 +38,9 @@ export class AuthService {
     @Inject(AUTH_REPOSITORY) private readonly authRepository: AuthRepositoryPort,
     @Inject(TOKEN_SERVICE) private readonly tokenService: TokenServicePort,
     @Inject(EMAIL_SENDER) private readonly emailSender: EmailSenderPort,
-    private readonly registerUseCase: RegisterUseCase,
-    private readonly loginUseCase: LoginUseCase,
-    private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    @Inject(RegisterUseCase) private readonly registerUseCase: RegisterUseCase,
+    @Inject(LoginUseCase) private readonly loginUseCase: LoginUseCase,
+    @Inject(RefreshTokenUseCase) private readonly refreshTokenUseCase: RefreshTokenUseCase,
   ) {}
 
   private getPasswordResetTtlMs(): number {

@@ -30,25 +30,25 @@ export class QueueService implements OnModuleDestroy {
   private readonly queues = new Map<string, Queue>();
   private readonly workers = new Map<string, Worker>();
   private readonly queueEvents = new Map<string, QueueEvents>();
+  private readonly connectionConfig: ReturnType<typeof getRedisConnectionConfig>;
 
   constructor() {
-    const connection = getRedisConnectionConfig();
-
-    for (const queueName of Object.values(QUEUE_NAMES)) {
-      const queue = new Queue(queueName, {
-        connection,
-        defaultJobOptions: DEFAULT_JOB_OPTIONS,
-      });
-
-      this.queues.set(queueName, queue);
-      this.logger.log(`Queue "${queueName}" initialized`);
-    }
+    console.log('[QueueService] Inicializando...');
+    this.connectionConfig = getRedisConnectionConfig();
+    console.log('[QueueService] Configuración Redis cargada');
+    // Las colas se crean lazy en getQueue para evitar bloqueos durante bootstrap
   }
 
   getQueue(name: QueueName): Queue {
-    const queue = this.queues.get(name);
+    let queue = this.queues.get(name);
     if (!queue) {
-      throw new Error(`Queue "${name}" not found`);
+      console.log(`[QueueService] Creando cola "${name}" (lazy)...`);
+      queue = new Queue(name, {
+        connection: this.connectionConfig,
+        defaultJobOptions: DEFAULT_JOB_OPTIONS,
+      });
+      this.queues.set(name, queue);
+      this.logger.log(`Queue "${name}" initialized (lazy)`);
     }
     return queue;
   }

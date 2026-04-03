@@ -19,32 +19,16 @@ import { RequestLoggingMiddleware } from './shared/infrastructure/observability/
 
 @Module({
   imports: [
+    // Solo módulos esenciales para diagnóstico
     SharedModule,
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 400 }] }),
     JwtModule.register({}),
-    HealthModule,
-    ProductsModule,
+    // HealthModule desactivado temporalmente
+    // HealthModule,
+    // AuthModule incluido temporalmente para probar login
     AuthModule,
-    UsersModule,
-    OrdersModule,
-    PaymentsModule,
-    AdminModule,
-    InventoryModule,
   ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: AuthorizationGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-  ],
+  // Guards desactivados temporalmente para diagnóstico
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

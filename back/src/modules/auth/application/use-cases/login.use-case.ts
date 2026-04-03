@@ -30,60 +30,124 @@ export class LoginUseCase {
   ) {}
 
   async execute(input: LoginDto, clientMeta: ClientMeta = {}) {
-    const normalizedEmail = this.normalizeEmail(input.email);
-    const user = await this.authRepository.findUserByEmail(normalizedEmail);
-
-    if (!user || !bcryptjs.compareSync(input.password, user.password)) {
-      throw new UnauthorizedError('Invalid email or password');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedError('Account is deactivated');
-    }
-
-    if (!user.emailVerified) {
-      throw new UnauthorizedError('Email address is not verified');
-    }
-
-    if (user.mfaEnabled && this.isPrivilegedRole(user.role)) {
-      if (!input.mfaCode) {
-        throw new UnauthorizedError('MFA code is required');
+    console.log('[LOGIN USE CASE] ============================================');
+    console.log('[LOGIN USE CASE] Starting login execution for:', input.email);
+    
+    try {
+      const normalizedEmail = this.normalizeEmail(input.email);
+      console.log('[LOGIN USE CASE] Normalized email:', normalizedEmail);
+      
+      console.log('[LOGIN USE CASE] Looking up user by email...');
+      const user = await this.authRepository.findUserByEmail(normalizedEmail);
+      console.log('[LOGIN USE CASE] User lookup result:', user ? 'FOUND' : 'NOT FOUND');
+      
+      if (!user) {
+        console.log('[LOGIN USE CASE] User not found, throwing UnauthorizedError');
+        throw new UnauthorizedError('Invalid email or password');
       }
-      const validMfaCode =
-        !!user.mfaSecret &&
-        speakeasy.totp.verify({
-          secret: user.mfaSecret,
-          encoding: 'base32',
-          token: input.mfaCode,
-          window: 1,
-        });
-      if (!validMfaCode) {
-        throw new UnauthorizedError('Invalid MFA code');
+      
+      console.log('[LOGIN USE CASE] User found:', {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        emailVerified: user.emailVerified,
+        mfaEnabled: user.mfaEnabled,
+        hasPassword: !!user.password,
+        passwordLength: user.password?.length,
+      });
+
+      console.log('[LOGIN USE CASE] Comparing passwords...');
+      const passwordMatch = bcryptjs.compareSync(input.password, user.password);
+      console.log('[LOGIN USE CASE] Password comparison result:', passwordMatch);
+      
+      if (!passwordMatch) {
+        console.log('[LOGIN USE CASE] Password mismatch, throwing UnauthorizedError');
+        throw new UnauthorizedError('Invalid email or password');
       }
+
+      if (!user.isActive) {
+        console.log('[LOGIN USE CASE] Account deactivated, throwing UnauthorizedError');
+        throw new UnauthorizedError('Account is deactivated');
+      }
+
+      if (!user.emailVerified) {
+        console.log('[LOGIN USE CASE] Email not verified, throwing UnauthorizedError');
+        throw new UnauthorizedError('Email address is not verified');
+      }
+
+      if (user.mfaEnabled && this.isPrivilegedRole(user.role)) {
+        console.log('[LOGIN USE CASE] MFA required for privileged role');
+        if (!input.mfaCode) {
+          console.log('[LOGIN USE CASE] MFA code missing, throwing UnauthorizedError');
+          throw new UnauthorizedError('MFA code is required');
+        }
+        const validMfaCode =
+          !!user.mfaSecret &&
+          speakeasy.totp.verify({
+            secret: user.mfaSecret,
+            encoding: 'base32',
+            token: input.mfaCode,
+            window: 1,
+          });
+        console.log('[LOGIN USE CASE] MFA code validation:', validMfaCode);
+        if (!validMfaCode) {
+          console.log('[LOGIN USE CASE] Invalid MFA code, throwing UnauthorizedError');
+          throw new UnauthorizedError('Invalid MFA code');
+        }
+      }
+
+      console.log('[LOGIN USE CASE] All validations passed, updating last login...');
+      await this.authRepository.updateUserLastLogin(user.id, new Date());
+      console.log('[LOGIN USE CASE] Last login updated');
+
+      const familyId = randomUUID();
+      console.log('[LOGIN USE CASE] Generated familyId:', familyId);
+      
+      console.log('[LOGIN USE CASE] Generating tokens...');
+      const tokens = await this.tokenService.signTokens({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      });
+      console.log('[LOGIN USE CASE] Tokens generated:', {
+        hasAccessToken: !!tokens.accessToken,
+        hasRefreshToken: !!tokens.refreshToken,
+        hasRefreshJti: !!tokens.refreshJti,
+      });
+
+      console.log('[LOGIN USE CASE] Storing refresh token...');
+      await this.storeRefreshToken({
+        userId: user.id,
+        refreshToken: tokens.refreshToken,
+        refreshJti: tokens.refreshJti,
+        familyId,
+        meta: clientMeta,
+      });
+      console.log('[LOGIN USE CASE] Refresh token stored');
+
+      console.log('[LOGIN USE CASE] Building auth user payload...');
+      const authUser = await this.buildAuthUser(user.id);
+      console.log('[LOGIN USE CASE] Auth user built:', authUser.email);
+      
+      console.log('[LOGIN USE CASE] Login successful, returning result');
+      console.log('[LOGIN USE CASE] ============================================');
+
+      return {
+        user: authUser,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+    } catch (error) {
+      console.error('[LOGIN USE CASE] ERROR during login execution:', error);
+      console.error('[LOGIN USE CASE] Error type:', error?.constructor?.name);
+      console.error('[LOGIN USE CASE] Error message:', error instanceof Error ? error.message : 'Unknown error');
+      if (error instanceof Error && error.stack) {
+        console.error('[LOGIN USE CASE] Stack trace:', error.stack);
+      }
+      console.error('[LOGIN USE CASE] ============================================');
+      throw error;
     }
-
-    await this.authRepository.updateUserLastLogin(user.id, new Date());
-
-    const familyId = randomUUID();
-    const tokens = await this.tokenService.signTokens({
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    await this.storeRefreshToken({
-      userId: user.id,
-      refreshToken: tokens.refreshToken,
-      refreshJti: tokens.refreshJti,
-      familyId,
-      meta: clientMeta,
-    });
-
-    return {
-      user: await this.buildAuthUser(user.id),
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
   }
 
   private normalizeEmail(email: string): string {

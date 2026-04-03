@@ -10,7 +10,8 @@ import { PrismaAuditRepository } from './infrastructure/persistence/prisma-audit
 
 @Global()
 @Module({
-  imports: [QueueModule],
+  // QueueModule desactivado temporalmente
+  // imports: [QueueModule],
   providers: [
     PrismaService,
     EmailService,
@@ -31,7 +32,7 @@ import { PrismaAuditRepository } from './infrastructure/persistence/prisma-audit
     StorageConfig,
     STORAGE_PORT,
     AUDIT_REPOSITORY,
-    QueueModule,
+    // QueueModule,
   ],
 })
 export class SharedModule {}

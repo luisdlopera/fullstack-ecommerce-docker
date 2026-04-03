@@ -16,8 +16,10 @@ export class EmailService {
     this.resend = new Resend(apiKey);
   }
 
-  async sendPasswordResetEmail(email: string, token: string): Promise<void> {
-    const resetUrl = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
+  async sendPasswordResetEmail(input: { to: string; resetUrl?: string; token?: string; ttlMinutes?: number }): Promise<void> {
+    const email = input.to;
+    const token = input.token || input.resetUrl?.split('token=')[1] || '';
+    const resetUrl = input.resetUrl || `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
     const { error } = await this.resend.emails.send({
       from: this.from,
       to: email,
@@ -36,8 +38,10 @@ export class EmailService {
     }
   }
 
-  async sendEmailVerificationEmail(email: string, token: string): Promise<void> {
-    const verifyUrl = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+  async sendEmailVerificationEmail(input: { to: string; verifyUrl?: string; token?: string; ttlMinutes?: number }): Promise<void> {
+    const email = input.to;
+    const token = input.token || input.verifyUrl?.split('token=')[1] || '';
+    const verifyUrl = input.verifyUrl || `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
     const { error } = await this.resend.emails.send({
       from: this.from,
       to: email,
@@ -55,7 +59,9 @@ export class EmailService {
     }
   }
 
-  async sendLowStockAlertEmail(productName: string, currentStock: number): Promise<void> {
+  async sendLowStockAlertEmail(input: { to?: string; productId?: string; productName?: string; warehouseId?: string; availableQuantity?: number; currentStock?: number; lowStockThreshold?: number }): Promise<void> {
+    const productName = input.productName || input.productId || 'Unknown Product';
+    const currentStock = input.currentStock ?? input.availableQuantity ?? 0;
     const { error } = await this.resend.emails.send({
       from: this.from,
       to: process.env.ADMIN_EMAIL || this.from,
@@ -72,15 +78,16 @@ export class EmailService {
     }
   }
 
-  async sendPaymentConfirmationEmail(email: string, orderId: string, total: number): Promise<void> {
+  async sendPaymentConfirmationEmail(input: { to?: string; email?: string; orderId: string; total: number; transactionId?: string; customerName?: string | null }): Promise<void> {
+    const email = input.email || input.to || '';
     const { error } = await this.resend.emails.send({
       from: this.from,
       to: email,
-      subject: `Confirmación de pago - Pedido #${orderId}`,
+      subject: `Confirmación de pago - Pedido #${input.orderId}`,
       html: `
         <h1>¡Gracias por tu compra!</h1>
-        <p>Hemos recibido tu pago para el pedido <strong>#${orderId}</strong>.</p>
-        <p>Total pagado: <strong>$${total}</strong></p>
+        <p>Hemos recibido tu pago para el pedido <strong>#${input.orderId}</strong>.</p>
+        <p>Total pagado: <strong>$${input.total}</strong></p>
         <p>Pronto recibirás un correo con los detalles de tu envío.</p>
       `,
     });

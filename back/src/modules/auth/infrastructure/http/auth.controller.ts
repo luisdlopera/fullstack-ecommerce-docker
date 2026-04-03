@@ -43,22 +43,44 @@ export class AuthController {
   @Throttle({ default: { limit: 12, ttl: 60000 } })
   @Post('login')
   async login(@Body() dto: LoginDto, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
-    const result = await this.authService.login(dto, {
-      ip: this.extractClientIp(request),
-      userAgent: request.headers['user-agent'],
-    });
+    console.log('[AUTH CONTROLLER /auth/login] ============================================');
+    console.log('[AUTH CONTROLLER] Received login request:', JSON.stringify({ email: dto.email, hasPassword: !!dto.password, mfaCode: dto.mfaCode }));
+    
+    try {
+      const clientMeta = {
+        ip: this.extractClientIp(request),
+        userAgent: request.headers['user-agent'],
+      };
+      console.log('[AUTH CONTROLLER] Client meta:', clientMeta);
+      
+      const result = await this.authService.login(dto, clientMeta);
+      console.log('[AUTH CONTROLLER] Login successful, user:', result.user?.email);
 
-    if (process.env.AUTH_COOKIES === 'true') {
-      response.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
-      });
-      return { user: result.user, accessToken: result.accessToken };
+      if (process.env.AUTH_COOKIES === 'true') {
+        response.cookie('refreshToken', result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
+        });
+        console.log('[AUTH CONTROLLER] Cookies set, returning response');
+        console.log('[AUTH CONTROLLER] ============================================');
+        return { user: result.user, accessToken: result.accessToken };
+      }
+
+      console.log('[AUTH CONTROLLER] Returning full result with tokens');
+      console.log('[AUTH CONTROLLER] ============================================');
+      return result;
+    } catch (error) {
+      console.error('[AUTH CONTROLLER] LOGIN ERROR:', error);
+      console.error('[AUTH CONTROLLER] Error type:', error?.constructor?.name);
+      console.error('[AUTH CONTROLLER] Error message:', error instanceof Error ? error.message : 'Unknown error');
+      if (error instanceof Error && error.stack) {
+        console.error('[AUTH CONTROLLER] Stack trace:', error.stack);
+      }
+      console.error('[AUTH CONTROLLER] ============================================');
+      throw error;
     }
-
-    return result;
   }
 
   @Public()

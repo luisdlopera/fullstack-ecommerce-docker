@@ -11,10 +11,28 @@ import { HttpExceptionFilter } from './shared/infrastructure/filters/http-except
 import { buildCorsOptions } from './shared/infrastructure/http/cors';
 
 async function bootstrap() {
+  console.log('[BOOTSTRAP] Iniciando...');
+  
+  // Timeout global de 30 segundos
+  const bootstrapTimeout = setTimeout(() => {
+    console.error('[BOOTSTRAP] ERROR: Timeout después de 30s. El servidor no pudo iniciar.');
+    console.error('[BOOTSTRAP] Posibles causas: Redis no accesible, PostgreSQL bloqueado, o algún módulo colgado.');
+    process.exit(1);
+  }, 30000);
+  
   loadEnv({ path: resolve(process.cwd(), '.env') });
+  console.log('[BOOTSTRAP] .env cargado');
   loadEnv({ path: resolve(process.cwd(), '..', '.env') });
+  console.log('[BOOTSTRAP] ../.env cargado');
 
+  console.log('[BOOTSTRAP] PORT:', process.env.PORT);
+  console.log('[BOOTSTRAP] DATABASE_URL:', process.env.DATABASE_URL ? 'definida' : 'NO definida');
+  console.log('[BOOTSTRAP] REDIS_URL:', process.env.REDIS_URL ? 'definida' : 'NO definida');
+
+  console.log('[BOOTSTRAP] Creando NestFactory...');
+  console.log('[BOOTSTRAP] AppModule creado, inicializando...');
   const app = await NestFactory.create(AppModule);
+  console.log('[BOOTSTRAP] NestFactory creada, AppModule inicializado');
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('api');
@@ -86,7 +104,13 @@ async function bootstrap() {
   }
 
   const port = Number(process.env.PORT ?? 5007);
+  console.log('[BOOTSTRAP] Puerto:', port);
+  console.log('[BOOTSTRAP] Llamando app.listen...');
   await app.listen(port, '0.0.0.0');
+  console.log('[BOOTSTRAP] app.listen completado');
+  
+  // Limpiar timeout ya que el servidor inició correctamente
+  clearTimeout(bootstrapTimeout);
 
   // eslint-disable-next-line no-console
   console.log('');

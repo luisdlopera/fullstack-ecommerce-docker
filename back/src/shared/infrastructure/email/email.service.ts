@@ -134,13 +134,17 @@ export class EmailService {
                 <td style="padding:8px 0;font-weight:600;">${input.lowStockThreshold}</td>
               </tr>
             </table>
-            ${settingsUrl ? `
+            ${
+              settingsUrl
+                ? `
               <div style="margin-top:20px;">
                 <a href="${settingsUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
                   Ver inventario
                 </a>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
           </div>
         </div>
       </div>
@@ -185,13 +189,17 @@ export class EmailService {
                 <td style="padding:8px 0;font-weight:600;">${input.transactionId}</td>
               </tr>
             </table>
-            ${orderUrl ? `
+            ${
+              orderUrl
+                ? `
               <div style="margin-top:20px;">
                 <a href="${orderUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
                   Ver pedido
                 </a>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
           </div>
         </div>
       </div>

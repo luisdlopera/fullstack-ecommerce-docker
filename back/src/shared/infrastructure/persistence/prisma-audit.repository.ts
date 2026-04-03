@@ -8,7 +8,7 @@ export class PrismaAuditRepository implements AuditRepositoryPort {
 
   async record(input: AuditRecordInput): Promise<void> {
     const { userId, action, entityType, entityId, metadata, ip, userAgent } = input;
-    
+
     await this.prisma.auditLog.create({
       data: {
         actorId: userId || 'system',

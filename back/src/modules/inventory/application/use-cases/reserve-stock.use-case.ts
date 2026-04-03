@@ -1,9 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { StockQuantity } from '../../domain/value-objects/stock-quantity.vo';
-import {
-  INVENTORY_REPOSITORY,
-  type InventoryRepositoryPort,
-} from '../ports/inventory-repository.port';
+import { INVENTORY_REPOSITORY, type InventoryRepositoryPort } from '../ports/inventory-repository.port';
 import { PRODUCT_REPOSITORY, type ProductRepositoryPort } from '../ports/product-repository.port';
 import { WAREHOUSE_REPOSITORY, type WarehouseRepositoryPort } from '../ports/warehouse-repository.port';
 import type { InventoryCommand } from '../dto/inventory-command.dto';

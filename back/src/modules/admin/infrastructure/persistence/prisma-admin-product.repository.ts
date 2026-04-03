@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
-import type { AdminProductListFilters, AdminProductRepositoryPort } from '../../domain/ports/admin-product.repository.port';
+import type {
+  AdminProductListFilters,
+  AdminProductRepositoryPort,
+} from '../../domain/ports/admin-product.repository.port';
 
 @Injectable()
 export class PrismaAdminProductRepository implements AdminProductRepositoryPort {

@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { MercadoPagoPaymentApiPort } from '../../domain/ports/mercadopago-payment-api.port';
 import { MERCADOPAGO_PAYMENT_API } from '../../domain/ports/mercadopago-payment-api.port';
-import { PAYMENT_ORDER_REPOSITORY, type PaymentOrderRepositoryPort } from '../../domain/ports/payment-order-repository.port';
+import {
+  PAYMENT_ORDER_REPOSITORY,
+  type PaymentOrderRepositoryPort,
+} from '../../domain/ports/payment-order-repository.port';
 import {
   BadRequestError,
   ForbiddenError,
@@ -25,7 +28,9 @@ export class InitMercadoPagoCheckoutUseCase {
     const order = await this.paymentOrders.findOrderById(orderId);
     if (!order) throw new NotFoundError('Order not found');
 
-    const isAuthorized = order.userId ? order.userId === userId : order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken;
+    const isAuthorized = order.userId
+      ? order.userId === userId
+      : order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken;
     if (!isAuthorized) {
       throw new ForbiddenError('You cannot pay this order');
     }

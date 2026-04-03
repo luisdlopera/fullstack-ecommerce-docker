@@ -31,4 +31,3 @@ import { MarkOrderPaidUseCase } from './application/use-cases/mark-order-paid.us
   exports: [],
 })
 export class OrdersModule {}
-

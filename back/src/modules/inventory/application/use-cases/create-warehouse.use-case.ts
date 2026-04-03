@@ -1,8 +1,5 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import {
-  WAREHOUSE_REPOSITORY,
-  type WarehouseRepositoryPort,
-} from '../ports/warehouse-repository.port';
+import { WAREHOUSE_REPOSITORY, type WarehouseRepositoryPort } from '../ports/warehouse-repository.port';
 
 @Injectable()
 export class CreateWarehouseUseCase {

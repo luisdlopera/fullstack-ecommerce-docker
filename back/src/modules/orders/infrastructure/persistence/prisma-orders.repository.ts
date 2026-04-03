@@ -23,7 +23,9 @@ export class PrismaOrdersRepository implements OrdersRepositoryPort {
     return rows;
   }
 
-  async validateCartStock(items: { productId: string; size: string; quantity: number }[]): Promise<CartValidationResult> {
+  async validateCartStock(
+    items: { productId: string; size: string; quantity: number }[],
+  ): Promise<CartValidationResult> {
     const errors: CartValidationError[] = [];
 
     for (const item of items) {
@@ -67,7 +69,6 @@ export class PrismaOrdersRepository implements OrdersRepositoryPort {
     guestCheckoutToken?: string,
   ): Promise<OrderWithItemsAndAddress> {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-
       const order = await tx.order.create({
         data: {
           userId,

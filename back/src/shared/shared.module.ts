@@ -25,13 +25,6 @@ import { PrismaAuditRepository } from './infrastructure/persistence/prisma-audit
       useClass: PrismaAuditRepository,
     },
   ],
-  exports: [
-    PrismaService,
-    EmailService,
-    StorageConfig,
-    STORAGE_PORT,
-    AUDIT_REPOSITORY,
-    QueueModule,
-  ],
+  exports: [PrismaService, EmailService, StorageConfig, STORAGE_PORT, AUDIT_REPOSITORY, QueueModule],
 })
 export class SharedModule {}

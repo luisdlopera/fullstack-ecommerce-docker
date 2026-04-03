@@ -45,7 +45,7 @@ export class LoginUseCase {
     if (!user) {
       authDebugLog('[AUTH-BACK] user lookup', { email: normalizedEmail, found: false });
       // Prevent timing attacks by hashing a static string
-      await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
+      await bcryptjs.compare(input.password, '$2b$10$Hr1qtwD1JyrGzo8uSLTBn.2L/pO0w7BRaWZ5kGi9TlZrcHM4.pDWi');
       throw new UnauthorizedError('Invalid email or password');
     }
 
@@ -162,10 +162,14 @@ export class LoginUseCase {
     const num = parseInt(ttl.slice(0, -1));
     const unit = ttl.slice(-1).toLowerCase();
     switch (unit) {
-      case 'd': return num * 24 * 60 * 60 * 1000;
-      case 'h': return num * 60 * 60 * 1000;
-      case 'm': return num * 60 * 1000;
-      default: return num;
+      case 'd':
+        return num * 24 * 60 * 60 * 1000;
+      case 'h':
+        return num * 60 * 60 * 1000;
+      case 'm':
+        return num * 60 * 1000;
+      default:
+        return num;
     }
   }
 

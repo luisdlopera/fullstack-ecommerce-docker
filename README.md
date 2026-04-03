@@ -308,6 +308,38 @@ cat front/.env.local | grep API_URL
 cat back/.env | grep PORT
 ```
 
+### Error: Prisma P3009 - Failed Migrations
+
+**Síntoma:** Error durante `npm run dev:stack`
+```
+Error: P3009
+migrate found failed migrations in the target database, new migrations will not be applied.
+The `0001_init` migration failed
+```
+
+**Solución (Desarrollo Local):**
+```bash
+cd back
+
+# Ver estado de migraciones
+npx prisma migrate status
+
+# Marcar migración fallida como rolled back
+npx prisma migrate resolve --rolled-back "0001_init"
+
+# Resetear base de datos y re-aplicar migraciones
+npx prisma migrate reset --force
+```
+
+**Luego volver a ejecutar:**
+```bash
+npm run dev:stack
+```
+
+**Documentación completa:** `.specify/troubleshooting/prisma-migrations.md`
+
+---
+
 ### Error: CORS bloqueando requests
 
 **Síntoma:** El navegador bloquea requests al backend.

@@ -5,8 +5,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AUTH_PERMISSIONS_KEY } from './auth.decorator';
 import type { JwtPayload } from './jwt-payload';
 import { isCustomerRole, type PermissionKey } from './permissions';
+import { AuthMessages } from '../../../modules/auth/domain/enums/auth-messages.enum';
 
 type RequestWithUser = {
+  url?: string;
+  method?: string;
+  headers?: Record<string, string>;
   user?: JwtPayload;
 };
 
@@ -30,8 +34,18 @@ export class AuthorizationGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const payload = request.user;
 
+    // Debug logging
+    if (process.env.AUTH_DEBUG_LOGS === 'true') {
+      console.log('[AUTH DEBUG] AuthorizationGuard check:', {
+        url: request.url,
+        method: request.method,
+        requiredPermissions,
+        userPayload: payload,
+      });
+    }
+
     if (!payload?.sub) {
-      throw new UnauthorizedException('Missing authenticated user');
+      throw new UnauthorizedException(AuthMessages.UNAUTHORIZED);
     }
 
     const user = await this.prisma.user.findUnique({
@@ -45,14 +59,23 @@ export class AuthorizationGuard implements CanActivate {
     });
 
     if (!user || !user.isActive || user.deletedAt) {
-      throw new ForbiddenException('Account is not allowed');
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] User forbidden:', { userId: payload.sub, exists: !!user, isActive: user?.isActive, deletedAt: user?.deletedAt });
+      }
+      throw new ForbiddenException(AuthMessages.ACCOUNT_NOT_ALLOWED);
     }
 
     if (isCustomerRole(user.role)) {
-      throw new ForbiddenException('CUSTOMER role cannot access admin resources');
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] Customer role forbidden for admin resource:', { userId: user.id, role: user.role });
+      }
+      throw new ForbiddenException(AuthMessages.CUSTOMER_ROLE_RESTRICTED);
     }
 
     if (user.role === Role.SUPER_ADMIN) {
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] Super admin allowed:', { userId: user.id });
+      }
       return true;
     }
 
@@ -65,7 +88,19 @@ export class AuthorizationGuard implements CanActivate {
     const hasAllPermissions = requiredPermissions.every((permission) => permissionSet.has(permission));
 
     if (!hasAllPermissions) {
-      throw new ForbiddenException('Insufficient permissions');
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] Insufficient permissions:', {
+          userId: user.id,
+          role: user.role,
+          requiredPermissions,
+          userPermissions: rolePermissions.map(p => p.permissionId),
+        });
+      }
+      throw new ForbiddenException(AuthMessages.INSUFFICIENT_PERMISSIONS);
+    }
+
+    if (process.env.AUTH_DEBUG_LOGS === 'true') {
+      console.log('[AUTH DEBUG] Access granted:', { userId: user.id, role: user.role });
     }
 
     return true;

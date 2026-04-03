@@ -63,36 +63,44 @@ export class AuthController {
       authCookiesEnabled: process.env.AUTH_COOKIES === 'true',
     });
 
-    const result = await this.authService.login(dto, {
-      ip: this.extractClientIp(request),
-      userAgent: request.headers['user-agent'],
-    });
-
-    if (process.env.AUTH_COOKIES === 'true') {
-      response.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
+    try {
+      const result = await this.authService.login(dto, {
+        ip: this.extractClientIp(request),
+        userAgent: request.headers['user-agent'],
       });
-      authDebugLog('[AUTH-COOKIE] refresh cookie set', {
+
+      if (process.env.AUTH_COOKIES === 'true') {
+        response.cookie('refreshToken', result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
+        });
+        authDebugLog('[AUTH-COOKIE] refresh cookie set', {
+          requestId,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAgeSeconds: 7 * 24 * 60 * 60,
+        });
+        return { user: result.user, accessToken: result.accessToken };
+      }
+
+      authDebugLog('[AUTH-BACK] login response', {
         requestId,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAgeSeconds: 7 * 24 * 60 * 60,
+        hasAccessToken: Boolean(result.accessToken),
+        hasRefreshToken: Boolean(result.refreshToken),
+        userId: result.user?.id,
+        role: result.user?.role,
       });
-      return { user: result.user, accessToken: result.accessToken };
+
+      return result;
+    } catch (error) {
+      authDebugLog('[AUTH-BACK] login error', {
+        requestId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
     }
-
-    authDebugLog('[AUTH-BACK] login response', {
-      requestId,
-      hasAccessToken: Boolean(result.accessToken),
-      hasRefreshToken: Boolean(result.refreshToken),
-      userId: result.user?.id,
-      role: result.user?.role,
-    });
-
-    return result;
   }
 
   @Public()

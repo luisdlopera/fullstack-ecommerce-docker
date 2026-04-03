@@ -15,8 +15,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
+COPY from=builder /app/dist ./dist
 COPY prisma ./prisma
 COPY scripts ./scripts
-EXPOSE 4000
+EXPOSE 5007
 CMD ["npm", "run", "docker:start"]

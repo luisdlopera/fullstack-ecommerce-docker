@@ -31,7 +31,7 @@ export function VerifyEmailClient({ token }: { token?: string }) {
 	}, [token, verifyEmail]);
 
 	return (
-		<main className='mx-auto mt-28 w-full max-w-md px-4 text-black'>
+		<main className='mx-auto mt-28 flex min-h-screen w-full max-w-md flex-col px-4 text-black'>
 			<div className='flex flex-col gap-3'>
 				<h1 className='text-3xl font-bold'>Verificación de correo</h1>
 				{loading ? <p className='text-sm text-gray-600'>Validando tu enlace...</p> : null}

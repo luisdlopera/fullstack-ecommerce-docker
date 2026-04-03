@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const frontPort = Number(process.env.FRONTEND_PORT || process.env.FRONT_PORT || 5006);
+const frontBaseUrl = `http://localhost:${frontPort}`;
+
 export default defineConfig({
 	testDir: './e2e',
 	fullyParallel: true,
@@ -8,12 +11,12 @@ export default defineConfig({
 	reporter: process.env.CI ? 'github' : 'list',
 	use: {
 		...devices['Desktop Chrome'],
-		baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
+		baseURL: process.env.PLAYWRIGHT_BASE_URL ?? frontBaseUrl,
 		trace: 'on-first-retry',
 	},
 	webServer: {
 		command: 'npm run dev',
-		url: 'http://localhost:3000',
+		url: frontBaseUrl,
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000,
 	},

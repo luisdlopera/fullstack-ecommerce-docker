@@ -7,6 +7,7 @@ import { AUTH_REPOSITORY, type AuthRepositoryPort } from '../../domain/ports/aut
 import { EMAIL_SENDER, type EmailSenderPort } from '../../domain/ports/email-sender.port';
 import { RegisterDto } from '../../infrastructure/http/dto/register.dto';
 import { BadRequestError, ConflictError } from '../../../../shared/domain/errors/domain-error';
+import { AuthMessages } from '../../domain/enums/auth-messages.enum';
 
 @Injectable()
 export class RegisterUseCase {
@@ -22,7 +23,7 @@ export class RegisterUseCase {
     const existingUser = await this.authRepository.findUserByEmail(normalizedEmail);
 
     if (existingUser) {
-      throw new ConflictError('Email is already in use');
+      throw new ConflictError(AuthMessages.EMAIL_ALREADY_EXISTS);
     }
 
     const user = await this.authRepository.createUser({
@@ -36,7 +37,7 @@ export class RegisterUseCase {
 
     return {
       ok: true,
-      message: 'We sent a verification email. Please verify your email before signing in.',
+      message: AuthMessages.REGISTER_SUCCESSFUL,
     };
   }
 
@@ -51,7 +52,13 @@ export class RegisterUseCase {
   }
 
   private getFrontendBaseUrl(): string {
-    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(/\/$/, '');
+  }
+
+  private buildFallbackFrontendUrl(): string {
+    const port = process.env.FRONTEND_PORT || process.env.FRONT_PORT || '5006';
+    const host = process.env.FRONTEND_HOST || 'localhost';
+    return `http://${host}:${port}`;
   }
 
   private hashValue(value: string): string {
@@ -70,11 +77,11 @@ export class RegisterUseCase {
   private async assertTrustedEmailAddress(email: string): Promise<void> {
     const domain = email.split('@')[1]?.toLowerCase();
     if (!domain) {
-      throw new BadRequestError('Invalid email domain');
+      throw new BadRequestError(AuthMessages.VALIDATION_ERROR);
     }
 
     if (this.getDisposableDomains().has(domain)) {
-      throw new BadRequestError('Disposable email addresses are not allowed');
+      throw new BadRequestError(AuthMessages.VALIDATION_ERROR);
     }
 
     const mustValidateMx = (process.env.EMAIL_MX_REQUIRED ?? 'true') === 'true';
@@ -86,10 +93,10 @@ export class RegisterUseCase {
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('MX lookup timeout')), 1500)),
       ]);
       if (!records?.length) {
-        throw new BadRequestError('Email domain cannot receive email');
+        throw new BadRequestError(AuthMessages.VALIDATION_ERROR);
       }
     } catch {
-      throw new BadRequestError('Email domain cannot receive email');
+      throw new BadRequestError(AuthMessages.VALIDATION_ERROR);
     }
   }
 

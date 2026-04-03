@@ -14,14 +14,24 @@ async function bootstrap() {
   const localEnvPath = resolve(process.cwd(), '.env');
   if (existsSync(localEnvPath)) {
     loadEnv({ path: localEnvPath });
+    console.log('[BOOTSTRAP] .env cargado');
   }
 
   const rootEnvPath = resolve(process.cwd(), '..', '.env');
-  if (!existsSync(localEnvPath) && existsSync(rootEnvPath)) {
+  if (existsSync(rootEnvPath)) {
     loadEnv({ path: rootEnvPath });
+    console.log('[BOOTSTRAP] ../.env cargado');
   }
 
+  console.log('[BOOTSTRAP] Iniciando...');
+  console.log('[BOOTSTRAP] PORT:', process.env.PORT);
+  console.log('[BOOTSTRAP] DATABASE_URL:', process.env.DATABASE_URL ? 'definida' : 'NO definida');
+  console.log('[BOOTSTRAP] REDIS_URL:', process.env.REDIS_URL ? 'definida' : 'NO definida');
+
+  console.log('[BOOTSTRAP] Creando NestFactory...');
+  console.log('[BOOTSTRAP] AppModule creado, inicializando...');
   const app = await NestFactory.create(AppModule);
+  console.log('[BOOTSTRAP] NestFactory creada, AppModule inicializado');
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('api');
@@ -64,8 +74,17 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  const port = Number(process.env.PORT ?? 4000);
+  const port = Number(process.env.PORT ?? 5007);
+  console.log('[BOOTSTRAP] Puerto:', port);
+  console.log('[BOOTSTRAP] Llamando app.listen...');
   await app.listen(port, '0.0.0.0');
+  console.log('[BOOTSTRAP] app.listen completado');
+
+  console.log('');
+  console.log('╔════════════════════════════════════════════════════════════╗');
+  console.log(`║  🚀 BACK running on http://localhost:${port}                     ║`);
+  console.log('╚════════════════════════════════════════════════════════════╝');
+  console.log('');
 }
 
 void bootstrap();

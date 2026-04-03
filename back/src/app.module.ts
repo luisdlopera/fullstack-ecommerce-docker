@@ -4,7 +4,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SharedModule } from './shared/shared.module';
 import { JwtAuthGuard } from './shared/infrastructure/auth/jwt-auth.guard';
-import { AuthorizationGuard } from './shared/infrastructure/auth/authorization.guard';
 import { RolesGuard } from './shared/infrastructure/auth/roles.guard';
 import { ProductsModule } from './modules/products/products.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -23,25 +22,27 @@ import { LegacyVersionController } from './shared/infrastructure/http/legacy-ver
     SharedModule,
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 400 }] }),
     JwtModule.register({}),
+    // HealthModule activado - PrismaHealthIndicator removido para evitar bloqueo
     HealthModule,
-    ProductsModule,
     AuthModule,
     UsersModule,
+    ProductsModule,
+    // Paso 4: OrdersModule + InventoryModule
     OrdersModule,
-    PaymentsModule,
-    AdminModule,
     InventoryModule,
+    // Paso 5: PaymentsModule
+    PaymentsModule,
+    // Paso 6: AdminModule
+    AdminModule,
   ],
   controllers: [LegacyVersionController],
   providers: [
+    // Global JWT Auth Guard - protege todos los endpoints excepto @Public()
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    {
-      provide: APP_GUARD,
-      useClass: AuthorizationGuard,
-    },
+    // Global Roles Guard - verifica permisos donde se use @Roles()
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

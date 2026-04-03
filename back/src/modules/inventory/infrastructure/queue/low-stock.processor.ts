@@ -16,7 +16,10 @@ export class LowStockProcessor implements JobProcessor, OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.queueService.registerProcessor(this);
+    console.log('[LowStockProcessor] onModuleInit - registrando procesador...');
+    // Desactivado temporalmente para diagnóstico
+    // this.queueService.registerProcessor(this);
+    console.log('[LowStockProcessor] Procesador desactivado para diagnóstico');
   }
 
   async process(job: Job<LowStockJobData>): Promise<{ ok: boolean }> {

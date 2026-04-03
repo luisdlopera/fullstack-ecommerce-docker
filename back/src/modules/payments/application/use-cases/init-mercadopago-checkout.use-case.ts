@@ -38,7 +38,7 @@ export class InitMercadoPagoCheckoutUseCase {
       };
     }
 
-    const appBaseUrl = (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(
+    const appBaseUrl = (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(
       /\/$/,
       '',
     );
@@ -74,5 +74,11 @@ export class InitMercadoPagoCheckoutUseCase {
       checkoutUrl: checkout.initPoint,
       sandboxCheckoutUrl: checkout.sandboxInitPoint,
     };
+  }
+
+  private buildFallbackFrontendUrl(): string {
+    const port = process.env.FRONTEND_PORT || process.env.FRONT_PORT || '5006';
+    const host = process.env.FRONTEND_HOST || 'localhost';
+    return `http://${host}:${port}`;
   }
 }

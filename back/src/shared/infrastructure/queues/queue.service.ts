@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Job, Queue, QueueEvents, Worker } from 'bullmq';
-import { DEFAULT_CONCURRENCY, DEFAULT_JOB_OPTIONS, QUEUE_NAMES, type QueueName } from './queue.constants';
+import { DEFAULT_CONCURRENCY, DEFAULT_JOB_OPTIONS, type QueueName } from './queue.constants';
 
 export interface JobProcessor {
   queueName: QueueName;
@@ -16,7 +16,7 @@ function getRedisConnectionConfig() {
   const url = new URL(redisUrl);
   return {
     host: url.hostname || 'localhost',
-    port: parseInt(url.port, 10) || 6379,
+    port: parseInt(url.port, 10) || 5003,
     password: url.password || undefined,
     username: url.username || undefined,
     db: url.pathname ? parseInt(url.pathname.slice(1), 10) || 0 : 0,
@@ -30,25 +30,33 @@ export class QueueService implements OnModuleDestroy {
   private readonly queues = new Map<string, Queue>();
   private readonly workers = new Map<string, Worker>();
   private readonly queueEvents = new Map<string, QueueEvents>();
+  private connectionConfig: ReturnType<typeof getRedisConnectionConfig> | null = null;
 
   constructor() {
-    const connection = getRedisConnectionConfig();
+    console.log('[QueueService] Inicializado (lazy - sin conexión aún)');
+    // La conexión se establece lazy en getQueue para evitar bloqueos
+  }
 
-    for (const queueName of Object.values(QUEUE_NAMES)) {
-      const queue = new Queue(queueName, {
-        connection,
-        defaultJobOptions: DEFAULT_JOB_OPTIONS,
-      });
-
-      this.queues.set(queueName, queue);
-      this.logger.log(`Queue "${queueName}" initialized`);
+  private getConnectionConfig(): ReturnType<typeof getRedisConnectionConfig> {
+    if (!this.connectionConfig) {
+      console.log('[QueueService] Cargando configuración Redis (lazy)...');
+      this.connectionConfig = getRedisConnectionConfig();
+      console.log('[QueueService] Configuración Redis cargada');
     }
+    return this.connectionConfig;
   }
 
   getQueue(name: QueueName): Queue {
-    const queue = this.queues.get(name);
+    let queue = this.queues.get(name);
     if (!queue) {
-      throw new Error(`Queue "${name}" not found`);
+      console.log(`[QueueService] Creando cola "${name}" (lazy)...`);
+      const connection = this.getConnectionConfig();
+      queue = new Queue(name, {
+        connection,
+        defaultJobOptions: DEFAULT_JOB_OPTIONS,
+      });
+      this.queues.set(name, queue);
+      this.logger.log(`Queue "${name}" initialized (lazy)`);
     }
     return queue;
   }
@@ -61,7 +69,7 @@ export class QueueService implements OnModuleDestroy {
       return;
     }
 
-    const connection = getRedisConnectionConfig();
+    const connection = this.getConnectionConfig();
 
     const worker = new Worker(
       queueName,

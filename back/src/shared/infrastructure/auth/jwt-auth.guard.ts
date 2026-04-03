@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import type { JwtPayload } from './jwt-payload';
+import { AuthMessages } from '../../../modules/auth/domain/enums/auth-messages.enum';
 import { authDebugLog } from '../observability/auth-debug';
 
 type RequestWithUser = Request & { user?: JwtPayload };
@@ -25,6 +26,18 @@ export class JwtAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
 
+    // Debug logging
+    if (process.env.AUTH_DEBUG_LOGS === 'true') {
+      console.log('[AUTH DEBUG] JwtAuthGuard check:', {
+        url: request.url,
+        method: request.method,
+        isPublic,
+        hasAuthHeader: !!authHeader,
+        hasToken: !!token,
+        origin: request.headers.origin,
+      });
+    }
+
     if (!token) {
       const requestId = (request as { requestId?: string }).requestId;
       authDebugLog('[AUTH-GUARD] missing bearer', {
@@ -37,7 +50,7 @@ export class JwtAuthGuard implements CanActivate {
         hasAccessCookie: Boolean(request.cookies?.accessToken),
       });
       if (isPublic) return true;
-      throw new UnauthorizedException('Missing bearer token');
+      throw new UnauthorizedException(AuthMessages.MISSING_AUTH_HEADER);
     }
 
     try {
@@ -46,7 +59,7 @@ export class JwtAuthGuard implements CanActivate {
       });
 
       if (payload.type !== 'access') {
-        throw new UnauthorizedException('Invalid token type');
+        throw new UnauthorizedException(AuthMessages.INVALID_TOKEN_TYPE);
       }
 
       request.user = payload;
@@ -59,8 +72,13 @@ export class JwtAuthGuard implements CanActivate {
         role: payload.role,
         tokenType: payload.type,
       });
+
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] Token valid:', { userId: payload.sub, email: payload.email, role: payload.role });
+      }
+
       return true;
-    } catch {
+    } catch (err: any) {
       const requestId = (request as { requestId?: string }).requestId;
       authDebugLog('[AUTH-GUARD] invalid token', {
         requestId,
@@ -71,7 +89,10 @@ export class JwtAuthGuard implements CanActivate {
         tokenLength: token.length,
       });
       if (isPublic) return true;
-      throw new UnauthorizedException('Invalid or expired token');
+      if (process.env.AUTH_DEBUG_LOGS === 'true') {
+        console.log('[AUTH DEBUG] Token verification failed:', { error: err?.message });
+      }
+      throw new UnauthorizedException(AuthMessages.INVALID_TOKEN);
     }
   }
 }

@@ -212,7 +212,7 @@ describe('AuthService', () => {
 
       const result = await service.resetPassword('valid-token', 'password123');
 
-      expect(result).toEqual({ ok: true });
+      expect(result).toEqual({ ok: true, message: '¡Bien hecho! Tu contraseña se ha restablecido correctamente.' });
       expect(mockAuthRepository.completePasswordReset).toHaveBeenCalledTimes(1);
     });
   });

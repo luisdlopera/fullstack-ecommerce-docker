@@ -2,7 +2,7 @@
 
 import { Button, Form, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
 import { Check, Copy } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,14 @@ const SEED_TEST_USERS: { label: string; email: string; role: string }[] = [
 ];
 
 export default function AuthPage() {
+	return (
+		<Suspense fallback={null}>
+			<AuthPageContent />
+		</Suspense>
+	);
+}
+
+function AuthPageContent() {
 	const { login, register, resendVerification, user } = useAuth();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -115,7 +123,8 @@ export default function AuthPage() {
 		setRegisterError('');
 		setRegisterMessage('');
 		setRegisterLoading(true);
-		const fd = new FormData(e.currentTarget);
+		const form = e.currentTarget;
+		const fd = new FormData(form);
 		const name = fd.get('name') as string;
 		const email = fd.get('email') as string;
 		const password = fd.get('password') as string;
@@ -124,7 +133,7 @@ export default function AuthPage() {
 			const message = await register(name, email, password);
 			setLastRegisteredEmail(email.trim());
 			setRegisterMessage(message);
-			e.currentTarget.reset();
+			form.reset();
 		} catch (err) {
 			setRegisterError(err instanceof Error ? err.message : 'Error al registrarse');
 		} finally {
@@ -148,8 +157,8 @@ export default function AuthPage() {
 
 	return (
 		<>
-			<div className='mx-auto flex min-h-screen w-[90%] max-w-480 items-center justify-around gap-10 pt-20'>
-				<div className='flex w-1/3 flex-col gap-6'>
+			<div className='mx-auto flex min-h-screen w-[90%] max-w-6xl flex-col items-center justify-center gap-10 px-4 py-20 md:flex-row md:items-start md:justify-around md:py-32'>
+				<div className='flex w-full flex-col gap-6 md:w-1/2 lg:w-1/3'>
 					<Form className='flex flex-col items-start gap-2 text-black' onSubmit={onLogin}>
 						<h2 className='mb-6 text-3xl font-bold'>Iniciar sesión</h2>
 						<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />
@@ -162,9 +171,6 @@ export default function AuthPage() {
 						/>
 						<Link href='/auth/forgot-password' className='mt-1 text-sm text-gray-600 hover:underline'>
 							¿Olvidaste tu contraseña?
-						</Link>
-						<Link href='/auth/resend-verification' className='text-sm text-gray-600 hover:underline'>
-							¿No te llegó el correo de verificación?
 						</Link>
 						{loginError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{loginError}</p>}
 						<Button className='bg-primary w-full text-white' type='submit' isLoading={loginLoading}>
@@ -184,7 +190,7 @@ export default function AuthPage() {
 					)}
 				</div>
 
-				<Form className='flex w-1/3 flex-col items-start gap-2 text-black' onSubmit={onRegister}>
+				<Form className='flex w-full flex-col items-start gap-2 text-black md:w-1/2 lg:w-1/3' onSubmit={onRegister}>
 					<h2 className='mb-6 text-3xl font-bold'>Crear una cuenta</h2>
 					<Input isRequired name='name' label='Nombre' placeholder='Tu nombre' minLength={2} />
 					<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />
@@ -195,7 +201,17 @@ export default function AuthPage() {
 						placeholder='Mínimo 10 caracteres'
 						minLength={10}
 					/>
-					{registerMessage && <p className='rounded-lg bg-green-50 p-3 text-sm text-green-700'>{registerMessage}</p>}
+					{registerMessage && (
+						<div className='rounded-lg bg-green-50 p-3 text-sm'>
+							<p className='text-green-700'>{registerMessage}</p>
+							<Link
+								href='/auth/resend-verification'
+								className='mt-1 inline-block text-sm text-green-600 underline hover:text-green-800'
+							>
+								¿No te llegó el correo de verificación?
+							</Link>
+						</div>
+					)}
 					{registerError && <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{registerError}</p>}
 					{lastRegisteredEmail ? (
 						<Button

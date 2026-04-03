@@ -7,6 +7,7 @@ import { AUTH_REPOSITORY, type AuthRepositoryPort } from '../../domain/ports/aut
 import { TOKEN_SERVICE, type TokenServicePort } from '../../domain/ports/token-service.port';
 import { LoginDto } from '../../infrastructure/http/dto/login.dto';
 import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
+import { AuthMessages } from '../../domain/enums/auth-messages.enum';
 import { authDebugLog } from '../../../../shared/infrastructure/observability/auth-debug';
 
 export type AuthUserPayload = {
@@ -31,103 +32,127 @@ export class LoginUseCase {
   ) {}
 
   async execute(input: LoginDto, clientMeta: ClientMeta = {}) {
-    const normalizedEmail = this.normalizeEmail(input.email);
     authDebugLog('[AUTH-BACK] login use-case start', {
-      email: normalizedEmail,
+      email: input.email,
       passwordLength: input.password ? input.password.length : 0,
       hasMfaCode: Boolean(input.mfaCode),
       clientIp: clientMeta.ip,
       hasUserAgent: Boolean(clientMeta.userAgent),
     });
-    const user = await this.authRepository.findUserByEmail(normalizedEmail);
 
-    let isPasswordValid = false;
-    if (!user) {
-      authDebugLog('[AUTH-BACK] user lookup', { email: normalizedEmail, found: false });
-      // Prevent timing attacks by hashing a static string
-      await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
-      throw new UnauthorizedError('Invalid email or password');
-    }
+    try {
+      const normalizedEmail = this.normalizeEmail(input.email);
+      authDebugLog('[AUTH-BACK] email normalized', { email: normalizedEmail });
 
-    authDebugLog('[AUTH-BACK] user lookup', {
-      email: normalizedEmail,
-      found: true,
-      userId: user.id,
-      role: user.role,
-      isActive: user.isActive,
-      emailVerified: Boolean(user.emailVerified),
-      mfaEnabled: user.mfaEnabled,
-    });
+      authDebugLog('[AUTH-BACK] Looking up user by email...', { email: normalizedEmail });
+      const user = await this.authRepository.findUserByEmail(normalizedEmail);
+      authDebugLog('[AUTH-BACK] User lookup result', { found: !!user });
 
-    isPasswordValid = await bcryptjs.compare(input.password, user.password);
-    if (!isPasswordValid) {
-      authDebugLog('[AUTH-BACK] password check', { userId: user.id, ok: false });
-      throw new UnauthorizedError('Invalid email or password');
-    }
-
-    authDebugLog('[AUTH-BACK] password check', { userId: user.id, ok: true });
-
-    if (!user.isActive) {
-      authDebugLog('[AUTH-BACK] user blocked', { userId: user.id, reason: 'inactive' });
-      throw new UnauthorizedError('Account is deactivated');
-    }
-
-    if (!user.emailVerified) {
-      authDebugLog('[AUTH-BACK] user blocked', { userId: user.id, reason: 'email_unverified' });
-      throw new UnauthorizedError('Email address is not verified');
-    }
-
-    if (user.mfaEnabled) {
-      if (!input.mfaCode) {
-        authDebugLog('[AUTH-BACK] mfa required', { userId: user.id, provided: false });
-        throw new UnauthorizedError('MFA code is required');
-      }
-      const validMfaCode =
-        !!user.mfaSecret &&
-        speakeasy.totp.verify({
-          secret: user.mfaSecret,
-          encoding: 'base32',
-          token: input.mfaCode,
-          window: 1,
-        });
-      if (!validMfaCode) {
-        authDebugLog('[AUTH-BACK] mfa check', { userId: user.id, ok: false });
-        throw new UnauthorizedError('Invalid MFA code');
+      if (!user) {
+        authDebugLog('[AUTH-BACK] User not found', { email: normalizedEmail });
+        // Prevent timing attacks by hashing a static string
+        await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
+        throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
 
-      authDebugLog('[AUTH-BACK] mfa check', { userId: user.id, ok: true });
+      authDebugLog('[AUTH-BACK] User found', {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        emailVerified: user.emailVerified,
+        mfaEnabled: user.mfaEnabled,
+        hasPassword: !!user.password,
+        passwordLength: user.password?.length,
+      });
+
+      authDebugLog('[AUTH-BACK] Comparing passwords...', { userId: user.id });
+      const isPasswordValid = await bcryptjs.compare(input.password, user.password);
+      authDebugLog('[AUTH-BACK] Password comparison result', { userId: user.id, ok: isPasswordValid });
+
+      if (!isPasswordValid) {
+        authDebugLog('[AUTH-BACK] Password mismatch', { userId: user.id });
+        throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
+      }
+
+      if (!user.isActive) {
+        authDebugLog('[AUTH-BACK] Account deactivated', { userId: user.id });
+        throw new UnauthorizedError(AuthMessages.USER_INACTIVE);
+      }
+
+      if (!user.emailVerified) {
+        authDebugLog('[AUTH-BACK] Email not verified', { userId: user.id });
+        throw new UnauthorizedError(AuthMessages.EMAIL_NOT_VERIFIED);
+      }
+
+      if (user.mfaEnabled) {
+        authDebugLog('[AUTH-BACK] MFA required for user', { userId: user.id, role: user.role });
+        if (!input.mfaCode) {
+          authDebugLog('[AUTH-BACK] MFA code missing', { userId: user.id });
+          throw new UnauthorizedError(AuthMessages.MFA_REQUIRED);
+        }
+        const validMfaCode =
+          !!user.mfaSecret &&
+          speakeasy.totp.verify({
+            secret: user.mfaSecret,
+            encoding: 'base32',
+            token: input.mfaCode,
+            window: 1,
+          });
+        authDebugLog('[AUTH-BACK] MFA code validation', { userId: user.id, ok: validMfaCode });
+        if (!validMfaCode) {
+          authDebugLog('[AUTH-BACK] Invalid MFA code', { userId: user.id });
+          throw new UnauthorizedError(AuthMessages.MFA_INVALID);
+        }
+      }
+
+      authDebugLog('[AUTH-BACK] All validations passed, updating last login...', { userId: user.id });
+      await this.authRepository.updateUserLastLogin(user.id, new Date());
+      authDebugLog('[AUTH-BACK] Last login updated', { userId: user.id });
+
+      const familyId = randomUUID();
+      authDebugLog('[AUTH-BACK] Generated familyId', { userId: user.id, familyId });
+
+      authDebugLog('[AUTH-BACK] Generating tokens...', { userId: user.id });
+      const tokens = await this.tokenService.signTokens({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      });
+      authDebugLog('[AUTH-BACK] Tokens generated', {
+        userId: user.id,
+        hasAccessToken: !!tokens.accessToken,
+        hasRefreshToken: !!tokens.refreshToken,
+        hasRefreshJti: !!tokens.refreshJti,
+      });
+
+      authDebugLog('[AUTH-BACK] Storing refresh token...', { userId: user.id });
+      await this.storeRefreshToken({
+        userId: user.id,
+        refreshToken: tokens.refreshToken,
+        refreshJti: tokens.refreshJti,
+        familyId,
+        meta: clientMeta,
+      });
+      authDebugLog('[AUTH-BACK] Refresh token stored', { userId: user.id });
+
+      authDebugLog('[AUTH-BACK] Building auth user payload...', { userId: user.id });
+      const authUser = await this.buildAuthUser(user.id);
+      authDebugLog('[AUTH-BACK] Auth user built', { userId: user.id, email: authUser.email });
+      authDebugLog('[AUTH-BACK] Login successful', { userId: user.id });
+
+      return {
+        user: authUser,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+    } catch (error) {
+      authDebugLog('[AUTH-BACK] ERROR during login execution', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        type: error?.constructor?.name,
+      });
+      throw error;
     }
-
-    await this.authRepository.updateUserLastLogin(user.id, new Date());
-
-    const familyId = randomUUID();
-    const tokens = await this.tokenService.signTokens({
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    authDebugLog('[AUTH-BACK] tokens issued', {
-      userId: user.id,
-      hasAccessToken: Boolean(tokens.accessToken),
-      accessTokenLength: tokens.accessToken ? tokens.accessToken.length : 0,
-      hasRefreshToken: Boolean(tokens.refreshToken),
-      refreshTokenLength: tokens.refreshToken ? tokens.refreshToken.length : 0,
-    });
-
-    await this.storeRefreshToken({
-      userId: user.id,
-      refreshToken: tokens.refreshToken,
-      refreshJti: tokens.refreshJti,
-      familyId,
-      meta: clientMeta,
-    });
-
-    return {
-      user: await this.buildAuthUser(user.id),
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
   }
 
   private normalizeEmail(email: string): string {
@@ -171,7 +196,7 @@ export class LoginUseCase {
 
   private async buildAuthUser(userId: string): Promise<AuthUserPayload> {
     const user = await this.authRepository.findUserById(userId);
-    if (!user) throw new UnauthorizedError('User not found');
+    if (!user) throw new UnauthorizedError(AuthMessages.USER_NOT_FOUND);
 
     return {
       id: user.id,

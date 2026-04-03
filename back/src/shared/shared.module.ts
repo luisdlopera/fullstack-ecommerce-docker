@@ -10,6 +10,7 @@ import { PrismaAuditRepository } from './infrastructure/persistence/prisma-audit
 
 @Global()
 @Module({
+  // QueueModule activado con lazy initialization
   imports: [QueueModule],
   providers: [
     PrismaService,
@@ -26,12 +27,13 @@ import { PrismaAuditRepository } from './infrastructure/persistence/prisma-audit
     },
   ],
   exports: [
+    QueueModule,
     PrismaService,
     EmailService,
     StorageConfig,
     STORAGE_PORT,
     AUDIT_REPOSITORY,
-    QueueModule,
+    // QueueModule,
   ],
 })
 export class SharedModule {}

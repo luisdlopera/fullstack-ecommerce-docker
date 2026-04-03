@@ -10,7 +10,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { OrdersModule } from './modules/orders/orders.module';
-// import { PaymentsModule } from './modules/payments/payments.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 // import { AdminModule } from './modules/admin/admin.module';
 // import { HealthModule } from './modules/health/health.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
@@ -30,7 +30,8 @@ import { RequestLoggingMiddleware } from './shared/infrastructure/observability/
     // Paso 4: OrdersModule + InventoryModule
     OrdersModule,
     InventoryModule,
-    // PaymentsModule,
+    // Paso 5: PaymentsModule
+    PaymentsModule,
   ],
   // Guards desactivados temporalmente para diagnóstico
 })

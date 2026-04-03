@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
 	};
 
 	return (
-		<main className='mx-auto mt-28 w-full max-w-md px-4 text-black'>
+		<main className='mx-auto mt-28 flex min-h-[calc(100vh-200px)] w-full max-w-md flex-col px-4 text-black'>
 			<Form className='flex flex-col gap-3' onSubmit={handleSubmit}>
 				<h1 className='text-3xl font-bold'>Recuperar contraseña</h1>
 				<p className='text-sm text-gray-600'>

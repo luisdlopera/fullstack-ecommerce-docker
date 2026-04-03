@@ -12,7 +12,7 @@ import { UsersModule } from './modules/users/users.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AdminModule } from './modules/admin/admin.module';
-// import { HealthModule } from './modules/health/health.module';
+import { HealthModule } from './modules/health/health.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { CorrelationIdMiddleware } from './shared/infrastructure/observability/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './shared/infrastructure/observability/request-logging.middleware';
@@ -22,8 +22,8 @@ import { RequestLoggingMiddleware } from './shared/infrastructure/observability/
     SharedModule,
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 400 }] }),
     JwtModule.register({}),
-    // HealthModule desactivado (TerminusModule bloquea)
-    // HealthModule,
+    // HealthModule activado - PrismaHealthIndicator removido para evitar bloqueo
+    HealthModule,
     AuthModule,
     UsersModule,
     ProductsModule,

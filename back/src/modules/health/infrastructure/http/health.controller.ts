@@ -1,11 +1,4 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import {
-  HealthCheck,
-  HealthCheckService,
-  HttpHealthIndicator,
-  PrismaHealthIndicator,
-  MemoryHealthIndicator,
-} from '@nestjs/terminus';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 
@@ -13,27 +6,43 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 @Controller('health')
 export class HealthController {
   constructor(
-    private health: HealthCheckService,
-    private http: HttpHealthIndicator,
-    private prismaHealth: PrismaHealthIndicator,
-    private memory: MemoryHealthIndicator,
     @Inject(PrismaService) private readonly prisma: PrismaService,
   ) {}
 
   @Get()
-  @HealthCheck()
-  check() {
-    return this.health.check([
-      () => this.prismaHealth.pingCheck('database', this.prisma),
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024), // 150MB
-      () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024), // 300MB
-      () => ({
-        uptime: {
-          status: 'up',
-          seconds: Math.floor(process.uptime()),
-        },
-      }),
-    ]);
+  async check() {
+    const checks: Record<string, { status: string; details?: unknown }> = {};
+    let status = 'ok';
+
+    // Database check
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      checks.database = { status: 'up' };
+    } catch (error) {
+      checks.database = { status: 'down', details: error instanceof Error ? error.message : 'Unknown error' };
+      status = 'error';
+    }
+
+    // Memory check
+    const used = process.memoryUsage();
+    const heapUsedMB = Math.round(used.heapUsed / 1024 / 1024);
+    const rssMB = Math.round(used.rss / 1024 / 1024);
+    
+    checks.memory = {
+      status: heapUsedMB < 150 ? 'up' : 'warning',
+      details: { heapUsed: `${heapUsedMB}MB`, rss: `${rssMB}MB` },
+    };
+
+    if (heapUsedMB > 300) {
+      status = 'error';
+    }
+
+    return {
+      status,
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+      checks,
+    };
   }
 
   @Get('simple')

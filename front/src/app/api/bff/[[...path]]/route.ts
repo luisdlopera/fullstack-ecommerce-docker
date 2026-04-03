@@ -5,6 +5,13 @@ import { NEXSTORE_ACCESS_COOKIE } from '@/lib/auth-cookie-names';
 
 export const maxDuration = 30;
 
+const AUTH_DEBUG = process.env.NEXT_PUBLIC_AUTH_DEBUG_LOGS === 'true';
+
+function authBffLog(event: string, payload: Record<string, unknown> = {}) {
+	if (!AUTH_DEBUG) return;
+	console.log(`[AUTH-BFF] ${event}`, payload);
+}
+
 async function proxy(request: NextRequest, context: { params: Promise<{ path?: string[] }> }) {
 	const { path: segments } = await context.params;
 	if (!segments?.length) {
@@ -14,6 +21,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path?: s
 	const path = segments.join('/');
 	const url = new URL(request.url);
 	const target = `${getInternalApiBase()}/${path}${url.search}`;
+	const isAuthPath = path.startsWith('auth') || path.startsWith('users/me');
 
 	const headers = new Headers();
 	const contentType = request.headers.get('content-type');
@@ -23,6 +31,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path?: s
 
 	const access = request.cookies.get(NEXSTORE_ACCESS_COOKIE)?.value;
 	if (access) headers.set('Authorization', `Bearer ${access}`);
+	if (isAuthPath) {
+		authBffLog('proxy start', {
+			method: request.method,
+			path,
+			target,
+			hasAccessCookie: Boolean(access),
+			hasAuthHeader: Boolean(access),
+		});
+	}
 
 	let body: BodyInit | undefined;
 
@@ -54,6 +71,13 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path?: s
 	try {
 		const upstream = await fetch(target, init);
 		const bodyText = await upstream.text();
+		if (isAuthPath) {
+			authBffLog('proxy response', {
+				status: upstream.status,
+				statusText: upstream.statusText,
+				body: bodyText.slice(0, 800),
+			});
+		}
 
 		const res = new NextResponse(bodyText, {
 			status: upstream.status,

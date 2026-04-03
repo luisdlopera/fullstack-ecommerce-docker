@@ -2,6 +2,9 @@
   "name": "nexstore",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "22"
+  },
   "overrides": {
     "path-to-regexp": "8.4.0",
     "handlebars": "4.7.9",
@@ -13,15 +16,12 @@
     "packages/*"
   ],
   "scripts": {
-    "clean": "node scripts/clean-all.mjs",
-    "clean:force": "node scripts/clean-all.mjs --force",
-    "dev:clean": "npx kill-port 5006 5007 || true",
-    "dev": "npm run dev:clean && npm run dev:apps",
+    "dev": "npm run dev:apps",
     "dev:front": "npm run dev -w front",
     "dev:back": "npm run start:dev -w back",
     "dev:db": "docker compose up -d postgres redis minio minio-init",
     "dev:apps": "node scripts/dev-apps.mjs",
-    "dev:stack": "npm run dev:clean && npm run dev:db && npm run dev:apps",
+    "dev:stack": "npm run dev:db && npm run db:sync && npm run dev:apps",
     "dev:down": "docker compose down",
     "build": "npm run build -w front && npm run build -w back",
     "db:sync": "npm run prisma:generate -w back && npm run prisma:migrate:deploy -w back",

@@ -2,6 +2,9 @@
 	"name": "nexstore-front",
 	"version": "1.0.0",
 	"private": true,
+	"engines": {
+		"node": "22"
+	},
 	"scripts": {
 		"dev": "next dev -p ${FRONTEND_PORT:-${FRONT_PORT:-5006}}",
 		"build": "next build",

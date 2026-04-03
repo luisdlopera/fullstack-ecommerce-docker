@@ -8,6 +8,7 @@ import { TOKEN_SERVICE, type TokenServicePort } from '../../domain/ports/token-s
 import { LoginDto } from '../../infrastructure/http/dto/login.dto';
 import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
 import { AuthMessages } from '../../domain/enums/auth-messages.enum';
+import { authDebugLog } from '../../../../shared/infrastructure/observability/auth-debug';
 
 export type AuthUserPayload = {
   id: string;
@@ -31,24 +32,31 @@ export class LoginUseCase {
   ) {}
 
   async execute(input: LoginDto, clientMeta: ClientMeta = {}) {
-    console.log('[LOGIN USE CASE] ============================================');
-    console.log('[LOGIN USE CASE] Starting login execution for:', input.email);
-    
+    authDebugLog('[AUTH-BACK] login use-case start', {
+      email: input.email,
+      passwordLength: input.password ? input.password.length : 0,
+      hasMfaCode: Boolean(input.mfaCode),
+      clientIp: clientMeta.ip,
+      hasUserAgent: Boolean(clientMeta.userAgent),
+    });
+
     try {
       const normalizedEmail = this.normalizeEmail(input.email);
-      console.log('[LOGIN USE CASE] Normalized email:', normalizedEmail);
-      
-      console.log('[LOGIN USE CASE] Looking up user by email...');
+      authDebugLog('[AUTH-BACK] email normalized', { email: normalizedEmail });
+
+      authDebugLog('[AUTH-BACK] Looking up user by email...', { email: normalizedEmail });
       const user = await this.authRepository.findUserByEmail(normalizedEmail);
-      console.log('[LOGIN USE CASE] User lookup result:', user ? 'FOUND' : 'NOT FOUND');
-      
+      authDebugLog('[AUTH-BACK] User lookup result', { found: !!user });
+
       if (!user) {
-        console.log('[LOGIN USE CASE] User not found, throwing UnauthorizedError');
+        authDebugLog('[AUTH-BACK] User not found', { email: normalizedEmail });
+        // Prevent timing attacks by hashing a static string
+        await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
         throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
-      
-      console.log('[LOGIN USE CASE] User found:', {
-        id: user.id,
+
+      authDebugLog('[AUTH-BACK] User found', {
+        userId: user.id,
         email: user.email,
         role: user.role,
         isActive: user.isActive,
@@ -58,29 +66,29 @@ export class LoginUseCase {
         passwordLength: user.password?.length,
       });
 
-      console.log('[LOGIN USE CASE] Comparing passwords...');
-      const passwordMatch = bcryptjs.compareSync(input.password, user.password);
-      console.log('[LOGIN USE CASE] Password comparison result:', passwordMatch);
-      
-      if (!passwordMatch) {
-        console.log('[LOGIN USE CASE] Password mismatch, throwing UnauthorizedError');
+      authDebugLog('[AUTH-BACK] Comparing passwords...', { userId: user.id });
+      const isPasswordValid = await bcryptjs.compare(input.password, user.password);
+      authDebugLog('[AUTH-BACK] Password comparison result', { userId: user.id, ok: isPasswordValid });
+
+      if (!isPasswordValid) {
+        authDebugLog('[AUTH-BACK] Password mismatch', { userId: user.id });
         throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
 
       if (!user.isActive) {
-        console.log('[LOGIN USE CASE] Account deactivated, throwing UnauthorizedError');
+        authDebugLog('[AUTH-BACK] Account deactivated', { userId: user.id });
         throw new UnauthorizedError(AuthMessages.USER_INACTIVE);
       }
 
       if (!user.emailVerified) {
-        console.log('[LOGIN USE CASE] Email not verified, throwing UnauthorizedError');
+        authDebugLog('[AUTH-BACK] Email not verified', { userId: user.id });
         throw new UnauthorizedError(AuthMessages.EMAIL_NOT_VERIFIED);
       }
 
-      if (user.mfaEnabled && this.isPrivilegedRole(user.role)) {
-        console.log('[LOGIN USE CASE] MFA required for privileged role');
+      if (user.mfaEnabled) {
+        authDebugLog('[AUTH-BACK] MFA required for user', { userId: user.id, role: user.role });
         if (!input.mfaCode) {
-          console.log('[LOGIN USE CASE] MFA code missing, throwing UnauthorizedError');
+          authDebugLog('[AUTH-BACK] MFA code missing', { userId: user.id });
           throw new UnauthorizedError(AuthMessages.MFA_REQUIRED);
         }
         const validMfaCode =
@@ -91,33 +99,34 @@ export class LoginUseCase {
             token: input.mfaCode,
             window: 1,
           });
-        console.log('[LOGIN USE CASE] MFA code validation:', validMfaCode);
+        authDebugLog('[AUTH-BACK] MFA code validation', { userId: user.id, ok: validMfaCode });
         if (!validMfaCode) {
-          console.log('[LOGIN USE CASE] Invalid MFA code, throwing UnauthorizedError');
+          authDebugLog('[AUTH-BACK] Invalid MFA code', { userId: user.id });
           throw new UnauthorizedError(AuthMessages.MFA_INVALID);
         }
       }
 
-      console.log('[LOGIN USE CASE] All validations passed, updating last login...');
+      authDebugLog('[AUTH-BACK] All validations passed, updating last login...', { userId: user.id });
       await this.authRepository.updateUserLastLogin(user.id, new Date());
-      console.log('[LOGIN USE CASE] Last login updated');
+      authDebugLog('[AUTH-BACK] Last login updated', { userId: user.id });
 
       const familyId = randomUUID();
-      console.log('[LOGIN USE CASE] Generated familyId:', familyId);
-      
-      console.log('[LOGIN USE CASE] Generating tokens...');
+      authDebugLog('[AUTH-BACK] Generated familyId', { userId: user.id, familyId });
+
+      authDebugLog('[AUTH-BACK] Generating tokens...', { userId: user.id });
       const tokens = await this.tokenService.signTokens({
         sub: user.id,
         email: user.email,
         role: user.role,
       });
-      console.log('[LOGIN USE CASE] Tokens generated:', {
+      authDebugLog('[AUTH-BACK] Tokens generated', {
+        userId: user.id,
         hasAccessToken: !!tokens.accessToken,
         hasRefreshToken: !!tokens.refreshToken,
         hasRefreshJti: !!tokens.refreshJti,
       });
 
-      console.log('[LOGIN USE CASE] Storing refresh token...');
+      authDebugLog('[AUTH-BACK] Storing refresh token...', { userId: user.id });
       await this.storeRefreshToken({
         userId: user.id,
         refreshToken: tokens.refreshToken,
@@ -125,14 +134,12 @@ export class LoginUseCase {
         familyId,
         meta: clientMeta,
       });
-      console.log('[LOGIN USE CASE] Refresh token stored');
+      authDebugLog('[AUTH-BACK] Refresh token stored', { userId: user.id });
 
-      console.log('[LOGIN USE CASE] Building auth user payload...');
+      authDebugLog('[AUTH-BACK] Building auth user payload...', { userId: user.id });
       const authUser = await this.buildAuthUser(user.id);
-      console.log('[LOGIN USE CASE] Auth user built:', authUser.email);
-      
-      console.log('[LOGIN USE CASE] Login successful, returning result');
-      console.log('[LOGIN USE CASE] ============================================');
+      authDebugLog('[AUTH-BACK] Auth user built', { userId: user.id, email: authUser.email });
+      authDebugLog('[AUTH-BACK] Login successful', { userId: user.id });
 
       return {
         user: authUser,
@@ -140,13 +147,10 @@ export class LoginUseCase {
         refreshToken: tokens.refreshToken,
       };
     } catch (error) {
-      console.error('[LOGIN USE CASE] ERROR during login execution:', error);
-      console.error('[LOGIN USE CASE] Error type:', error?.constructor?.name);
-      console.error('[LOGIN USE CASE] Error message:', error instanceof Error ? error.message : 'Unknown error');
-      if (error instanceof Error && error.stack) {
-        console.error('[LOGIN USE CASE] Stack trace:', error.stack);
-      }
-      console.error('[LOGIN USE CASE] ============================================');
+      authDebugLog('[AUTH-BACK] ERROR during login execution', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        type: error?.constructor?.name,
+      });
       throw error;
     }
   }

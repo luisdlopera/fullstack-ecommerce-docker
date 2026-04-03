@@ -5,6 +5,7 @@ import type { Request } from 'express';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import type { JwtPayload } from './jwt-payload';
 import { AuthMessages } from '../../../modules/auth/domain/enums/auth-messages.enum';
+import { authDebugLog } from '../observability/auth-debug';
 
 type RequestWithUser = Request & { user?: JwtPayload };
 
@@ -38,6 +39,16 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     if (!token) {
+      const requestId = (request as { requestId?: string }).requestId;
+      authDebugLog('[AUTH-GUARD] missing bearer', {
+        requestId,
+        isPublic,
+        method: request.method,
+        path: request.originalUrl ?? request.url,
+        hasAuthorizationHeader: Boolean(authHeader),
+        hasRefreshCookie: Boolean(request.cookies?.refreshToken),
+        hasAccessCookie: Boolean(request.cookies?.accessToken),
+      });
       if (isPublic) return true;
       throw new UnauthorizedException(AuthMessages.MISSING_AUTH_HEADER);
     }
@@ -52,6 +63,15 @@ export class JwtAuthGuard implements CanActivate {
       }
 
       request.user = payload;
+      const requestId = (request as { requestId?: string }).requestId;
+      authDebugLog('[AUTH-GUARD] access ok', {
+        requestId,
+        method: request.method,
+        path: request.originalUrl ?? request.url,
+        userId: payload.sub,
+        role: payload.role,
+        tokenType: payload.type,
+      });
 
       if (process.env.AUTH_DEBUG_LOGS === 'true') {
         console.log('[AUTH DEBUG] Token valid:', { userId: payload.sub, email: payload.email, role: payload.role });
@@ -59,6 +79,15 @@ export class JwtAuthGuard implements CanActivate {
 
       return true;
     } catch (err: any) {
+      const requestId = (request as { requestId?: string }).requestId;
+      authDebugLog('[AUTH-GUARD] invalid token', {
+        requestId,
+        isPublic,
+        method: request.method,
+        path: request.originalUrl ?? request.url,
+        hasAuthorizationHeader: Boolean(authHeader),
+        tokenLength: token.length,
+      });
       if (isPublic) return true;
       if (process.env.AUTH_DEBUG_LOGS === 'true') {
         console.log('[AUTH DEBUG] Token verification failed:', { error: err?.message });

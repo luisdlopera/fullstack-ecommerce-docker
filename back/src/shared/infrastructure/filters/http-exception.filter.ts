@@ -1,6 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { DomainError } from '../../domain/errors/domain-error';
+import { authDebugError } from '../observability/auth-debug';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -45,10 +46,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
       this.logger.error(exception instanceof Error ? exception.stack : String(exception));
     }
 
-    response.status(status).json({
+    authDebugError('[AUTH-BACK] exception', {
       statusCode: status,
       message,
       error: errorName,
+      path: request.originalUrl ?? request.url,
+      method: request.method,
+      requestId,
+      stack: exception instanceof Error ? exception.stack : undefined,
+    });
+
+    response.status(status).json({
+      success: false,
+      message,
+      error: errorName,
+      statusCode: status,
+      data: null,
+      meta: requestId ? { requestId } : undefined,
       requestId,
     });
   }

@@ -35,6 +35,13 @@ type AuthUserResponse = {
 	permissions?: string[];
 };
 
+const AUTH_DEBUG = process.env.NEXT_PUBLIC_AUTH_DEBUG_LOGS === 'true';
+
+function authFrontLog(event: string, payload: Record<string, unknown> = {}) {
+	if (!AUTH_DEBUG) return;
+	console.log(`[AUTH-FRONT] ${event}`, payload);
+}
+
 function nestErrorMessage(body: unknown, fallback: string): string {
 	if (!body || typeof body !== 'object') return fallback;
 	const msg = (body as { message?: unknown }).message;
@@ -61,12 +68,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [loading, setLoading] = useState(true);
 
 	const refreshSession = useCallback(async () => {
+		authFrontLog('session start', {
+			url: '/api/auth/session',
+			credentials: 'include',
+		});
 		const res = await fetch('/api/auth/session', { credentials: 'include' });
+		const raw = await res.clone().text().catch(() => '');
+		authFrontLog('session response', {
+			status: res.status,
+			body: raw.slice(0, 800),
+		});
 		if (!res.ok) {
+			authFrontLog('session failed', { status: res.status });
 			setUser(null);
 			return;
 		}
 		const data = (await res.json()) as { user: AuthUserResponse | null };
+		authFrontLog('session parsed', {
+			hasUser: Boolean(data.user),
+			userId: data.user?.id,
+			role: data.user?.role,
+		});
 		setUser(normalizeAuthUser(data.user));
 	}, []);
 
@@ -83,6 +105,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}, [refreshSession]);
 
 	const login = useCallback(async (email: string, password: string) => {
+		authFrontLog('login submit', {
+			url: '/api/auth/login',
+			method: 'POST',
+			credentials: 'include',
+			email: email.trim(),
+			passwordLength: password?.length ?? 0,
+		});
 		const res = await fetch('/api/auth/login', {
 			method: 'POST',
 			credentials: 'include',
@@ -90,12 +119,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			body: JSON.stringify({ email: email.trim(), password }),
 		});
 
+		const raw = await res.clone().text().catch(() => '');
+		authFrontLog('login response', {
+			status: res.status,
+			body: raw.slice(0, 800),
+		});
+
 		if (!res.ok) {
 			const body = await res.json().catch(() => ({}));
+			authFrontLog('login failed', { status: res.status, body });
 			throw new Error(nestErrorMessage(body, 'Error al iniciar sesión'));
 		}
 
 		const data = (await res.json()) as { user: AuthUserResponse };
+		authFrontLog('login success', {
+			hasUser: Boolean(data.user),
+			userId: data.user?.id,
+			role: data.user?.role,
+		});
 		setUser(normalizeAuthUser(data.user));
 	}, []);
 

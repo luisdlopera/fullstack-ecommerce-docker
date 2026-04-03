@@ -9,11 +9,11 @@ import { SharedModule } from './shared/shared.module';
 import { ProductsModule } from './modules/products/products.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-// import { OrdersModule } from './modules/orders/orders.module';
+import { OrdersModule } from './modules/orders/orders.module';
 // import { PaymentsModule } from './modules/payments/payments.module';
 // import { AdminModule } from './modules/admin/admin.module';
 // import { HealthModule } from './modules/health/health.module';
-// import { InventoryModule } from './modules/inventory/inventory.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 import { CorrelationIdMiddleware } from './shared/infrastructure/observability/correlation-id.middleware';
 import { RequestLoggingMiddleware } from './shared/infrastructure/observability/request-logging.middleware';
 
@@ -26,12 +26,11 @@ import { RequestLoggingMiddleware } from './shared/infrastructure/observability/
     // HealthModule,
     AuthModule,
     UsersModule,
-    // Paso 3: ProductsModule
     ProductsModule,
-    // OrdersModule,
+    // Paso 4: OrdersModule + InventoryModule
+    OrdersModule,
+    InventoryModule,
     // PaymentsModule,
-    // AdminModule,
-    // InventoryModule,
   ],
   // Guards desactivados temporalmente para diagnóstico
 })

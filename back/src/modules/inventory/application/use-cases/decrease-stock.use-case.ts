@@ -1,9 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { StockQuantity } from '../../domain/value-objects/stock-quantity.vo';
-import {
-  INVENTORY_REPOSITORY,
-  type InventoryRepositoryPort,
-} from '../ports/inventory-repository.port';
+import { INVENTORY_REPOSITORY, type InventoryRepositoryPort } from '../ports/inventory-repository.port';
 import { LOW_STOCK_NOTIFIER, type LowStockNotifierPort } from '../ports/low-stock-notifier.port';
 import { PRODUCT_REPOSITORY, type ProductRepositoryPort } from '../ports/product-repository.port';
 import { WAREHOUSE_REPOSITORY, type WarehouseRepositoryPort } from '../ports/warehouse-repository.port';

@@ -6,7 +6,13 @@ import type { AdminAuditRepositoryPort } from '../../domain/ports/admin-audit.re
 export class PrismaAdminAuditRepository implements AdminAuditRepositoryPort {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async create(input: { actorId: string; action: string; entityType: string; entityId: string; metadata?: Record<string, unknown> }): Promise<void> {
+  async create(input: {
+    actorId: string;
+    action: string;
+    entityType: string;
+    entityId: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<void> {
     await this.prisma.auditLog.create({
       data: {
         actorId: input.actorId,

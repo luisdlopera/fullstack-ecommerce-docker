@@ -15,7 +15,15 @@ export class PrismaPaymentOrderRepository implements PaymentOrderRepositoryPort 
   async findOrderById(orderId: string): Promise<OrderPaymentRow | null> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, userId: true, total: true, isPaid: true, transactionId: true, guestEmail: true, guestCheckoutToken: true },
+      select: {
+        id: true,
+        userId: true,
+        total: true,
+        isPaid: true,
+        transactionId: true,
+        guestEmail: true,
+        guestCheckoutToken: true,
+      },
     });
     return order;
   }

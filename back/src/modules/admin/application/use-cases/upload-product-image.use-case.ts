@@ -5,11 +5,7 @@ import {
   ADMIN_PRODUCT_IMAGE_REPOSITORY,
   type AdminProductImageRepositoryPort,
 } from '../../domain/ports/admin-product-image.repository.port';
-import {
-  MIME_TO_EXTENSION,
-  normalizeMimeType,
-  validateProductImageFile,
-} from './product-image-file-validation.util';
+import { MIME_TO_EXTENSION, normalizeMimeType, validateProductImageFile } from './product-image-file-validation.util';
 import { buildProductImageKey } from './build-product-image-key.util';
 import type { UploadFile } from './upload-file.type';
 import { InternalError, NotFoundError } from '../../../../shared/domain/errors/domain-error';

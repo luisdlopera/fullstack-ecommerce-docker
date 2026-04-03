@@ -42,7 +42,10 @@ export class PaymentsController {
 
   @Public()
   @Post('simulate')
-  simulatePayment(@CurrentUser() user: JwtPayload | undefined, @Body() body: { orderId: string, guestCheckoutToken?: string }) {
+  simulatePayment(
+    @CurrentUser() user: JwtPayload | undefined,
+    @Body() body: { orderId: string; guestCheckoutToken?: string },
+  ) {
     if (!body.orderId) {
       throw new BadRequestException('orderId is required');
     }

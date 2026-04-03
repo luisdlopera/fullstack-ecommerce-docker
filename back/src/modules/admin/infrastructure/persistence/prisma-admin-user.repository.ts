@@ -117,56 +117,58 @@ export class PrismaAdminUserRepository implements AdminUserRepositoryPort {
   }
 
   create(input: AdminUserCreateInput): Promise<AdminUserSummary> {
-    return this.prisma.user.create({
-      data: {
-        name: input.name,
-        email: input.email,
-        password: input.passwordHash,
-        phone: input.phone,
-        role: input.role,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        phone: true,
-        emailVerified: true,
-        lastLoginAt: true,
-        createdAt: true,
-        _count: { select: { Order: true } },
-      },
-    }).then((user) => ({
-      ...user,
-      orderCount: user._count.Order,
-      _count: undefined,
-    })) as Promise<AdminUserSummary>;
+    return this.prisma.user
+      .create({
+        data: {
+          name: input.name,
+          email: input.email,
+          password: input.passwordHash,
+          phone: input.phone,
+          role: input.role,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          phone: true,
+          emailVerified: true,
+          lastLoginAt: true,
+          createdAt: true,
+          _count: { select: { Order: true } },
+        },
+      })
+      .then((user) => ({
+        ...user,
+        orderCount: user._count.Order,
+        _count: undefined,
+      })) as Promise<AdminUserSummary>;
   }
 
   update(userId: string, input: AdminUserUpdateInput): Promise<AdminUserSummary> {
     return this.prisma.user
       .update({
-      where: { id: userId },
-      data: {
-        name: input.name,
-        email: input.email,
-        phone: input.phone,
-        isActive: input.isActive,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        phone: true,
-        emailVerified: true,
-        lastLoginAt: true,
-        createdAt: true,
-        _count: { select: { Order: true } },
-      },
-    })
+        where: { id: userId },
+        data: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone,
+          isActive: input.isActive,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          phone: true,
+          emailVerified: true,
+          lastLoginAt: true,
+          createdAt: true,
+          _count: { select: { Order: true } },
+        },
+      })
       .then((user) => ({
         ...user,
         orderCount: user._count.Order,

@@ -12,6 +12,7 @@ import { TOKEN_SERVICE, type TokenServicePort } from '../domain/ports/token-serv
 import { RegisterUseCase } from './use-cases/register.use-case';
 import { LoginUseCase } from './use-cases/login.use-case';
 import { RefreshTokenUseCase } from './use-cases/refresh-token.use-case';
+import { AuthMessages } from '../domain/enums/auth-messages.enum';
 
 type AuthTokens = {
   accessToken: string;
@@ -89,11 +90,11 @@ export class AuthService {
   private async assertTrustedEmailAddress(email: string): Promise<void> {
     const domain = email.split('@')[1]?.toLowerCase();
     if (!domain) {
-      throw new UnauthorizedException('Invalid email domain');
+      throw new UnauthorizedException(AuthMessages.VALIDATION_ERROR);
     }
 
     if (this.getDisposableDomains().has(domain)) {
-      throw new UnauthorizedException('Disposable email addresses are not allowed');
+      throw new UnauthorizedException(AuthMessages.VALIDATION_ERROR);
     }
 
     const mustValidateMx = (process.env.EMAIL_MX_REQUIRED ?? 'true') === 'true';
@@ -105,10 +106,10 @@ export class AuthService {
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('MX lookup timeout')), 1500)),
       ]);
       if (!records?.length) {
-        throw new UnauthorizedException('Email domain cannot receive email');
+        throw new UnauthorizedException(AuthMessages.VALIDATION_ERROR);
       }
     } catch {
-      throw new UnauthorizedException('Email domain cannot receive email');
+      throw new UnauthorizedException(AuthMessages.VALIDATION_ERROR);
     }
   }
 
@@ -167,7 +168,7 @@ export class AuthService {
     const verification = await this.authRepository.findEmailVerificationToken(tokenHash);
 
     if (!verification || verification.usedAt || (verification.expiresAt && verification.expiresAt <= new Date()) || !verification.user?.isActive) {
-      throw new UnauthorizedException('Verification token is invalid or expired');
+      throw new UnauthorizedException(AuthMessages.INVALID_TOKEN);
     }
 
     await this.authRepository.completeEmailVerification(
@@ -176,7 +177,7 @@ export class AuthService {
       new Date(),
     );
 
-    return { ok: true, message: 'Email verified successfully' };
+    return { ok: true, message: AuthMessages.EMAIL_VERIFICATION_SUCCESSFUL };
   }
 
   async resendVerification(email: string) {
@@ -184,11 +185,11 @@ export class AuthService {
     const user = await this.authRepository.findUserByEmail(normalizedEmail);
 
     if (!user || !user.isActive || user.emailVerified) {
-      return { ok: true, message: 'If the account exists, we sent a verification email.' };
+      return { ok: true, message: AuthMessages.EMAIL_VERIFICATION_RESENT };
     }
 
     await this.issueEmailVerification(user.id, user.email);
-    return { ok: true, message: 'If the account exists, we sent a verification email.' };
+    return { ok: true, message: AuthMessages.EMAIL_VERIFICATION_RESENT };
   }
 
   async forgotPassword(email: string) {
@@ -197,7 +198,7 @@ export class AuthService {
 
     // Anti-enumeration: always return the same response.
     if (!user || !user.isActive) {
-      return { ok: true, message: 'Si el correo existe, enviaremos instrucciones para recuperar la contraseña.' };
+      return { ok: true, message: AuthMessages.PASSWORD_RESET_EMAIL_SENT };
     }
 
     const rawToken = randomBytes(32).toString('hex');
@@ -218,7 +219,7 @@ export class AuthService {
       ttlMinutes: Math.ceil(ttlMs / 60000),
     });
 
-    return { ok: true, message: 'Si el correo existe, enviaremos instrucciones para recuperar la contraseña.' };
+    return { ok: true, message: AuthMessages.PASSWORD_RESET_EMAIL_SENT };
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -226,7 +227,7 @@ export class AuthService {
     const resetToken = await this.authRepository.findPasswordResetToken(tokenHash);
 
     if (!resetToken || resetToken.usedAt || (resetToken.expiresAt && resetToken.expiresAt <= new Date()) || !resetToken.user?.isActive) {
-      throw new UnauthorizedException('El token es invalido o ha expirado');
+      throw new UnauthorizedException(AuthMessages.INVALID_TOKEN);
     }
 
     await this.authRepository.completePasswordReset(
@@ -235,15 +236,15 @@ export class AuthService {
       bcryptjs.hashSync(newPassword, 10),
     );
 
-    return { ok: true };
+    return { ok: true, message: AuthMessages.PASSWORD_RESET_SUCCESSFUL };
   }
 
   async enrollMfa(userId: string) {
     const user = await this.authRepository.findUserById(userId);
 
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) throw new UnauthorizedException(AuthMessages.USER_NOT_FOUND);
     if (!this.isPrivilegedRole(user.role)) {
-      throw new ForbiddenException('MFA enrollment is available only for admin accounts');
+      throw new ForbiddenException(AuthMessages.MFA_NOT_ENROLLED);
     }
 
     const generated = speakeasy.generateSecret({
@@ -255,7 +256,7 @@ export class AuthService {
     const otpauthUrl = generated.otpauth_url;
 
     if (!secret || !otpauthUrl) {
-      throw new UnauthorizedException('Unable to generate MFA enrollment data');
+      throw new UnauthorizedException(AuthMessages.INTERNAL_SERVER_ERROR);
     }
 
     await this.authRepository.updateUser(userId, { mfaSecret: secret, mfaEnabled: false });
@@ -276,7 +277,7 @@ export class AuthService {
       });
 
     if (!validCode) {
-      throw new UnauthorizedException('Invalid MFA verification code');
+      throw new UnauthorizedException(AuthMessages.MFA_INVALID);
     }
 
     await this.authRepository.updateUser(userId, { mfaEnabled: true });
@@ -288,7 +289,7 @@ export class AuthService {
     const user = await this.authRepository.findUserById(userId);
 
     if (!user?.mfaEnabled || !user.mfaSecret) {
-      throw new UnauthorizedException('MFA is not enabled');
+      throw new UnauthorizedException(AuthMessages.MFA_NOT_ENROLLED);
     }
     const validCode = speakeasy.totp.verify({
       secret: user.mfaSecret,
@@ -297,7 +298,7 @@ export class AuthService {
       window: 1,
     });
     if (!validCode) {
-      throw new UnauthorizedException('Invalid MFA code');
+      throw new UnauthorizedException(AuthMessages.MFA_INVALID);
     }
 
     await this.authRepository.updateUser(userId, { mfaEnabled: false, mfaSecret: null });
@@ -343,7 +344,7 @@ export class AuthService {
     const user = await this.authRepository.findUserById(userId);
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException(AuthMessages.USER_NOT_FOUND);
     }
 
     const rolePermissions = await this.authRepository.listRolePermissions(user.role);

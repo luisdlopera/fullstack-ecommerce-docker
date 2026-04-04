@@ -51,7 +51,7 @@ export class LoginUseCase {
       if (!user) {
         authDebugLog('[AUTH-BACK] User not found', { email: normalizedEmail });
         // Prevent timing attacks by hashing a static string
-        await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
+        await bcryptjs.compare(input.password, '$2b$12$.0cctg8op4M8sBiqTFjtaOXZ5eD8jq/jFiWsva0ArGG4.ZAvMRubm');
         throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
 

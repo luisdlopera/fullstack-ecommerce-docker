@@ -4,6 +4,31 @@ Si te gusta este proyecto, ¡deja una estrella en GitHub! ⭐ Ayuda a que más g
 
 ---
 
+## 🖼️ Screenshots
+
+### Home Slider
+![Home Slider 1](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/home/slider/slider-1.png)
+![Home Slider 2](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/home/slider/slider-2.png)
+![Home Slider 3](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/home/slider/slider-3.png)
+
+### Productos - Hombres
+![Men Product 1](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/men/men-01-jacket/722606-1200-auto.webp)
+![Men Product 2](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/men/men-02-shirt/722403-1200-auto.webp)
+
+### Productos - Mujeres
+![Women Product 1](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/women/women-01-shorts/723354-1200-auto.webp)
+![Women Product 2](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/women/women-02-body/723142-1200-auto.webp)
+
+### Productos - Niños
+![Kids Product 1](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_1.webp)
+![Kids Product 2](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_1.webp)
+
+### Productos - Nuevos
+![New Product 1](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/new/new-01-classic/RA44394-2520-K01XS_1.webp)
+![New Product 2](https://6a4f2031f330a47ca01f2f20a7109c27.r2.cloudflarestorage.com/nexstore/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_3.jpg)
+
+---
+
 NexStore es un e-commerce organizado como monorepo con separación clara entre frontend y backend:
 
 - `front/`: Next.js (UI)

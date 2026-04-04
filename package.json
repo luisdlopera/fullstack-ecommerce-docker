@@ -28,6 +28,9 @@
     "db:sync:seed": "npm run db:sync && npm run prisma:seed -w back",
     "db:seed": "npm run prisma:seed -w back",
     "lint": "npm run lint -w front && npm run lint -w back",
-    "format": "npm run format -w front && npm run format -w back"
+    "format": "npm run format -w front && npm run format -w back",
+    "r2:upload:seed": "tsx scripts/r2/upload.ts seed",
+    "r2:upload:readme": "tsx scripts/r2/upload.ts readme",
+    "r2:upload:all": "tsx scripts/r2/upload.ts all"
   }
 }

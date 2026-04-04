@@ -1,0 +1,581 @@
+{
+  "generatedAt": "2026-04-04T00:39:57.625Z",
+  "bucket": "nexstore",
+  "sourceRoot": "front/public",
+  "summary": {
+    "total": 63,
+    "uploaded": 63,
+    "overwritten": 0,
+    "skipped": 0,
+    "errors": 0
+  },
+  "files": [
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/home/slider/slider-1.png",
+      "r2Key": "home/slider/slider-1.png",
+      "publicUrl": "http://localhost:5010/nexstore-products/home/slider/slider-1.png",
+      "contentType": "image/png",
+      "size": 5719588,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/home/slider/slider-2.png",
+      "r2Key": "home/slider/slider-2.png",
+      "publicUrl": "http://localhost:5010/nexstore-products/home/slider/slider-2.png",
+      "contentType": "image/png",
+      "size": 5167033,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/home/slider/slider-3.png",
+      "r2Key": "home/slider/slider-3.png",
+      "publicUrl": "http://localhost:5010/nexstore-products/home/slider/slider-3.png",
+      "contentType": "image/png",
+      "size": 428917,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_1.webp",
+      "r2Key": "products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_1.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_1.webp",
+      "contentType": "image/webp",
+      "size": 81112,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_2.webp",
+      "r2Key": "products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_2.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_2.webp",
+      "contentType": "image/webp",
+      "size": 56590,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_4.webp",
+      "r2Key": "products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_4.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_4.webp",
+      "contentType": "image/webp",
+      "size": 219996,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_5.webp",
+      "r2Key": "products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_5.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_5.webp",
+      "contentType": "image/webp",
+      "size": 73222,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_6.webp",
+      "r2Key": "products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_6.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_6.webp",
+      "contentType": "image/webp",
+      "size": 116054,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_1.webp",
+      "r2Key": "products/kids/kids-02-basic-set/RJ46313-2424-G045Y_1.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_1.webp",
+      "contentType": "image/webp",
+      "size": 118658,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_3.webp",
+      "r2Key": "products/kids/kids-02-basic-set/RJ46313-2424-G045Y_3.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_3.webp",
+      "contentType": "image/webp",
+      "size": 108202,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_4.webp",
+      "r2Key": "products/kids/kids-02-basic-set/RJ46313-2424-G045Y_4.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_4.webp",
+      "contentType": "image/webp",
+      "size": 81720,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_5.webp",
+      "r2Key": "products/kids/kids-02-basic-set/RJ46313-2424-G045Y_5.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_5.webp",
+      "contentType": "image/webp",
+      "size": 248900,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_6.webp",
+      "r2Key": "products/kids/kids-02-basic-set/RJ46313-2424-G045Y_6.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_6.webp",
+      "contentType": "image/webp",
+      "size": 123486,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-03-jacket/RJ41346-2510-N015Y_2.webp",
+      "r2Key": "products/kids/kids-03-jacket/RJ41346-2510-N015Y_2.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-03-jacket/RJ41346-2510-N015Y_2.webp",
+      "contentType": "image/webp",
+      "size": 42266,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-03-jacket/RJ41346-2510-N015Y_3.webp",
+      "r2Key": "products/kids/kids-03-jacket/RJ41346-2510-N015Y_3.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-03-jacket/RJ41346-2510-N015Y_3.webp",
+      "contentType": "image/webp",
+      "size": 59338,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-03-jacket/RJ41346-2510-N015Y_4.webp",
+      "r2Key": "products/kids/kids-03-jacket/RJ41346-2510-N015Y_4.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-03-jacket/RJ41346-2510-N015Y_4.webp",
+      "contentType": "image/webp",
+      "size": 73306,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-03-jacket/RJ41346-2510-N015Y_6.webp",
+      "r2Key": "products/kids/kids-03-jacket/RJ41346-2510-N015Y_6.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-03-jacket/RJ41346-2510-N015Y_6.webp",
+      "contentType": "image/webp",
+      "size": 42556,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/kids/kids-03-jacket/RJ41346-2510-N015Y_8.webp",
+      "r2Key": "products/kids/kids-03-jacket/RJ41346-2510-N015Y_8.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/kids/kids-03-jacket/RJ41346-2510-N015Y_8.webp",
+      "contentType": "image/webp",
+      "size": 30618,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-01-jacket/722606-1200-auto.webp",
+      "r2Key": "products/men/men-01-jacket/722606-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-01-jacket/722606-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 45710,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-01-jacket/722607-1200-auto.webp",
+      "r2Key": "products/men/men-01-jacket/722607-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-01-jacket/722607-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 31356,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-01-jacket/722608-1200-auto.webp",
+      "r2Key": "products/men/men-01-jacket/722608-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-01-jacket/722608-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 36834,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-01-jacket/722609-1200-auto.webp",
+      "r2Key": "products/men/men-01-jacket/722609-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-01-jacket/722609-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 30144,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-01-jacket/722611-1200-auto.webp",
+      "r2Key": "products/men/men-01-jacket/722611-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-01-jacket/722611-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 590446,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-02-shirt/722403-1200-auto.webp",
+      "r2Key": "products/men/men-02-shirt/722403-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-02-shirt/722403-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 101620,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-02-shirt/722404-1200-auto.jpeg",
+      "r2Key": "products/men/men-02-shirt/722404-1200-auto.jpeg",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-02-shirt/722404-1200-auto.jpeg",
+      "contentType": "image/jpeg",
+      "size": 750754,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-02-shirt/722405-1200-auto.webp",
+      "r2Key": "products/men/men-02-shirt/722405-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-02-shirt/722405-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 32188,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-02-shirt/722406-1200-auto.webp",
+      "r2Key": "products/men/men-02-shirt/722406-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-02-shirt/722406-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 36542,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-02-shirt/722407-1200-auto.webp",
+      "r2Key": "products/men/men-02-shirt/722407-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-02-shirt/722407-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 28830,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-03-cargo-pants/707796-1200-auto.webp",
+      "r2Key": "products/men/men-03-cargo-pants/707796-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-03-cargo-pants/707796-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 105212,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-03-cargo-pants/707797-1200-auto.webp",
+      "r2Key": "products/men/men-03-cargo-pants/707797-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-03-cargo-pants/707797-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 100016,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-03-cargo-pants/707798-1200-auto.jpeg",
+      "r2Key": "products/men/men-03-cargo-pants/707798-1200-auto.jpeg",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-03-cargo-pants/707798-1200-auto.jpeg",
+      "contentType": "image/jpeg",
+      "size": 925826,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-03-cargo-pants/707799-1200-auto.webp",
+      "r2Key": "products/men/men-03-cargo-pants/707799-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-03-cargo-pants/707799-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 87012,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/men/men-03-cargo-pants/707800-1200-auto.webp",
+      "r2Key": "products/men/men-03-cargo-pants/707800-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/men/men-03-cargo-pants/707800-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 75954,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-01-classic/RA44394-2520-K01XS_1.webp",
+      "r2Key": "products/new/new-01-classic/RA44394-2520-K01XS_1.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-01-classic/RA44394-2520-K01XS_1.webp",
+      "contentType": "image/webp",
+      "size": 95782,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-01-classic/RA44394-2520-K01XS_3.jpg",
+      "r2Key": "products/new/new-01-classic/RA44394-2520-K01XS_3.jpg",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-01-classic/RA44394-2520-K01XS_3.jpg",
+      "contentType": "image/jpeg",
+      "size": 364581,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-01-classic/RA44394-2520-K01XS_5 (1).webp",
+      "r2Key": "products/new/new-01-classic/RA44394-2520-K01XS_5 (1).webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-01-classic/RA44394-2520-K01XS_5 (1).webp",
+      "contentType": "image/webp",
+      "size": 104606,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-01-classic/RA44394-2520-K01XS_5 (2).webp",
+      "r2Key": "products/new/new-01-classic/RA44394-2520-K01XS_5 (2).webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-01-classic/RA44394-2520-K01XS_5 (2).webp",
+      "contentType": "image/webp",
+      "size": 104606,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-01-classic/RA44394-2520-K01XS_5.webp",
+      "r2Key": "products/new/new-01-classic/RA44394-2520-K01XS_5.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-01-classic/RA44394-2520-K01XS_5.webp",
+      "contentType": "image/webp",
+      "size": 104606,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_3.jpg",
+      "r2Key": "products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_3.jpg",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_3.jpg",
+      "contentType": "image/jpeg",
+      "size": 317485,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_4.jpg",
+      "r2Key": "products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_4.jpg",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_4.jpg",
+      "contentType": "image/jpeg",
+      "size": 322908,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_5.jpg",
+      "r2Key": "products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_5.jpg",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_5.jpg",
+      "contentType": "image/jpeg",
+      "size": 322011,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_6.webp",
+      "r2Key": "products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_6.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_6.webp",
+      "contentType": "image/webp",
+      "size": 190680,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_7.webp",
+      "r2Key": "products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_7.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_7.webp",
+      "contentType": "image/webp",
+      "size": 355312,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-03-linen-shirt/RA44417-2510-N01XS_1.webp",
+      "r2Key": "products/new/new-03-linen-shirt/RA44417-2510-N01XS_1.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-03-linen-shirt/RA44417-2510-N01XS_1.webp",
+      "contentType": "image/webp",
+      "size": 36682,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-03-linen-shirt/RA44417-2510-N01XS_2.webp",
+      "r2Key": "products/new/new-03-linen-shirt/RA44417-2510-N01XS_2.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-03-linen-shirt/RA44417-2510-N01XS_2.webp",
+      "contentType": "image/webp",
+      "size": 77334,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-03-linen-shirt/RA44417-2510-N01XS_3.webp",
+      "r2Key": "products/new/new-03-linen-shirt/RA44417-2510-N01XS_3.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-03-linen-shirt/RA44417-2510-N01XS_3.webp",
+      "contentType": "image/webp",
+      "size": 28786,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-03-linen-shirt/RA44417-2510-N01XS_5.webp",
+      "r2Key": "products/new/new-03-linen-shirt/RA44417-2510-N01XS_5.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-03-linen-shirt/RA44417-2510-N01XS_5.webp",
+      "contentType": "image/webp",
+      "size": 54688,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/new/new-03-linen-shirt/RA44417-2510-N01_4.webp",
+      "r2Key": "products/new/new-03-linen-shirt/RA44417-2510-N01_4.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/new/new-03-linen-shirt/RA44417-2510-N01_4.webp",
+      "contentType": "image/webp",
+      "size": 39472,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-01-shorts/723354-1200-auto.webp",
+      "r2Key": "products/women/women-01-shorts/723354-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-01-shorts/723354-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 22514,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-01-shorts/723355-1200-auto.webp",
+      "r2Key": "products/women/women-01-shorts/723355-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-01-shorts/723355-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 33280,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-01-shorts/723356-1200-auto.webp",
+      "r2Key": "products/women/women-01-shorts/723356-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-01-shorts/723356-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 43880,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-01-shorts/723357-1200-auto.webp",
+      "r2Key": "products/women/women-01-shorts/723357-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-01-shorts/723357-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 33732,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-01-shorts/723358-1200-auto.webp",
+      "r2Key": "products/women/women-01-shorts/723358-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-01-shorts/723358-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 360504,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-02-body/723142-1200-auto.webp",
+      "r2Key": "products/women/women-02-body/723142-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-02-body/723142-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 12318,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-02-body/723143-1200-auto.webp",
+      "r2Key": "products/women/women-02-body/723143-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-02-body/723143-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 24664,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-02-body/723144-1200-auto.webp",
+      "r2Key": "products/women/women-02-body/723144-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-02-body/723144-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 39404,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-02-body/723145-1200-auto.webp",
+      "r2Key": "products/women/women-02-body/723145-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-02-body/723145-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 33136,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-02-body/723147-1200-auto.webp",
+      "r2Key": "products/women/women-02-body/723147-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-02-body/723147-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 110448,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-03-pants/723282-1200-auto.webp",
+      "r2Key": "products/women/women-03-pants/723282-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-03-pants/723282-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 92214,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-03-pants/723283-1200-auto.webp",
+      "r2Key": "products/women/women-03-pants/723283-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-03-pants/723283-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 471700,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-03-pants/723284-1200-auto.webp",
+      "r2Key": "products/women/women-03-pants/723284-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-03-pants/723284-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 26910,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-03-pants/723285-1200-auto.webp",
+      "r2Key": "products/women/women-03-pants/723285-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-03-pants/723285-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 52856,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/products/women/women-03-pants/723286-1200-auto.webp",
+      "r2Key": "products/women/women-03-pants/723286-1200-auto.webp",
+      "publicUrl": "http://localhost:5010/nexstore-products/products/women/women-03-pants/723286-1200-auto.webp",
+      "contentType": "image/webp",
+      "size": 48498,
+      "lastModified": "2026-04-04T00:39:57.625Z",
+      "operation": "uploaded"
+    }
+  ]
+}

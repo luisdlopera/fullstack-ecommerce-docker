@@ -34,7 +34,103 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     categorySlug: string;
   };
 
-  const imgs = (i: number) =>
+  const R2_BASE_URL = 'https://pub-e14c4ed4e514428faeb13ca8f02c15a7.r2.dev';
+
+// R2 Product images mapping
+const R2_IMAGES = {
+  kids: {
+    hoodie: [
+      `${R2_BASE_URL}/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_1.webp`,
+      `${R2_BASE_URL}/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_2.webp`,
+      `${R2_BASE_URL}/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_4.webp`,
+      `${R2_BASE_URL}/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_5.webp`,
+      `${R2_BASE_URL}/products/kids/kids-01-hoodie-blue/RJ44293-2520-Z5O5Y_6.webp`,
+    ],
+    basic: [
+      `${R2_BASE_URL}/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_1.webp`,
+      `${R2_BASE_URL}/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_3.webp`,
+      `${R2_BASE_URL}/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_4.webp`,
+      `${R2_BASE_URL}/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_5.webp`,
+      `${R2_BASE_URL}/products/kids/kids-02-basic-set/RJ46313-2424-G045Y_6.webp`,
+    ],
+    jacket: [
+      `${R2_BASE_URL}/products/kids/kids-03-jacket/RJ41346-2510-N015Y_2.webp`,
+      `${R2_BASE_URL}/products/kids/kids-03-jacket/RJ41346-2510-N015Y_3.webp`,
+      `${R2_BASE_URL}/products/kids/kids-03-jacket/RJ41346-2510-N015Y_4.webp`,
+      `${R2_BASE_URL}/products/kids/kids-03-jacket/RJ41346-2510-N015Y_6.webp`,
+      `${R2_BASE_URL}/products/kids/kids-03-jacket/RJ41346-2510-N015Y_8.webp`,
+    ],
+  },
+  men: {
+    jacket: [
+      `${R2_BASE_URL}/products/men/men-01-jacket/722606-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-01-jacket/722607-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-01-jacket/722608-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-01-jacket/722609-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-01-jacket/722611-1200-auto.webp`,
+    ],
+    shirt: [
+      `${R2_BASE_URL}/products/men/men-02-shirt/722403-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-02-shirt/722404-1200-auto.jpeg`,
+      `${R2_BASE_URL}/products/men/men-02-shirt/722405-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-02-shirt/722406-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-02-shirt/722407-1200-auto.webp`,
+    ],
+    pants: [
+      `${R2_BASE_URL}/products/men/men-03-cargo-pants/707796-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-03-cargo-pants/707797-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-03-cargo-pants/707798-1200-auto.jpeg`,
+      `${R2_BASE_URL}/products/men/men-03-cargo-pants/707799-1200-auto.webp`,
+      `${R2_BASE_URL}/products/men/men-03-cargo-pants/707800-1200-auto.webp`,
+    ],
+  },
+  women: {
+    shorts: [
+      `${R2_BASE_URL}/products/women/women-01-shorts/723354-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-01-shorts/723355-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-01-shorts/723356-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-01-shorts/723357-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-01-shorts/723358-1200-auto.webp`,
+    ],
+    body: [
+      `${R2_BASE_URL}/products/women/women-02-body/723142-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-02-body/723143-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-02-body/723144-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-02-body/723145-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-02-body/723147-1200-auto.webp`,
+    ],
+    pants: [
+      `${R2_BASE_URL}/products/women/women-03-pants/723282-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-03-pants/723283-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-03-pants/723284-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-03-pants/723285-1200-auto.webp`,
+      `${R2_BASE_URL}/products/women/women-03-pants/723286-1200-auto.webp`,
+    ],
+  },
+  new: {
+    classic: [
+      `${R2_BASE_URL}/products/new/new-01-classic/RA44394-2520-K01XS_1.webp`,
+      `${R2_BASE_URL}/products/new/new-01-classic/RA44394-2520-K01XS_3.jpg`,
+      `${R2_BASE_URL}/products/new/new-01-classic/RA44394-2520-K01XS_5.webp`,
+    ],
+    oversized: [
+      `${R2_BASE_URL}/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_3.jpg`,
+      `${R2_BASE_URL}/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_4.jpg`,
+      `${R2_BASE_URL}/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_5.jpg`,
+      `${R2_BASE_URL}/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_6.webp`,
+      `${R2_BASE_URL}/products/new/new-02-oversized-tee/RA44425-2520-KZ0XS_7.webp`,
+    ],
+    linen: [
+      `${R2_BASE_URL}/products/new/new-03-linen-shirt/RA44417-2510-N01XS_1.webp`,
+      `${R2_BASE_URL}/products/new/new-03-linen-shirt/RA44417-2510-N01XS_2.webp`,
+      `${R2_BASE_URL}/products/new/new-03-linen-shirt/RA44417-2510-N01XS_3.webp`,
+      `${R2_BASE_URL}/products/new/new-03-linen-shirt/RA44417-2510-N01XS_5.webp`,
+      `${R2_BASE_URL}/products/new/new-03-linen-shirt/RA44417-2510-N01_4.webp`,
+    ],
+  },
+};
+
+const imgs = (i: number) =>
     i % 2 === 0
       ? ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png']
       : ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'];
@@ -53,91 +149,184 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
   const classTags = ['class:essential', 'class:limited', 'class:runway'] as const;
   const collectionTags = ['col:core', 'col:studio', 'col:travel'] as const;
 
-  for (let i = 1; i <= 14; i++) {
-    const color = colorTags[i % colorTags.length];
-    const label = labelTags[i % labelTags.length];
-    const klass = classTags[i % classTags.length];
-    const col = collectionTags[i % collectionTags.length];
-    const cat = menCats[i % menCats.length];
-    const stock = i % 7 === 0 ? 0 : 12 + (i % 40);
-    rows.push({
-      title: `NEX Men Line ${i}`,
-      description: `Pieza masculina de línea catálogo ${i}, corte contemporáneo.`,
-      slug: `catalog-men-line-${i}`,
-      sku: `CAT-M-LN-${String(i).padStart(3, '0')}`,
-      price: 79.9 + i * 4,
-      comparePrice: i % 3 === 0 ? 79.9 + i * 4 + 35 : undefined,
-      inStock: stock,
-      sizes: i % 5 === 0 ? [Size.M, Size.L] : midSizes,
-      gender: Gender.men,
-      tags: [color, label, klass, col, i % 4 === 0 ? 'nuevo' : 'basics'].map((t) => t.toLowerCase()),
-      images: imgs(i),
-      categorySlug: cat,
-    });
-  }
+  // Kids products
+  rows.push({
+    title: 'Hoodie Kids Blue',
+    description: 'Hoodie azul para niños, cómodo y resistente.',
+    slug: 'hoodie-kids-blue',
+    sku: 'KIDS-HOOD-BL-001',
+    price: 49.9,
+    comparePrice: 69.9,
+    inStock: 15,
+    sizes: [Size.XS, Size.S, Size.M, Size.L],
+    gender: Gender.kid,
+    tags: ['c:azul', 'kids', 'hoodie', 'casual', 'nuevo'],
+    images: R2_IMAGES.kids.hoodie,
+    categorySlug: 'hoodies',
+  });
 
-  for (let i = 1; i <= 14; i++) {
-    const color = colorTags[(i + 2) % colorTags.length];
-    const label = labelTags[(i + 1) % labelTags.length];
-    const klass = classTags[(i + 2) % classTags.length];
-    const col = collectionTags[(i + 1) % collectionTags.length];
-    const cat = womenCats[i % womenCats.length];
-    const stock = i % 8 === 0 ? 0 : 10 + (i % 35);
-    rows.push({
-      title: `NEX Woman Atelier ${i}`,
-      description: `Diseño femenino atelier ${i}, texturas y silueta premium.`,
-      slug: `catalog-woman-atelier-${i}`,
-      sku: `CAT-W-AT-${String(i).padStart(3, '0')}`,
-      price: 89.9 + i * 5,
-      comparePrice: i % 4 === 0 ? 89.9 + i * 5 + 40 : undefined,
-      inStock: stock,
-      sizes: [Size.XS, Size.S, Size.M, Size.L, Size.XL].filter((_, idx) => idx !== i % 5),
-      gender: Gender.women,
-      tags: [color, label, klass, col, i % 3 === 0 ? 'nuevo' : 'elegante'].map((t) => t.toLowerCase()),
-      images: imgs(i + 3),
-      categorySlug: cat,
-    });
-  }
+  rows.push({
+    title: 'Basic Set Kids',
+    description: 'Set básico para niños, ideal para el día a día.',
+    slug: 'basic-set-kids',
+    sku: 'KIDS-SET-BAS-002',
+    price: 39.9,
+    inStock: 20,
+    sizes: [Size.XS, Size.S, Size.M, Size.L],
+    gender: Gender.kid,
+    tags: ['c:verde', 'kids', 'set', 'basics'],
+    images: R2_IMAGES.kids.basic,
+    categorySlug: 'camisetas',
+  });
 
-  for (let i = 1; i <= 10; i++) {
-    const color = colorTags[(i + 1) % colorTags.length];
-    const cat = kidCats[i % kidCats.length];
-    const stock = i % 6 === 0 ? 0 : 20 + (i % 25);
-    rows.push({
-      title: `NEX Kids Play ${i}`,
-      description: `Prenda infantil resistente y cómoda, modelo ${i}.`,
-      slug: `catalog-kids-play-${i}`,
-      sku: `CAT-K-PL-${String(i).padStart(3, '0')}`,
-      price: 49.9 + i * 3,
-      comparePrice: i % 5 === 0 ? 49.9 + i * 3 + 20 : undefined,
-      inStock: stock,
-      sizes: [Size.XS, Size.S, Size.M, Size.L].slice(0, 3 + (i % 2)),
-      gender: Gender.kid,
-      tags: [color, 'kids', 'fun', i % 2 === 0 ? 'nuevo' : 'active'].map((t) => t.toLowerCase()),
-      images: imgs(i + 1),
-      categorySlug: cat,
-    });
-  }
-  for (let i = 1; i <= 12; i++) {
-    const color = colorTags[i % colorTags.length];
-    const stock = i % 9 === 0 ? 0 : 8 + (i % 20);
-    rows.push({
-      title: `NEX New Drop ${i}`,
-      description: `Lanzamiento temporada — pieza ${i} de la colección nueva.`,
-      slug: `catalog-new-drop-${i}`,
-      sku: `CAT-N-DR-${String(i).padStart(3, '0')}`,
-      price: 99.9 + i * 6,
-      comparePrice: i % 2 === 0 ? 99.9 + i * 6 + 45 : undefined,
-      inStock: stock,
-      sizes: allSizes.filter((_, idx) => idx % 2 === i % 2),
-      gender: i % 3 === 0 ? Gender.unisex : i % 3 === 1 ? Gender.men : Gender.women,
-      tags: ['nuevo', color, labelTags[i % labelTags.length], collectionTags[i % collectionTags.length]].map((t) =>
-        t.toLowerCase(),
-      ),
-      images: imgs(i + 2),
-      categorySlug: 'camisetas',
-    });
-  }
+  rows.push({
+    title: 'Kids Jacket Navy',
+    description: 'Chaqueta navy para niños, resistente al agua.',
+    slug: 'kids-jacket-navy',
+    sku: 'KIDS-JACK-NV-003',
+    price: 59.9,
+    comparePrice: 79.9,
+    inStock: 10,
+    sizes: [Size.S, Size.M, Size.L],
+    gender: Gender.kid,
+    tags: ['c:azul', 'kids', 'jacket', 'sport'],
+    images: R2_IMAGES.kids.jacket,
+    categorySlug: 'chaquetas',
+  });
+
+  // Men products
+  rows.push({
+    title: 'Men Premium Jacket',
+    description: 'Chaqueta premium para hombre, diseño urbano.',
+    slug: 'men-premium-jacket',
+    sku: 'MEN-JACK-PR-001',
+    price: 129.9,
+    comparePrice: 169.9,
+    inStock: 12,
+    sizes: [Size.S, Size.M, Size.L, Size.XL, Size.XXL],
+    gender: Gender.men,
+    tags: ['c:negro', 'premium', 'jacket', 'urban', 'nuevo'],
+    images: R2_IMAGES.men.jacket,
+    categorySlug: 'chaquetas',
+  });
+
+  rows.push({
+    title: 'Men Casual Shirt',
+    description: 'Camisa casual para hombre, perfecta para el día a día.',
+    slug: 'men-casual-shirt',
+    sku: 'MEN-SHIRT-CAS-002',
+    price: 59.9,
+    inStock: 25,
+    sizes: [Size.S, Size.M, Size.L, Size.XL],
+    gender: Gender.men,
+    tags: ['c:blanco', 'shirt', 'casual', 'minimal'],
+    images: R2_IMAGES.men.shirt,
+    categorySlug: 'camisetas',
+  });
+
+  rows.push({
+    title: 'Men Cargo Pants',
+    description: 'Pantalones cargo para hombre, estilo y funcionalidad.',
+    slug: 'men-cargo-pants',
+    sku: 'MEN-PANT-CAR-003',
+    price: 79.9,
+    comparePrice: 99.9,
+    inStock: 18,
+    sizes: [Size.S, Size.M, Size.L, Size.XL, Size.XXL],
+    gender: Gender.men,
+    tags: ['c:beige', 'pants', 'cargo', 'urban'],
+    images: R2_IMAGES.men.pants,
+    categorySlug: 'pantalones',
+  });
+
+  // Women products
+  rows.push({
+    title: 'Women Summer Shorts',
+    description: 'Shorts de verano para mujer, frescos y cómodos.',
+    slug: 'women-summer-shorts',
+    sku: 'WOM-SHORT-SU-001',
+    price: 39.9,
+    inStock: 30,
+    sizes: [Size.XS, Size.S, Size.M, Size.L, Size.XL],
+    gender: Gender.women,
+    tags: ['c:azul', 'shorts', 'summer', 'sport'],
+    images: R2_IMAGES.women.shorts,
+    categorySlug: 'pantalones',
+  });
+
+  rows.push({
+    title: 'Women Body Fit',
+    description: 'Body fit para mujer, diseño elegante y cómodo.',
+    slug: 'women-body-fit',
+    sku: 'WOM-BODY-FIT-002',
+    price: 49.9,
+    comparePrice: 69.9,
+    inStock: 22,
+    sizes: [Size.XS, Size.S, Size.M, Size.L],
+    gender: Gender.women,
+    tags: ['c:negro', 'body', 'elegant', 'premium', 'nuevo'],
+    images: R2_IMAGES.women.body,
+    categorySlug: 'vestidos',
+  });
+
+  rows.push({
+    title: 'Women Classic Pants',
+    description: 'Pantalones clásicos para mujer, versátiles y elegantes.',
+    slug: 'women-classic-pants',
+    sku: 'WOM-PANT-CL-003',
+    price: 69.9,
+    inStock: 16,
+    sizes: [Size.S, Size.M, Size.L, Size.XL],
+    gender: Gender.women,
+    tags: ['c:beige', 'pants', 'classic', 'elegant'],
+    images: R2_IMAGES.women.pants,
+    categorySlug: 'pantalones',
+  });
+
+  // New arrivals
+  rows.push({
+    title: 'Classic Oversized Tee',
+    description: 'Camiseta oversized clásica, tendencia actual.',
+    slug: 'classic-oversized-tee',
+    sku: 'NEW-TEE-CLS-001',
+    price: 44.9,
+    comparePrice: 59.9,
+    inStock: 35,
+    sizes: [Size.XS, Size.S, Size.M, Size.L, Size.XL],
+    gender: Gender.unisex,
+    tags: ['c:blanco', 'oversized', 'nuevo', 'trendy', 'col:core'],
+    images: R2_IMAGES.new.classic,
+    categorySlug: 'camisetas',
+  });
+
+  rows.push({
+    title: 'Oversized Graphic Tee',
+    description: 'Camiseta oversized con diseño gráfico exclusivo.',
+    slug: 'oversized-graphic-tee',
+    sku: 'NEW-TEE-GRA-002',
+    price: 49.9,
+    inStock: 28,
+    sizes: [Size.S, Size.M, Size.L, Size.XL, Size.XXL],
+    gender: Gender.men,
+    tags: ['c:negro', 'oversized', 'graphic', 'nuevo', 'urban'],
+    images: R2_IMAGES.new.oversized,
+    categorySlug: 'camisetas',
+  });
+
+  rows.push({
+    title: 'Linen Summer Shirt',
+    description: 'Camisa de lino para verano, fresca y elegante.',
+    slug: 'linen-summer-shirt',
+    sku: 'NEW-SHIRT-LIN-003',
+    price: 89.9,
+    comparePrice: 119.9,
+    inStock: 14,
+    sizes: [Size.S, Size.M, Size.L, Size.XL],
+    gender: Gender.men,
+    tags: ['c:beige', 'linen', 'summer', 'nuevo', 'premium'],
+    images: R2_IMAGES.new.linen,
+    categorySlug: 'camisetas',
+  });
 
   for (const productData of rows) {
     const categoryId = pickCat(productData.categorySlug);

@@ -82,7 +82,8 @@ export class AuthController {
           sameSite: 'lax',
           maxAgeSeconds: 7 * 24 * 60 * 60,
         });
-        return { user: result.user, accessToken: result.accessToken };
+        // BFF requires refreshToken in payload even if backend sets cookie.
+        // Returning full result.
       }
 
       authDebugLog('[AUTH-BACK] login response', {
@@ -149,7 +150,8 @@ export class AuthController {
         sameSite: 'lax',
         maxAgeSeconds: 7 * 24 * 60 * 60,
       });
-      return { user: result.user, accessToken: result.accessToken };
+      // BFF requires refreshToken in payload even if backend sets cookie.
+      // Returning full result.
     }
 
     authDebugLog('[AUTH-BACK] refresh response', {

@@ -1,0 +1,4 @@
+2024-04-05 - [Bcrypt Dummy Hash Format]
+**Vulnerability:** The dummy hash used to mitigate timing attacks (`$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha`) is malformed. `bcryptjs` fast-fails when given this string because it expects the hash portion to be base64-encoded and properly formatted. This bypasses the expensive computation intended to obscure whether the user exists or not, rendering the timing attack mitigation ineffective.
+**Learning:** When using dummy hashes with `bcryptjs` or similar libraries, the dummy hash must be properly formatted and generated with the same cost factor as real hashes to ensure the computation takes the same amount of time.
+**Prevention:** Generate a real bcrypt hash of a random string with the standard cost factor (e.g. 10 or 12) during configuration and use that valid hash as the dummy.

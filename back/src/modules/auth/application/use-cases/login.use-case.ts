@@ -150,6 +150,7 @@ export class LoginUseCase {
       authDebugLog('[AUTH-BACK] ERROR during login execution', {
         error: error instanceof Error ? error.message : 'Unknown error',
         type: error?.constructor?.name,
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
     }

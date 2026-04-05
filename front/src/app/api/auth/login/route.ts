@@ -14,9 +14,18 @@ export async function POST(request: NextRequest) {
 	const apiBase = getInternalApiBase();
 	const targetUrl = `${apiBase}/auth/login`;
 
+		let emailReceived = 'unknown';
+		try {
+			const parsed = JSON.parse(body);
+			if (parsed.email) emailReceived = parsed.email;
+		} catch {
+			// ignore
+		}
+
 	authRouteLog('api login start', {
 		target: targetUrl,
 		method: 'POST',
+			email: emailReceived,
 		hasBody: body.length > 0,
 		contentType: request.headers.get('content-type'),
 	});
@@ -28,13 +37,20 @@ export async function POST(request: NextRequest) {
 			body,
 		});
 
+		authRouteLog('api login response headers', {
+			headers: Object.fromEntries(res.headers.entries())
+		});
+
 		authRouteLog('api login response', {
 			status: res.status,
 			statusText: res.statusText,
 		});
 
 		const data = (await res.json().catch((e) => {
-			authRouteLog('api login parse error', { error: e instanceof Error ? e.message : String(e) });
+			authRouteLog('api login parse error', {
+				error: e instanceof Error ? e.message : String(e),
+				stack: e instanceof Error ? e.stack : undefined
+			});
 			return {};
 		})) as {
 			success?: boolean;
@@ -70,10 +86,14 @@ export async function POST(request: NextRequest) {
 		authRouteLog('api login cookies set', {
 			hasAccessToken: Boolean(payload.accessToken),
 			hasRefreshToken: Boolean(payload.refreshToken),
+			cookieHeaderSet: response.headers.get('set-cookie')
 		});
 		return response;
 	} catch (error) {
-		authRouteLog('api login error', { error: error instanceof Error ? error.message : 'Unknown error' });
+		authRouteLog('api login error', {
+			error: error instanceof Error ? error.message : 'Unknown error',
+			stack: error instanceof Error ? error.stack : undefined
+		});
 		return NextResponse.json(
 			{ message: 'Backend connection error', error: error instanceof Error ? error.message : 'Unknown error' },
 			{ status: 500 }

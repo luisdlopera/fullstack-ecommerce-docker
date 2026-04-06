@@ -34,27 +34,30 @@ export default function AccountAddressesPage() {
 		setCountryId(selectedAddress?.countryId ?? '');
 	}, [selectedAddress?.countryId]);
 
-	const loadAddresses = useCallback(async (targetPage = page) => {
-		const response = await bffFetch(`/users/me/addresses?page=${targetPage}&limit=${ITEMS_PER_PAGE}`);
-		const payload = await safeParseJson<UserAddressListResponse>(response, {
-			data: [],
-			meta: { page: targetPage, limit: ITEMS_PER_PAGE, total: 0, totalPages: 1 },
-		});
+	const loadAddresses = useCallback(
+		async (targetPage = page) => {
+			const response = await bffFetch(`/users/me/addresses?page=${targetPage}&limit=${ITEMS_PER_PAGE}`);
+			const payload = await safeParseJson<UserAddressListResponse>(response, {
+				data: [],
+				meta: { page: targetPage, limit: ITEMS_PER_PAGE, total: 0, totalPages: 1 },
+			});
 
-		setAddresses(payload.data);
-		setTotalPages(Math.max(1, payload.meta.totalPages));
-		setTotalAddresses(payload.meta.total);
+			setAddresses(payload.data);
+			setTotalPages(Math.max(1, payload.meta.totalPages));
+			setTotalAddresses(payload.meta.total);
 
-		if (payload.data.length === 0) {
-			setSelectedAddressId(null);
-			return;
-		}
+			if (payload.data.length === 0) {
+				setSelectedAddressId(null);
+				return;
+			}
 
-		setSelectedAddressId((current) => {
-			if (current && payload.data.some((address) => address.id === current)) return current;
-			return payload.data[0].id;
-		});
-	}, [page]);
+			setSelectedAddressId((current) => {
+				if (current && payload.data.some((address) => address.id === current)) return current;
+				return payload.data[0].id;
+			});
+		},
+		[page],
+	);
 
 	useEffect(() => {
 		if (!user) return;
@@ -206,60 +209,83 @@ export default function AccountAddressesPage() {
 					<h2 className='mb-4 text-lg font-semibold'>
 						{selectedAddress ? 'Editar dirección' : 'Crear nueva dirección'}
 					</h2>
-					<form key={selectedAddress?.id ?? 'new'} onSubmit={handleSaveAddress} className='flex flex-col gap-4'>
-					<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-						<Input isRequired name='firstName' label='Nombre' defaultValue={selectedAddress?.firstName ?? ''} />
-						<Input isRequired name='lastName' label='Apellido' defaultValue={selectedAddress?.lastName ?? ''} />
-					</div>
-					<Input isRequired name='address' label='Dirección' defaultValue={selectedAddress?.address ?? ''} />
-					<Input name='address2' label='Dirección 2 (opcional)' defaultValue={selectedAddress?.address2 ?? ''} />
-					<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-						<Input isRequired name='city' label='Ciudad' defaultValue={selectedAddress?.city ?? ''} />
+					<form
+						key={selectedAddress?.id ?? 'new'}
+						onSubmit={handleSaveAddress}
+						className='flex flex-col gap-4'
+					>
+						<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+							<Input
+								isRequired
+								name='firstName'
+								label='Nombre'
+								defaultValue={selectedAddress?.firstName ?? ''}
+							/>
+							<Input
+								isRequired
+								name='lastName'
+								label='Apellido'
+								defaultValue={selectedAddress?.lastName ?? ''}
+							/>
+						</div>
 						<Input
 							isRequired
-							name='postalCode'
-							label='Código postal'
-							defaultValue={selectedAddress?.postalCode ?? ''}
+							name='address'
+							label='Dirección'
+							defaultValue={selectedAddress?.address ?? ''}
 						/>
-						<Autocomplete
-							isRequired
-							label='País'
-							placeholder='Buscar país'
-							selectedKey={countryId || null}
-							onSelectionChange={(key) => setCountryId(key ? String(key) : '')}
-						>
-							{countries.map((country) => (
-								<AutocompleteItem key={country.id}>{country.name}</AutocompleteItem>
-							))}
-						</Autocomplete>
-					</div>
-					<Input isRequired name='phone' label='Teléfono' defaultValue={selectedAddress?.phone ?? ''} />
-
-					{message && (
-						<p
-							className={`rounded-lg p-3 text-sm ${message.includes('Error') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}
-						>
-							{message}
-						</p>
-					)}
-
-					<div className='flex flex-wrap gap-3'>
-						<Button type='submit' color='primary' isLoading={saving} startContent={<Save size={16} />}>
-							{selectedAddress ? 'Guardar cambios' : 'Crear dirección'}
-						</Button>
-						{selectedAddress && (
-							<Button
-								type='button'
-								color='danger'
-								variant='light'
-								isLoading={deleting}
-								startContent={<Trash2 size={16} />}
-								onPress={() => setDeleteTarget(selectedAddress)}
+						<Input
+							name='address2'
+							label='Dirección 2 (opcional)'
+							defaultValue={selectedAddress?.address2 ?? ''}
+						/>
+						<div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+							<Input isRequired name='city' label='Ciudad' defaultValue={selectedAddress?.city ?? ''} />
+							<Input
+								isRequired
+								name='postalCode'
+								label='Código postal'
+								defaultValue={selectedAddress?.postalCode ?? ''}
+							/>
+							<Autocomplete
+								isRequired
+								label='País'
+								placeholder='Buscar país'
+								selectedKey={countryId || null}
+								onSelectionChange={(key) => setCountryId(key ? String(key) : '')}
 							>
-								Eliminar dirección
-							</Button>
+								{countries.map((country) => (
+									<AutocompleteItem key={country.id}>{country.name}</AutocompleteItem>
+								))}
+							</Autocomplete>
+						</div>
+						<Input isRequired name='phone' label='Teléfono' defaultValue={selectedAddress?.phone ?? ''} />
+
+						{message && (
+							<p
+								className={`rounded-lg p-3 text-sm ${message.includes('Error') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}
+							>
+								{message}
+							</p>
 						)}
-					</div>
+
+						<div className='flex flex-wrap gap-3'>
+							<Button type='submit' color='primary' isLoading={saving} startContent={<Save size={16} />}>
+								{selectedAddress ? 'Guardar cambios' : 'Crear dirección'}
+							</Button>
+							{selectedAddress && (
+								<Button
+									type='button'
+									color='danger'
+									variant='light'
+									isLoading={deleting}
+									startContent={<Trash2 size={16} />}
+									onPress={() => setDeleteTarget(selectedAddress)}
+								>
+									Eliminar dirección
+								</Button>
+							)}
+						</div>
 					</form>
 				</div>
 			</section>

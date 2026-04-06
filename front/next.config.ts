@@ -4,41 +4,21 @@ import { fileURLToPath } from 'node:url';
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 
-const minioPort = process.env.MINIO_PORT || '5010';
-
 const nextConfig: NextConfig = {
 	turbopack: {
 		root: path.resolve(configDir, '..'),
 	},
 	images: {
-		// Allow Next.js <Image> to load from MinIO on localhost during development
 		dangerouslyAllowSVG: true,
 		remotePatterns: [
 			{
-				protocol: 'http',
-				hostname: 'localhost',
-				port: minioPort,
-				pathname: '/**',
-			},
-			{
-				protocol: 'http',
-				hostname: '127.0.0.1',
-				port: minioPort,
-				pathname: '/**',
-			},
-			{
 				protocol: 'https',
-				hostname: 'images.unsplash.com',
+				hostname: '*.r2.dev',
 				pathname: '/**',
 			},
 			{
 				protocol: 'https',
 				hostname: '*.r2.cloudflarestorage.com',
-				pathname: '/**',
-			},
-			{
-				protocol: 'https',
-				hostname: '*.r2.dev',
 				pathname: '/**',
 			},
 		],

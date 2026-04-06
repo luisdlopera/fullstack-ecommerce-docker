@@ -192,10 +192,13 @@ export default function AccountFavoritesPage() {
 									) : null}
 								</div>
 								<div className='min-w-0'>
-								<Link href={`/products/${item.slug}`} className='truncate text-base font-semibold hover:underline'>
-									{item.title}
-								</Link>
-								<p className='text-sm text-gray-500'>{item.slug}</p>
+									<Link
+										href={`/products/${item.slug}`}
+										className='truncate text-base font-semibold hover:underline'
+									>
+										{item.title}
+									</Link>
+									<p className='text-sm text-gray-500'>{item.slug}</p>
 								</div>
 							</div>
 							<div className='flex items-center gap-3'>

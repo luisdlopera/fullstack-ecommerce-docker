@@ -56,12 +56,7 @@ export default function AccountSettingsPage() {
 				<form onSubmit={handleChangePassword} className='flex flex-col gap-4'>
 					<PasswordInput isRequired name='currentPassword' label='Contraseña actual' minLength={6} />
 					<PasswordInput isRequired name='newPassword' label='Nueva contraseña' minLength={8} />
-					<PasswordInput
-						isRequired
-						name='confirmPassword'
-						label='Confirmar nueva contraseña'
-						minLength={8}
-					/>
+					<PasswordInput isRequired name='confirmPassword' label='Confirmar nueva contraseña' minLength={8} />
 
 					{message && (
 						<p

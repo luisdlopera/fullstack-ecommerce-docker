@@ -60,7 +60,7 @@ export function collectionToApiParams(collection: CollectionSlug): { gender?: st
 	if (collection === 'men') return { gender: 'men' };
 	if (collection === 'women') return { gender: 'women' };
 	if (collection === 'kids') return { gender: 'kid' };
-	return { tag: 'nuevo' };
+	return { tag: 'new' };
 }
 
 export function isCollectionSlug(value: string): value is CollectionSlug {

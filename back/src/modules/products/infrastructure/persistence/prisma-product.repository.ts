@@ -16,17 +16,48 @@ import type {
 } from '../../domain/ports/product-repository.port';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { buildProductListWhere } from './build-product-list-where';
+import { StorageConfig } from '../../../../shared/infrastructure/storage/storage.config';
 
-function mapImages(imgs: Array<{ id: number; url: string; sortOrder?: number }>): ProductListItem['ProductImage'] {
-  return imgs.map((img) => ({
-    id: img.id,
-    url: img.url,
-    sortOrder: img.sortOrder,
-  }));
+// Helper to build full R2 URL from storageKey
+function buildR2Url(storageConfig: StorageConfig, storageKey: string | null | undefined): string | null {
+  if (!storageKey) return null;
+  const baseUrl = storageConfig.publicUrl.replace(/\/$/, '');
+  const normalizedKey = storageKey.replace(/^\//, '');
+  return `${baseUrl}/${normalizedKey}`;
+}
+
+function mapImages(
+  imgs: Array<{
+    id: number;
+    url: string;
+    storageKey?: string | null;
+    storageProvider?: string | null;
+    sortOrder?: number;
+  }>,
+  storageConfig: StorageConfig,
+): ProductListItem['ProductImage'] {
+  return imgs.map((img) => {
+    // If storageProvider is r2 and we have storageKey, build full URL
+    let resolvedUrl = img.url;
+    if (img.storageProvider === 'r2' && img.storageKey) {
+      const r2Url = buildR2Url(storageConfig, img.storageKey);
+      if (r2Url) {
+        resolvedUrl = r2Url;
+      }
+    }
+    return {
+      id: img.id,
+      url: resolvedUrl,
+      storageKey: img.storageKey,
+      storageProvider: img.storageProvider,
+      sortOrder: img.sortOrder,
+    };
+  });
 }
 
 function mapListItem(
   row: Prisma.ProductGetPayload<{ include: { ProductImage: true; category: true } }>,
+  storageConfig: StorageConfig,
 ): ProductListItem {
   return {
     id: row.id,
@@ -40,14 +71,17 @@ function mapListItem(
     tags: row.tags,
     gender: String(row.gender),
     categoryId: row.categoryId,
-    ProductImage: mapImages(row.ProductImage),
+    ProductImage: mapImages(row.ProductImage, storageConfig),
     category: { id: row.category.id, name: row.category.name },
   };
 }
 
 @Injectable()
 export class PrismaProductRepository implements ProductRepositoryPort {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(StorageConfig) private readonly storageConfig: StorageConfig,
+  ) {}
 
   async findFeatured(limit: number): Promise<FeaturedProductRecord[]> {
     const rows = await this.prisma.product.findMany({
@@ -69,7 +103,7 @@ export class PrismaProductRepository implements ProductRepositoryPort {
       slug: row.slug,
       gender: String(row.gender),
       tags: row.tags,
-      ProductImage: mapImages(row.ProductImage),
+      ProductImage: mapImages(row.ProductImage, this.storageConfig),
     }));
   }
 
@@ -95,7 +129,7 @@ export class PrismaProductRepository implements ProductRepositoryPort {
     ]);
 
     return {
-      data: rows.map(mapListItem),
+      data: rows.map((row) => mapListItem(row, this.storageConfig)),
       meta: {
         page,
         limit,
@@ -135,7 +169,7 @@ export class PrismaProductRepository implements ProductRepositoryPort {
         category: true,
       },
     });
-    return row ? mapListItem(row) : null;
+    return row ? mapListItem(row, this.storageConfig) : null;
   }
 
   async findStockBySlug(slug: string): Promise<ProductStockRecord | null> {

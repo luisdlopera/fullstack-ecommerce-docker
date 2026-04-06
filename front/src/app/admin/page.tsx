@@ -4,16 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { DollarSign, ShoppingCart, Users, Package, Clock, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
 import Image from 'next/image';
-import {
-	AdminPageHeader,
-	dashboardApi,
-	ErrorState,
-	LoadingSkeleton,
-	StatCard,
-	StatusBadge,
-	type AdminOrder,
-	type TopProduct,
-} from '@/features/admin';
+import { AdminPageHeader, dashboardApi, ErrorState, LoadingSkeleton, StatCard, StatusBadge, type AdminOrder, type TopProduct } from '@/features/admin';
+import { getProductImageUrl } from '@/lib/assets';
 
 const PERIOD_OPTIONS = [
 	{ value: '1d', label: 'Hoy' },
@@ -181,9 +173,9 @@ function TopProductsSection({ products }: { products: TopProduct[] }) {
 							<span className='flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-600'>
 								{i + 1}
 							</span>
-							{item.product?.ProductImage?.[0]?.url && (
+							{item.product?.ProductImage?.[0] && (
 								<Image
-									src={item.product.ProductImage[0].url}
+									src={getProductImageUrl(item.product.ProductImage[0])}
 									alt={item.product?.title ?? 'Producto'}
 									width={40}
 									height={40}

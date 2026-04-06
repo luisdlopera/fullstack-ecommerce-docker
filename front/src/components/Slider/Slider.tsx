@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/scrollbar';
 import 'swiper/css/navigation';
@@ -8,46 +9,73 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Scrollbar, Autoplay } from 'swiper/modules';
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LAYOUT_MAIN_INNER_WIDTH } from '@/components/layout/layout-classes';
-import { Button, Link } from '@heroui/react';
-import { homeSliderImages, sliderContent } from '@/config/home-slider';
-import { getAssetUrl } from '@/lib/assets';
-import { useSyncExternalStore } from 'react';
+import { Button, Link, Spinner } from '@heroui/react';
 
-function getServerSnapshot() {
-	return false;
+interface HomeBanner {
+	id: number;
+	title: string;
+	subtitle: string | null;
+	ctaText: string | null;
+	ctaLink: string | null;
+	secondaryText: string | null;
+	secondaryLink: string | null;
+	imageUrl: string;
+	altText: string | null;
+	sortOrder: number;
 }
 
-function getSnapshot() {
-	return true;
-}
+function useHomeBanners() {
+	const [banners, setBanners] = useState<HomeBanner[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-function subscribe() {
-	return () => {};
+	useEffect(() => {
+		async function fetchBanners() {
+			try {
+				const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/products/banners`;
+
+				const response = await fetch(apiUrl);
+				if (!response.ok) throw new Error('Failed to fetch banners');
+				const data = await response.json();
+
+				setBanners(data);
+			} catch (err) {
+				console.error('[Slider] Error fetching banners:', err);
+				setError(err instanceof Error ? err.message : 'Error loading banners');
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		fetchBanners();
+	}, []);
+
+	return { banners, loading, error };
 }
 
 export function Slider() {
-	const isMounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+	const { banners, loading, error } = useHomeBanners();
 
-	if (!isMounted) {
+	if (loading) {
 		return (
-			<div className='relative w-full' suppressHydrationWarning>
-				<div className='relative h-[700px] w-full bg-gray-200'>
-					<div className='flex h-full items-center justify-center'>
-						<div className='h-8 w-8 animate-spin rounded-full border-2 border-gray-400 border-t-transparent' />
-					</div>
-				</div>
+			<div className='relative flex h-[702px] w-full items-center justify-center bg-gray-100'>
+				<Spinner size='lg' />
 			</div>
 		);
 	}
 
+	if (error || banners.length === 0) {
+		return null;
+	}
+
 	return (
 		<div className='relative w-full'>
-			<div className='relative h-[700px] w-full'>
+			<div className='relative h-[702px] w-full'>
 				<Swiper
 					modules={[Navigation, Scrollbar, Autoplay]}
-					loop={true}
-					slidesPerView={1}
+					loop={banners.length > 1}
 					simulateTouch
+					autoplay={{ delay: 5000, disableOnInteraction: false }}
 					navigation={{
 						nextEl: '.custom-next',
 						prevEl: '.custom-prev',
@@ -55,45 +83,51 @@ export function Slider() {
 					scrollbar={{ hide: true }}
 					className='mySwiper h-full w-full'
 				>
-					{homeSliderImages.map((imagePath, index) => {
-						const content = sliderContent[index];
-						return (
-							<SwiperSlide key={index}>
-								<div className='relative h-full w-full'>
-									<Image
-										src={getAssetUrl(imagePath)}
-										alt={`slide-${index + 1}`}
-										fill
-										sizes='100vw'
-										draggable={false}
-										className='object-cover'
-										priority={index === 0}
-										unoptimized
-									/>
-									<div className='absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center bg-black/50 p-4 text-white'>
-										<h2 className='mb-4 text-5xl font-bold'>{content.title}</h2>
-										<p className='mb-6 text-lg'>{content.description}</p>
-										<div className='flex gap-4'>
-											{content.buttons.map((btn, btnIndex) => (
-												<Button
-													key={btnIndex}
-													className={
-														btn.variant === 'solid'
-															? 'bg-primary text-white'
-															: 'border-white text-white data-[hover=true]:bg-white/15 data-[hover=true]:text-white'
-													}
-													variant={btn.variant}
-													endContent={btn.variant === 'solid' ? <ArrowUpRight /> : undefined}
-												>
-													{btn.label}
-												</Button>
-											))}
-										</div>
+					{banners.map((banner) => (
+						<SwiperSlide key={banner.id}>
+							<div className='relative h-full w-full'>
+								<Image
+									src={banner.imageUrl}
+									alt={banner.altText || banner.title}
+									fill
+									draggable={false}
+									className='z-0 object-cover'
+									priority={banner.sortOrder === 0}
+									sizes='100vw'
+								/>
+								<div className='absolute top-0 left-0 z-10 flex h-full w-full flex-col items-center justify-center bg-black/50 p-4 text-white'>
+									<h2 className='mb-4 max-w-3xl text-center text-4xl font-bold md:text-5xl'>
+										{banner.title}
+									</h2>
+									{banner.subtitle && (
+										<p className='mb-6 max-w-2xl text-center text-lg'>{banner.subtitle}</p>
+									)}
+									<div className='flex flex-wrap gap-4'>
+										{banner.ctaText && banner.ctaLink && (
+											<Button
+												className='bg-primary text-white'
+												endContent={<ArrowUpRight />}
+												as={Link}
+												href={banner.ctaLink}
+											>
+												{banner.ctaText}
+											</Button>
+										)}
+										{banner.secondaryText && banner.secondaryLink && (
+											<Button
+												className='border-white text-white data-[hover=true]:bg-white/15 data-[hover=true]:text-white'
+												variant='bordered'
+												as={Link}
+												href={banner.secondaryLink}
+											>
+												{banner.secondaryText}
+											</Button>
+										)}
 									</div>
 								</div>
-							</SwiperSlide>
-						);
-					})}
+							</div>
+						</SwiperSlide>
+					))}
 				</Swiper>
 
 				<div

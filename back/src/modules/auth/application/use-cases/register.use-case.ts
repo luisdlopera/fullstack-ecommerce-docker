@@ -52,7 +52,10 @@ export class RegisterUseCase {
   }
 
   private getFrontendBaseUrl(): string {
-    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(/\/$/, '');
+    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(
+      /\/$/,
+      '',
+    );
   }
 
   private buildFallbackFrontendUrl(): string {

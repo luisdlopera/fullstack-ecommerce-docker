@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
-import type { AdminProductListFilters, AdminProductRepositoryPort } from '../../domain/ports/admin-product.repository.port';
+import type {
+  AdminProductListFilters,
+  AdminProductRepositoryPort,
+} from '../../domain/ports/admin-product.repository.port';
 
 @Injectable()
 export class PrismaAdminProductRepository implements AdminProductRepositoryPort {
@@ -74,6 +77,18 @@ export class PrismaAdminProductRepository implements AdminProductRepositoryPort 
             sortOrder: index,
             isPrimary: index === 0,
           })),
+        });
+      }
+
+      // Create inventory record in default warehouse
+      const defaultWarehouseId = process.env.DEFAULT_WAREHOUSE_ID;
+      if (defaultWarehouseId) {
+        await tx.inventory.create({
+          data: {
+            productId: product.id,
+            warehouseId: defaultWarehouseId,
+            availableQuantity: (input.inStock as number) || 0,
+          },
         });
       }
 

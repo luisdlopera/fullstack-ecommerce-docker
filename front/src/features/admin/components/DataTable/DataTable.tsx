@@ -183,7 +183,7 @@ export function DataTable<T>({
 						Página {page} de {totalPages}
 						{total !== undefined && <span className='ml-1'>({total} resultados)</span>}
 						{isSelectable && selectedKeys.size > 0 && (
-							<span className='ml-2 font-medium text-primary'>
+							<span className='text-primary ml-2 font-medium'>
 								• {selectedKeys.size} seleccionado{selectedKeys.size !== 1 ? 's' : ''}
 							</span>
 						)}

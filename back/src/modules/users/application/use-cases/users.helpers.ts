@@ -20,13 +20,29 @@ export function buildPaginationMeta(page: number, limit: number, total: number) 
 }
 
 export function mapFavorite(fav: {
-  product: { id: string; slug: string; title: string; price: number; ProductImage: { url: string }[] };
+  product: {
+    id: string;
+    slug: string;
+    title: string;
+    price: number;
+    ProductImage: {
+      url: string;
+      storageKey?: string | null;
+      storageProvider?: string | null;
+    }[];
+  };
 }) {
+  const firstImage = fav.product.ProductImage[0];
+
+  console.log('[mapFavorite] Processing product:', fav.product.slug, 'First image:', firstImage);
+
   return {
     productId: fav.product.id,
     slug: fav.product.slug,
     title: fav.product.title,
     price: fav.product.price,
-    image: fav.product.ProductImage[0]?.url ?? '',
+    image: firstImage?.url ?? '',
+    imageStorageKey: firstImage?.storageKey ?? null,
+    imageStorageProvider: firstImage?.storageProvider ?? null,
   };
 }

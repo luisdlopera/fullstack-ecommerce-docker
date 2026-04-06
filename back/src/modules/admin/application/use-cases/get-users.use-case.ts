@@ -6,14 +6,7 @@ import { AdminService } from '../admin.service';
 export class GetUsersUseCase {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 
-  execute(
-    page?: number,
-    limit?: number,
-    search?: string,
-    role?: Role,
-    isActive?: boolean,
-    actorRole?: Role,
-  ) {
+  execute(page?: number, limit?: number, search?: string, role?: Role, isActive?: boolean, actorRole?: Role) {
     return this.adminService.getUsers(page, limit, search, role, isActive, actorRole);
   }
 }

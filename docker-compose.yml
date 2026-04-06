@@ -26,39 +26,6 @@ services:
     volumes:
       - redis_data:/data
 
-  minio:
-    image: minio/minio:latest
-    container_name: nexstore_minio
-    restart: unless-stopped
-    environment:
-      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin}
-    command: server /data --console-address ':9001'
-    ports:
-      - '${MINIO_PORT:-5010}:9000'
-      - '${MINIO_CONSOLE_PORT:-5011}:9001'
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  minio-init:
-    image: minio/mc:latest
-    container_name: nexstore_minio_init
-    depends_on:
-      minio:
-        condition: service_healthy
-    restart: 'no'
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 ${STORAGE_ACCESS_KEY:-minioadmin} ${STORAGE_SECRET_KEY:-minioadmin};
-      mc mb --ignore-existing local/${STORAGE_BUCKET:-nexstore-products};
-      mc anonymous set public local/${STORAGE_BUCKET:-nexstore-products};
-      "
-
   back:
     build:
       context: ./back
@@ -68,8 +35,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
       redis:
         condition: service_started
     env_file:
@@ -81,14 +46,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:-11f5a3ee55273d281c78c1329e73c52e37c359b19a0ebc36338904fb78ebb0f06dca1422b53d7fa1ececc4c2ed622e53edf3587d4f67e18a4c89250f8d3372ba}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-minio}
+      STORAGE_PROVIDER: r2
       STORAGE_BUCKET: ${STORAGE_BUCKET:-nexstore-products}
-      STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
-      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-http://minio:9000}
-      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-minioadmin}
-      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-minioadmin}
-      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:5010/nexstore-products}
-      STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE:-true}
+      STORAGE_REGION: ${STORAGE_REGION:-auto}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-}
       STORAGE_MAX_FILE_SIZE_BYTES: ${STORAGE_MAX_FILE_SIZE_BYTES:-5242880}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     ports:
@@ -116,5 +80,4 @@ services:
 
 volumes:
   pg_data:
-  minio_data:
   redis_data:

@@ -2,6 +2,9 @@ import { Slider } from '@/components/Slider/Slider';
 import { TabsHome } from '@/components/TabsHome';
 import { FeaturedProduct, getFeaturedProducts } from '@/lib/api';
 
+// Force dynamic rendering to skip static generation during build
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
 	let products: FeaturedProduct[] = [];
 

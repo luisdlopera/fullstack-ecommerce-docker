@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EmailService } from '../../../../shared/infrastructure/email/email.service';
-import type { EmailSenderPort, EmailVerificationMessage, PasswordResetMessage } from '../../domain/ports/email-sender.port';
+import type {
+  EmailSenderPort,
+  EmailVerificationMessage,
+  PasswordResetMessage,
+} from '../../domain/ports/email-sender.port';
 
 @Injectable()
 export class EmailSenderAdapter implements EmailSenderPort {

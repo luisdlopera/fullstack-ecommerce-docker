@@ -120,10 +120,14 @@ export class RefreshTokenUseCase {
     const num = parseInt(ttl.slice(0, -1));
     const unit = ttl.slice(-1).toLowerCase();
     switch (unit) {
-      case 'd': return num * 24 * 60 * 60 * 1000;
-      case 'h': return num * 60 * 60 * 1000;
-      case 'm': return num * 60 * 1000;
-      default: return num;
+      case 'd':
+        return num * 24 * 60 * 60 * 1000;
+      case 'h':
+        return num * 60 * 60 * 1000;
+      case 'm':
+        return num * 60 * 1000;
+      default:
+        return num;
     }
   }
 

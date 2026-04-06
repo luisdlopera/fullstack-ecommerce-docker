@@ -24,7 +24,13 @@ export type ProductListFilters = {
   classifications?: string;
 };
 
-export type ProductImageRecord = { id: number; url: string; sortOrder?: number };
+export type ProductImageRecord = {
+  id: number;
+  url: string;
+  storageKey?: string | null;
+  storageProvider?: string | null;
+  sortOrder?: number;
+};
 
 export type CategoryRecord = { id: string; name: string };
 

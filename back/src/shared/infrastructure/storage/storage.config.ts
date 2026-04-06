@@ -27,8 +27,8 @@ export class StorageConfig {
   readonly maxFileSizeBytes: number;
 
   constructor() {
-    const providerRaw = (process.env.STORAGE_PROVIDER ?? 'minio').trim().toLowerCase();
-    this.provider = providerRaw === 'r2' ? 'r2' : 'minio';
+    const providerRaw = (process.env.STORAGE_PROVIDER ?? 'r2').trim().toLowerCase();
+    this.provider = providerRaw === 'minio' ? 'minio' : 'r2';
 
     this.bucket = (process.env.STORAGE_BUCKET ?? 'nexstore-products').trim();
     this.region = (process.env.STORAGE_REGION ?? (this.provider === 'r2' ? 'auto' : 'us-east-1')).trim();

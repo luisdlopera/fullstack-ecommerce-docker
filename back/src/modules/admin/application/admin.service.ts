@@ -8,11 +8,23 @@ import { UpsertProductDto } from '../infrastructure/http/dto/upsert-product.dto'
 import { UpsertCategoryDto } from '../infrastructure/http/dto/upsert-category.dto';
 import { UpsertCountryDto } from '../infrastructure/http/dto/upsert-country.dto';
 import { ADMIN_AUDIT_REPOSITORY, type AdminAuditRepositoryPort } from '../domain/ports/admin-audit.repository.port';
-import { ADMIN_CATEGORY_REPOSITORY, type AdminCategoryRepositoryPort } from '../domain/ports/admin-category.repository.port';
-import { ADMIN_COUNTRY_REPOSITORY, type AdminCountryRepositoryPort } from '../domain/ports/admin-country.repository.port';
-import { ADMIN_METRICS_REPOSITORY, type AdminMetricsRepositoryPort } from '../domain/ports/admin-metrics.repository.port';
+import {
+  ADMIN_CATEGORY_REPOSITORY,
+  type AdminCategoryRepositoryPort,
+} from '../domain/ports/admin-category.repository.port';
+import {
+  ADMIN_COUNTRY_REPOSITORY,
+  type AdminCountryRepositoryPort,
+} from '../domain/ports/admin-country.repository.port';
+import {
+  ADMIN_METRICS_REPOSITORY,
+  type AdminMetricsRepositoryPort,
+} from '../domain/ports/admin-metrics.repository.port';
 import { ADMIN_ORDER_REPOSITORY, type AdminOrderRepositoryPort } from '../domain/ports/admin-order.repository.port';
-import { ADMIN_PRODUCT_REPOSITORY, type AdminProductRepositoryPort } from '../domain/ports/admin-product.repository.port';
+import {
+  ADMIN_PRODUCT_REPOSITORY,
+  type AdminProductRepositoryPort,
+} from '../domain/ports/admin-product.repository.port';
 import { ADMIN_USER_REPOSITORY, type AdminUserRepositoryPort } from '../domain/ports/admin-user.repository.port';
 import {
   BadRequestError,
@@ -255,12 +267,15 @@ export class AdminService {
       data.paymentStatus = PaymentStatus.REFUNDED;
     }
 
-    const updated = await this.orderRepository.updateStatus(orderId, data as {
-      status: OrderStatus;
-      isPaid?: boolean;
-      paidAt?: Date;
-      paymentStatus?: PaymentStatus;
-    });
+    const updated = await this.orderRepository.updateStatus(
+      orderId,
+      data as {
+        status: OrderStatus;
+        isPaid?: boolean;
+        paidAt?: Date;
+        paymentStatus?: PaymentStatus;
+      },
+    );
 
     await this.logAction(actorId, 'order.status.changed', 'order', orderId, {
       previousStatus: order.status,
@@ -281,11 +296,14 @@ export class AdminService {
       data.paidAt = new Date();
     }
 
-    return this.orderRepository.updatePaymentStatus(orderId, data as {
-      paymentStatus: PaymentStatus;
-      isPaid?: boolean;
-      paidAt?: Date;
-    });
+    return this.orderRepository.updatePaymentStatus(
+      orderId,
+      data as {
+        paymentStatus: PaymentStatus;
+        isPaid?: boolean;
+        paidAt?: Date;
+      },
+    );
   }
 
   async updateOrderNotes(orderId: string, internalNotes: string | undefined) {

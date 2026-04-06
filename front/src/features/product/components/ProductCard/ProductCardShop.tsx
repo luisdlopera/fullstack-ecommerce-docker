@@ -33,98 +33,98 @@ export function ProductCardShop({ model, showActions = true }: ProductCardShopPr
 		<>
 			<div className='flex flex-col items-center gap-4'>
 				<div
-				className='relative h-88.75 w-72.5 overflow-hidden rounded-3xl bg-gray-100'
-				onMouseEnter={() => setHover(true)}
-				onMouseLeave={() => setHover(false)}
+					className='relative h-88.75 w-72.5 overflow-hidden rounded-3xl bg-gray-100'
+					onMouseEnter={() => setHover(true)}
+					onMouseLeave={() => setHover(false)}
 				>
-				<ShopStyleBadges
-					isNew={model.isNew}
-					discount={model.discountPercent}
-					isSoldOut={model.isSoldOut}
-					highlightBadge={model.highlightBadge}
-					discountBadge={model.discountBadge}
-				/>
+					<ShopStyleBadges
+						isNew={model.isNew}
+						discount={model.discountPercent}
+						isSoldOut={model.isSoldOut}
+						highlightBadge={model.highlightBadge}
+						discountBadge={model.discountBadge}
+					/>
 
-				{model.slug ? (
-					<Link href={actions.productHref} className='flex cursor-pointer justify-center'>
-						<Image
-							src={model.image}
-							alt={model.title}
-							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
-								hover ? 'absolute opacity-0' : 'opacity-100'
-							}`}
-						/>
-						<Image
-							src={model.image2 || model.image}
-							alt=''
-							aria-hidden
-							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
-								hover ? 'opacity-100' : 'absolute opacity-0'
-							}`}
-						/>
-					</Link>
-				) : (
-					<div className='flex cursor-pointer justify-center'>
-						<Image
-							src={model.image}
-							alt={model.title}
-							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
-								hover ? 'absolute opacity-0' : 'opacity-100'
-							}`}
-						/>
-						<Image
-							src={model.image2 || model.image}
-							alt=''
-							aria-hidden
-							className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
-								hover ? 'opacity-100' : 'absolute opacity-0'
-							}`}
-						/>
-					</div>
-				)}
+					{model.slug ? (
+						<Link href={actions.productHref} className='flex cursor-pointer justify-center'>
+							<Image
+								src={model.image}
+								alt={model.title}
+								className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
+									hover ? 'absolute opacity-0' : 'opacity-100'
+								}`}
+							/>
+							<Image
+								src={model.image2 || model.image}
+								alt=''
+								aria-hidden
+								className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
+									hover ? 'opacity-100' : 'absolute opacity-0'
+								}`}
+							/>
+						</Link>
+					) : (
+						<div className='flex cursor-pointer justify-center'>
+							<Image
+								src={model.image}
+								alt={model.title}
+								className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
+									hover ? 'absolute opacity-0' : 'opacity-100'
+								}`}
+							/>
+							<Image
+								src={model.image2 || model.image}
+								alt=''
+								aria-hidden
+								className={`h-88.75 w-72.5 rounded-3xl object-cover transition-opacity duration-500 ${
+									hover ? 'opacity-100' : 'absolute opacity-0'
+								}`}
+							/>
+						</div>
+					)}
 
-				{showActions && hover && (
-					<div className='absolute top-3 right-3 z-20 flex flex-col gap-2'>
-						<Tooltip
-							key={actions.favorite ? 'fav-on' : 'fav-off'}
-							content={favoriteTooltip}
-							placement='bottom'
-							classNames={{ base: 'z-[200]' }}
-						>
-							<Button
-								isIconOnly
-								aria-label={favoriteAria}
-								className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
-								onPress={handleFavoritePress}
+					{showActions && hover && (
+						<div className='absolute top-3 right-3 z-20 flex flex-col gap-2'>
+							<Tooltip
+								key={actions.favorite ? 'fav-on' : 'fav-off'}
+								content={favoriteTooltip}
+								placement='bottom'
+								classNames={{ base: 'z-[200]' }}
 							>
-								<Heart
-									className={actions.favorite ? 'text-red-500' : ''}
-									fill={actions.favorite ? 'currentColor' : 'none'}
-								/>
-							</Button>
-						</Tooltip>
-						<Tooltip
-							key={actions.inCart ? 'cart-on' : 'cart-off'}
-							content={actions.inCart ? 'En el carrito' : 'Agregar al carrito'}
-							placement='bottom'
-							classNames={{ base: 'z-[200]' }}
-						>
-							<Button
-								isIconOnly
-								aria-label={actions.inCart ? 'Producto en el carrito' : 'Agregar al carrito'}
-								className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
-								onPress={() => void actions.handleAddToCart()}
-								isDisabled={!model.slug || model.isSoldOut}
-								isLoading={actions.addingToCart}
+								<Button
+									isIconOnly
+									aria-label={favoriteAria}
+									className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
+									onPress={handleFavoritePress}
+								>
+									<Heart
+										className={actions.favorite ? 'text-red-500' : ''}
+										fill={actions.favorite ? 'currentColor' : 'none'}
+									/>
+								</Button>
+							</Tooltip>
+							<Tooltip
+								key={actions.inCart ? 'cart-on' : 'cart-off'}
+								content={actions.inCart ? 'En el carrito' : 'Agregar al carrito'}
+								placement='bottom'
+								classNames={{ base: 'z-[200]' }}
 							>
-								<ShoppingCart
-									className={actions.inCart ? 'text-primary' : ''}
-									fill={actions.inCart ? 'currentColor' : 'none'}
-								/>
-							</Button>
-						</Tooltip>
-					</div>
-				)}
+								<Button
+									isIconOnly
+									aria-label={actions.inCart ? 'Producto en el carrito' : 'Agregar al carrito'}
+									className='h-14 w-14 bg-white p-2 shadow-md hover:bg-gray-200'
+									onPress={() => void actions.handleAddToCart()}
+									isDisabled={!model.slug || model.isSoldOut}
+									isLoading={actions.addingToCart}
+								>
+									<ShoppingCart
+										className={actions.inCart ? 'text-primary' : ''}
+										fill={actions.inCart ? 'currentColor' : 'none'}
+									/>
+								</Button>
+							</Tooltip>
+						</div>
+					)}
 				</div>
 
 				{model.slug ? (

@@ -16,13 +16,11 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import type { Product } from '@/lib/api';
 import { fetchProductsClient } from '@/lib/api';
 import { fetchProductBySlugClient } from '@/lib/shop-api';
-import { getMockProductDetail } from '@/lib/mocks/product-detail';
 import { pickDefaultSize } from '@/lib/product-size';
 
 export type ProductDetailPageClientProps = {
 	slug: string;
 	initialApiProduct: Product | null;
-	useMock: boolean;
 };
 
 function defaultColorId(colors: ProductDetail['colors']): string | null {
@@ -37,22 +35,20 @@ function selectionFromApi(p: Product): { size: string | null; color: string | nu
 	return { size, color: defaultColorId(detail.colors) };
 }
 
-export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: ProductDetailPageClientProps) {
+export function ProductDetailPageClient({ slug, initialApiProduct }: ProductDetailPageClientProps) {
 	const params = useParams<{ slug: string }>();
 	const router = useRouter();
 	const { addItem } = useCart();
 	const { isFavorite, toggleFavorite, removeFavorite } = useFavorites();
 
-	const initialSelection =
-		initialApiProduct && !useMock
-			? selectionFromApi(initialApiProduct)
-			: { size: null as string | null, color: null as string | null };
-
+	const initialSelection = initialApiProduct
+		? selectionFromApi(initialApiProduct)
+		: { size: null as string | null, color: null as string | null };
 	const [product, setProduct] = useState<ProductDetail | null>(() =>
 		initialApiProduct ? mapApiProductToProductDetail(initialApiProduct) : null,
 	);
 	const [relatedProducts, setRelatedProducts] = useState<SimilarProduct[]>([]);
-	const [loading, setLoading] = useState(() => Boolean(useMock || !initialApiProduct));
+	const [loading, setLoading] = useState(() => Boolean(!initialApiProduct));
 	const [selectedImage, setSelectedImage] = useState(0);
 	const [selectedSize, setSelectedSize] = useState<string | null>(() => initialSelection.size);
 	const [selectedColorId, setSelectedColorId] = useState<string | null>(() => initialSelection.color);
@@ -61,15 +57,6 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 	const [favoriteDeleteOpen, setFavoriteDeleteOpen] = useState(false);
 
 	useEffect(() => {
-		if (useMock) {
-			const p = getMockProductDetail(params.slug);
-			setProduct(p);
-			setSelectedSize(pickDefaultSize(p.sizes));
-			setSelectedColorId(defaultColorId(p.colors));
-			setLoading(false);
-			return;
-		}
-
 		if (initialApiProduct && params.slug === slug) {
 			const p = mapApiProductToProductDetail(initialApiProduct);
 			setProduct(p);
@@ -108,7 +95,7 @@ export function ProductDetailPageClient({ slug, initialApiProduct, useMock }: Pr
 		return () => {
 			cancelled = true;
 		};
-	}, [params.slug, slug, initialApiProduct, useMock]);
+	}, [params.slug, slug, initialApiProduct]);
 
 	useEffect(() => {
 		if (!product) {

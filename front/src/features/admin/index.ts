@@ -1,6 +1,8 @@
 export * from './types';
+export * from './types/collection';
 export * from './permissions';
 export * from './services/admin-api';
+export * from './services/collections-api';
 export { AdminPageHeader } from './components/AdminPageHeader';
 export { ConfirmDialog } from './components/ConfirmDialog';
 export { DataTable, type Column } from './components/DataTable';

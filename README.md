@@ -1,288 +1,338 @@
-# NexStore
+# SellFlow System
 
-Si te gusta este proyecto, ¡deja una estrella en GitHub! ⭐ Ayuda a que más gente lo descubra.
+<p align="center">
+  <img src="https://pub-e14c4ed4e514428faeb13ca8f02c15a7.r2.dev/home/slider/slider-1.webp" alt="SellFlow Banner" width="100%">
+</p>
+
+**System for managing orders, customers, and inventory for businesses that sell via WhatsApp**
+
+> From chaos to control: manage your WhatsApp sales like a professional operation without changing how your customers buy.
 
 ---
 
-NexStore es un e-commerce organizado como monorepo con separación clara entre frontend y backend:
+## Problem
 
-- `front/`: Next.js (UI)
-- `back/`: NestJS con arquitectura hexagonal + Prisma
-- `docker-compose.yml`: servicios Docker para desarrollo local (`postgres` + `minio`)
+Every day, millions of small businesses in Latin America receive orders through WhatsApp. But behind the apparent simplicity lies operational chaos:
 
-## Stack
+- **Lost orders** — Customer messages buried in chat history, forgotten requests, missed sales
+- **No inventory control** — Selling products you don't have, missing restock opportunities, manual counts
+- **No order tracking** — Customers constantly asking "where is my order?" without a clear answer
+- **Scattered information** — Data spread across notebooks, spreadsheets, and chat apps
+- **No customer history** — Every order feels like the first time, missing upsell opportunities
 
-- Next.js (`latest`) + React (`latest`) en `front/`
-- NestJS (`latest`) en `back/`
-- Prisma + PostgreSQL
-- npm workspaces para correr `front` y `back` en local
-- Docker Compose para base de datos PostgreSQL
+These businesses lose **money, customers, and growth opportunities** simply because they lack a system designed for their reality.
 
-## Estructura
+---
 
-```txt
-nexstore/
-  front/                  # Next.js app
-  back/                   # NestJS API + Prisma
-  docker-compose.yml      # servicios Docker (en local: postgres, redis, minio)
-  docker-compose.dev.yml  # desarrollo con hot reload
-  .env.example            # plantilla de variables de entorno
-```
+## Solution
 
-> **Seguridad**: El archivo `.env.example` contiene placeholders seguros. Nunca uses secretos reales en archivos versionables. Copia a `.env` y reemplaza los valores.
+**SellFlow** is an order management system built specifically for the WhatsApp commerce reality:
 
-## Puertos Estándar (Estrictos)
+- **Capture orders** directly from WhatsApp conversations
+- **Track inventory** in real-time with automatic alerts
+- **Know your customers** with complete purchase history
+- **Professional workflow** from order to delivery
+- **No customer app needed** — They keep using WhatsApp normally
 
-Este monorepo usa puertos **fijos y estrictos** - sin fallback automático:
+---
 
-| Servicio | Puerto | Variable |
-|----------|--------|----------|
-| **Frontend** | 5006 | `FRONTEND_PORT` |
-| **Backend** | 5007 | `BACKEND_PORT` |
-| **PostgreSQL** | 5008 | `DATABASE_PORT` |
-| **Redis** | 5009 | `REDIS_PORT` |
-| **MinIO** | 5010 | `MINIO_PORT` |
+## Target Users
 
-**Reglas críticas:**
-- Si un puerto está ocupado, el proceso **falla** (no cambia de puerto)
-- Usa `npm run dev:clean` antes de arrancar si hay conflictos
-- Frontend siempre en 5006, Backend siempre en 5007
+| Business Type | Use Case |
+|--------------|----------|
+| **Beauty Stores** | Skincare, cosmetics, nail salons selling to 200+ regular customers |
+| **Hardware Stores** | Materials, tools, bulk orders from contractors |
+| **Food Businesses** | Home kitchens, bakeries, meal prep with perishable inventory |
+| **Distributors** | Multi-customer management, order aggregation, delivery routes |
+| **Local Retailers** | Neighborhood shops using WhatsApp as main sales channel |
 
-**Comandos de limpieza:**
+---
+
+## Features
+
+### Orders
+- **Order lifecycle**: Draft → Confirmed → Processing → Shipped → Delivered
+- **WhatsApp-optimized**: Capture orders from chat conversations
+- **Status tracking**: Full visibility for operators and customers
+- **Order notes**: Internal comments and customer communication history
+
+### Inventory
+- **Real-time stock**: Accurate inventory across all products
+- **Multi-location**: Manage stock across multiple warehouses or stores
+- **Low stock alerts**: Automatic notifications when inventory runs low
+- **Complete audit**: Every inventory change tracked with user attribution
+
+### Customers
+- **Customer profiles**: Contact info, WhatsApp number, preferences
+- **Purchase history**: Complete view of all transactions
+- **Quick reorder**: Easy reordering based on past purchases
+- **Customer tags**: Segment customers by type or value
+
+### WhatsApp Flow
+- **Mobile-first**: Full functionality on mobile devices
+- **One-click WhatsApp**: Direct link to customer chat
+- **Shareable catalog**: Quick product list for sharing
+- **No customer friction**: Customers continue using WhatsApp normally
+
+### Admin Panel
+- **Dashboard overview**: Orders, revenue, inventory status at a glance
+- **Role-based access**: Admin, manager, and operator permissions
+- **Sales reports**: Trends, top products, customer insights
+- **User management**: Add team members with specific permissions
+
+---
+
+## Differentiation
+
+### This is NOT a Generic E-Commerce
+
+| Generic E-Commerce | **SellFlow** |
+|-------------------|----------------|
+| Customers browse a website | Orders come from **WhatsApp conversations** |
+| Automated checkout | **Manual confirmation** workflow with customers |
+| Payment gateways | Track **cash and bank transfers** |
+| Shipping integrations | **Local delivery** management |
+| Anonymous buyers | **Known customers** with purchase history |
+
+### Built for WhatsApp Commerce
+
+- **Conversational orders** — System designed around chat-based sales
+- **Human-in-the-loop** — Orders confirmed by business owner, not automated
+- **Flexible payments** — Supports cash, bank transfers, mobile payments
+- **Local delivery** — Optimized for in-house or local courier delivery
+- **Relationship-focused** — Built to strengthen customer relationships
+
+---
+
+## Architecture
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Next.js 15 + React 19 + TypeScript |
+| **Backend** | NestJS + TypeScript + Prisma ORM |
+| **Database** | PostgreSQL 16 |
+| **Queue/Cache** | Redis 7 + BullMQ |
+| **Storage** | Cloudflare R2 (S3-compatible) |
+| **Auth** | JWT + RBAC |
+| **DevOps** | Docker + Docker Compose |
+
+---
+
+## Run Locally
+
+### Prerequisites
+
+- Node.js 22 (see `.nvmrc`)
+- Docker + Docker Compose
+- Git
+
+### Quick Start
+
 ```bash
-npm run dev:clean        # Mata procesos en 5006 y 5007
-npm run dev              # Limpia y arranca apps
-npm run dev:stack        # Limpia, arranca DB y apps
-```
-
-## Paso a paso en otro PC (o instalación desde cero)
-
-1) Clona el repositorio:
-
-```bash
+# 1. Clone the repository
 git clone <URL_DEL_REPO>
-cd nexstore
-```
+cd sellflow
 
-2) Crea el archivo de entorno:
+# 2. Install dependencies
+npm install
 
-```bash
-copy .env.example .env       # Windows
-cp .env.example .env         # Linux/Mac
-```
+# 3. Configure environment
+cp .env.example .env
+# Edit .env with your values (see below)
 
-3) Edita `.env` y cambia `JWT_SECRET` por un valor seguro:
-
-```bash
-# Genera un secreto aleatorio (Linux/Mac):
-openssl rand -hex 64
-```
-
-4) Levanta PostgreSQL + MinIO:
-
-```bash
-npm run dev:db
-```
-
-5) Aplica migraciones, genera cliente Prisma y carga seed:
-
-```bash
-npm run db:sync:seed
-```
-
-6) Levanta frontend + backend locales:
-
-```bash
-npm run dev:apps
-```
-
-7) Abre:
-
-- Frontend: `http://localhost:5006`
-- Backend API: `http://localhost:5007/api/health`
-- Swagger docs: `http://localhost:5007/api/docs`
-
-8) Cargar datos de prueba (usuarios, productos, países, etc.) cuando lo necesites:
-
-**Con el backend en local** (desde la raíz del repo, con PostgreSQL accesible y `DATABASE_URL` en `.env`):
-
-```bash
-npm run prisma:seed -w back
-```
-
-**Con Docker** (contenedor del API en ejecución):
-
-```bash
-docker exec -it nexstore_back npx prisma db seed
-```
-
-El seed define cuentas como `admin@nexstore.com` / `Qwert.12345` (ver sección *Usuarios de prueba*).
-
-## Flujo de desarrollo recomendado
-
-Desde la raíz del proyecto:
-
-1) Primera ejecución del día (si la DB no está arriba):
-
-```bash
+# 4. Start full stack (Database + Backend + Frontend)
 npm run dev:stack
 ```
 
-2) Día a día (DB ya arriba, solo apps locales):
+The system will be available at:
+- **Frontend**: http://localhost:5006
+- **Backend API**: http://localhost:5007/api
+- **API Documentation**: http://localhost:5007/api/docs
 
+### Environment Configuration
+
+Edit `.env` file:
+
+```bash
+# Database
+DATABASE_URL=postgresql://sellflow:sellflow@localhost:5008/sellflow?schema=public
+POSTGRES_USER=sellflow
+POSTGRES_PASSWORD=sellflow
+POSTGRES_DB=sellflow
+DATABASE_PORT=5008
+
+# JWT Secret (generate a secure one)
+JWT_SECRET=your-generated-secret-here
+
+# Storage (Cloudflare R2)
+STORAGE_PROVIDER=r2
+STORAGE_BUCKET=sellflow-products
+STORAGE_ENDPOINT=https://your-account.r2.cloudflarestorage.com
+STORAGE_ACCESS_KEY=your-access-key
+STORAGE_SECRET_KEY=your-secret-key
+STORAGE_PUBLIC_URL=https://your-public-url.com
+
+# Redis
+REDIS_URL=redis://localhost:5009
+```
+
+Generate a secure JWT secret:
+```bash
+# macOS/Linux
+openssl rand -hex 64
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev:stack` | Start everything (DB + Backend + Frontend) |
+| `npm run dev:apps` | Start only apps (DB must be running) |
+| `npm run dev:db` | Start only database (PostgreSQL + Redis) |
+| `npm run dev:down` | Stop all Docker containers |
+| `npm run dev:front` | Start only frontend |
+| `npm run dev:back` | Start only backend |
+| `npm run db:sync` | Sync database schema (generate + migrate) |
+| `npm run db:sync:seed` | Sync database and load seed data |
+| `npm run db:seed` | Load seed data only |
+| `npm run format` | Format all code with Prettier |
+| `npm run build` | Build for production |
+
+### Development Workflow
+
+**First time setup:**
+```bash
+npm install
+npm run dev:stack
+```
+
+**Daily development (DB already running):**
 ```bash
 npm run dev:apps
 ```
 
-Si `5000` o `5001` están ocupados, `dev:apps` elige automáticamente el siguiente puerto libre.
-
-3) Si hubo cambios de schema ya migrados en git (pull/CI):
-
+**After pulling changes with schema updates:**
 ```bash
 npm run db:sync
 ```
 
-4) Si tú cambiaste `schema.prisma` en local:
-
-```bash
-npm run prisma:migrate:dev -w back
-```
-
-5) Levantar PostgreSQL + MinIO:
-
-```bash
-npm run dev:db
-```
-
-6) Apagar contenedores Docker:
-
+**Reset everything:**
 ```bash
 npm run dev:down
+npm run dev:stack
 ```
 
-## Comandos disponibles
+### Default Ports
 
-| Comando | Descripción |
-|---|---|
-| `npm run dev:stack` | Levanta DB (`postgres`) y ejecuta `back` + `front` en paralelo |
-| `npm run dev:apps` | Ejecuta `back` + `front` en paralelo usando npm workspaces |
-| `npm run dev:db` | Levanta PostgreSQL + MinIO con Docker Compose |
-| `npm run dev:down` | Apaga contenedores Docker del proyecto |
-| `npm run db:sync` | Ejecuta `prisma generate` + `prisma migrate deploy` en `back/` |
-| `npm run db:sync:seed` | Ejecuta `db:sync` y luego el seed del backend |
-| `npm run dev:front` | Ejecuta solo frontend |
-| `npm run dev:back` | Ejecuta solo backend |
-| `npm run format` | Formatea `front/` y `back/` con Prettier |
+| Service | Port | Description |
+|---------|------|-------------|
+| Frontend | 5006 | Next.js development server |
+| Backend | 5007 | NestJS API server |
+| PostgreSQL | 5008 | Database |
+| Redis | 5009 | Cache and queues |
 
-## Desarrollo con hot reload
+### Test Users
 
-- `front` corre con `next dev` y recarga en caliente.
-- `back` corre con `tsx watch` y recompila automáticamente.
-- Frontend y backend corren localmente vía npm workspaces.
-- Si PowerShell bloquea `npm`, usa `npm.cmd run dev:stack`.
+After running seed, use these accounts:
 
-### Puertos en desarrollo
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@sellflow.local | Qwert.12345 |
+| Manager | manager@sellflow.local | Qwert.12345 |
+| Operator | operator@sellflow.local | Qwert.12345 |
 
-- Puertos por defecto: `front=5000`, `back=5001`.
-- Si están ocupados, `npm run dev:apps` hace fallback automático al siguiente puerto libre.
-- Puedes forzar puertos base con variables de entorno:
+---
 
-```bash
-# PowerShell
-$env:FRONT_PORT=3010
-$env:BACK_PORT=4010
-npm run dev:apps
-```
+## Roadmap
 
-## URLs de referencia
+### Phase 1 — Core (Current)
+- Order management with WhatsApp workflow
+- Inventory control with multi-location
+- Customer management with history
+- Admin panel with role-based access
+- Product catalog with image upload
 
-| Servicio | URL |
-|---|---|
-| Frontend | `http://localhost:5000` |
-| Backend API | `http://localhost:5001/api` |
-| Swagger Docs | `http://localhost:5001/api/docs` |
-| Health check | `http://localhost:5001/api/health` |
-| PostgreSQL | `localhost:5002` |
-| MinIO API (S3) | `http://localhost:5004` |
-| MinIO Console | `http://localhost:5005` |
+### Phase 2 — WhatsApp Integration
+- WhatsApp Business API integration
+- Automated customer notifications
+- Click-to-order catalog links
+- Order status updates via WhatsApp
 
-## Usuarios de prueba
+### Phase 3 — SaaS Platform
+- Multi-tenant architecture
+- Self-service onboarding
+- Subscription billing
+- White-label customization
 
-| Rol | Email | Contraseña |
-|---|---|---|
-| Admin | admin@nexstore.com | Qwert.12345 |
-| Cliente | cliente@nexstore.com | Qwert.12345 |
+### Phase 4 — Ecosystem
+- Delivery partner integrations
+- Supplier management
+- Financial tracking and reporting
+- Mobile app for operators
 
-## Desarrollo local
+---
 
-Instala dependencias en raíz (workspaces):
+## Business Vision
 
-```bash
-npm install
-```
+### Target Market
+- **Primary**: Small businesses in Latin America selling via WhatsApp
+- **Secondary**: Distributors and retailers using conversational commerce
+- **TAM**: Millions of businesses using WhatsApp as primary sales channel
 
-Luego ejecuta uno de estos flujos:
+### Monetization Strategy
 
-```bash
-npm run dev:stack   # DB + apps
-npm run dev:apps    # solo apps (DB ya levantada)
-```
+**Phase 1**: Custom implementation for individual businesses (service revenue)
+**Phase 2**: SaaS subscription model:
+- **Starter**: $29/month — 1 user, 100 orders/month
+- **Professional**: $79/month — 5 users, unlimited orders
+- **Enterprise**: $199/month — Unlimited users, API access, priority support
 
-## Prisma (backend)
+### Competitive Advantages
+1. **Purpose-built** for WhatsApp commerce (not retrofitted e-commerce)
+2. **Simplicity** over feature bloat
+3. **Mobile-native** experience
+4. **Fast implementation** (days, not months)
 
-Comandos recomendados desde la raíz:
+---
 
-```bash
-npm run db:sync                      # generate + migrate deploy
-npm run db:sync:seed                 # db:sync + seed
-npm run prisma:migrate:dev -w back   # cuando tú cambias schema.prisma
-```
+## Contact
 
-El seed también se puede ejecutar con `npx prisma db seed` dentro de `back/` (usa `prisma.seed` del `package.json` del backend).
+**Luis David Lopera**
 
-## Storage de imágenes (backend)
+- **Email**: info@luisdavidlopera.com
+- **WhatsApp**: +57 301 289 1218
+- **Location**: Colombia
 
-- Arquitectura y uso: `back/docs/STORAGE.md`
-- Puerto: `StoragePort` (desacoplado del proveedor)
-- Local: MinIO
-- Demo/Prod: Cloudflare R2
+---
 
-## Formato de código
+## SellFlow
 
-Desde la raíz del monorepo:
+> **"Turn your WhatsApp chaos into a professional sales operation."**
 
-```bash
-npm run format
-```
+If this project helps your business, please consider giving it a star
 
-Equivale a formatear el frontend (`prettier --write .` en `front/`) y el backend (`src` y `prisma` en `back/`). Comprobar sin escribir: `npm run format:check -w back` y `npm run prettier:check -w front`.
+---
 
-## Problemas frecuentes
+## License
 
-### Error: "Cannot start server - port already in use" o ECONNREFUSED
+See [LICENSE](LICENSE) for details.
 
-**Síntoma:** Frontend o backend no arrancan, o hay conflictos de puerto.
+## Security
 
-**Causa:** Dos servicios intentan usar el mismo puerto (ej: frontend y backend ambos en 5001).
+See [SECURITY.md](SECURITY.md) for security policies and reporting.
 
-**Solución:**
-```bash
-# 1. Mata procesos huérfanos
-pkill -f "next dev"
-pkill -f "tsx watch"
+## Contributing
 
-# 2. Reinicia con puertos explícitos
-FRONTEND_PORT=5000 BACKEND_PORT=5001 npm run dev:apps
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
-### Error: Frontend 404 en /api/* (Next.js intenta resolver rutas locales)
+---
 
 **Síntoma:** El frontend muestra 404 al llamar `/api/products/featured` o similares.
 
 **Causa:** Next.js intercepta rutas `/api/*` y las trata como API routes locales en lugar de enviarlas al backend.
 
 **Solución:**
-- Verifica que `NEXT_PUBLIC_API_URL` apunte al backend (port 5001), no al frontend:
+- Verifica `NEXT_PUBLIC_API_URL` apunte al backend (port 5001), no al frontend:
   ```bash
   # front/.env.local
   NEXT_PUBLIC_API_URL=http://localhost:5001/api
@@ -399,3 +449,7 @@ See:
 - .specify/spec.md
 - .specify/plan.md
 - .specify/tasks/
+
+<p align="center">
+  <strong>Built with love for small businesses in Latin America</strong>
+</p>

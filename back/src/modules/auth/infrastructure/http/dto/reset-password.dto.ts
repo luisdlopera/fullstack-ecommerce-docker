@@ -9,8 +9,7 @@ export class ResetPasswordDto {
   @IsString()
   @MinLength(10)
   @Matches(PASSWORD_POLICY, {
-    message:
-      'Password must include at least one uppercase letter, one lowercase letter, one number and one symbol',
+    message: 'Password must include at least one uppercase letter, one lowercase letter, one number and one symbol',
   })
   newPassword!: string;
 }

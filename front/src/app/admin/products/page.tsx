@@ -158,7 +158,6 @@ export default function AdminProductsPage() {
 		return failedFiles;
 	};
 
-
 	const updateMutation = useMutation({
 		mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => productsApi.update(id, data),
 		onSuccess: () => {
@@ -382,11 +381,13 @@ export default function AdminProductsPage() {
 
 	const categoryOptions = (() => {
 		const seen = new Set<string>();
-		return (categories ?? []).filter((c: AdminCategory) => {
-			if (seen.has(c.id)) return false;
-			seen.add(c.id);
-			return true;
-		}).map((c: AdminCategory) => ({ value: c.id, label: c.name }));
+		return (categories ?? [])
+			.filter((c: AdminCategory) => {
+				if (seen.has(c.id)) return false;
+				seen.add(c.id);
+				return true;
+			})
+			.map((c: AdminCategory) => ({ value: c.id, label: c.name }));
 	})();
 
 	if (error) {
@@ -467,7 +468,6 @@ export default function AdminProductsPage() {
 				selectedKeys={selectedKeys}
 				onSelectionChange={setSelectedKeys}
 			/>
-
 
 			{canWrite && editProduct && (
 				<ProductFormModal
@@ -691,214 +691,224 @@ function ProductFormModal({
 		<>
 			<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading} size='lg'>
 				<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-				{(initialData?.id || !initialData) && (
-					<div className='sm:col-span-2 rounded-xl border border-gray-200 p-4'>
-						<p className='mb-3 text-sm font-semibold text-gray-900'>Imágenes del producto</p>
-						{initialData?.id && <p className='mb-2 text-xs text-gray-500'>Arrastra para reordenar</p>}
-						{initialData?.id && (
-							<div className='mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4'>
-								{localImages.map((img) => (
-								<div
-									key={img.id}
-									draggable={!reorderingImages}
-									onDragStart={() => setDragImageId(img.id)}
-									onDragOver={(e) => e.preventDefault()}
-									onDrop={() => void handleDropOnImage(img.id)}
-									className={`rounded-lg border p-2 ${dragImageId === img.id ? 'border-black' : 'border-gray-200'}`}
-								>
-									<div className='relative h-24 w-full overflow-hidden rounded-md bg-gray-100'>
-										<Image
-											src={img.url}
-											alt={initialData.title}
-											fill
-											className='object-cover'
-											unoptimized
-										/>
-									</div>
-									<div className='mt-2 flex flex-wrap items-center justify-between gap-2'>
-										{img.isPrimary ? (
-											<span className='rounded bg-black px-2 py-0.5 text-[10px] font-semibold text-white'>
-												Principal
-											</span>
-										) : (
-											<span className='text-[10px] text-gray-500'>Orden {img.sortOrder + 1}</span>
-										)}
-										{!img.isPrimary && (
-											<button
-												type='button'
-												disabled={settingPrimaryImage}
-												onClick={() => void handleSetPrimaryImage(img.id)}
-												className='rounded px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50'
-											>
-												Hacer principal
-											</button>
-										)}
-										<button
-											type='button'
-											disabled={deletingImage}
-											onClick={() => setPendingDeleteImageId(img.id)}
-											className='rounded px-2 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+					{(initialData?.id || !initialData) && (
+						<div className='rounded-xl border border-gray-200 p-4 sm:col-span-2'>
+							<p className='mb-3 text-sm font-semibold text-gray-900'>Imágenes del producto</p>
+							{initialData?.id && <p className='mb-2 text-xs text-gray-500'>Arrastra para reordenar</p>}
+							{initialData?.id && (
+								<div className='mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4'>
+									{localImages.map((img) => (
+										<div
+											key={img.id}
+											draggable={!reorderingImages}
+											onDragStart={() => setDragImageId(img.id)}
+											onDragOver={(e) => e.preventDefault()}
+											onDrop={() => void handleDropOnImage(img.id)}
+											className={`rounded-lg border p-2 ${dragImageId === img.id ? 'border-black' : 'border-gray-200'}`}
 										>
-											Borrar
-										</button>
-									</div>
+											<div className='relative h-24 w-full overflow-hidden rounded-md bg-gray-100'>
+												<Image
+													src={img.url}
+													alt={initialData.title}
+													fill
+													className='object-cover'
+													unoptimized
+												/>
+											</div>
+											<div className='mt-2 flex flex-wrap items-center justify-between gap-2'>
+												{img.isPrimary ? (
+													<span className='rounded bg-black px-2 py-0.5 text-[10px] font-semibold text-white'>
+														Principal
+													</span>
+												) : (
+													<span className='text-[10px] text-gray-500'>
+														Orden {img.sortOrder + 1}
+													</span>
+												)}
+												{!img.isPrimary && (
+													<button
+														type='button'
+														disabled={settingPrimaryImage}
+														onClick={() => void handleSetPrimaryImage(img.id)}
+														className='rounded px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50'
+													>
+														Hacer principal
+													</button>
+												)}
+												<button
+													type='button'
+													disabled={deletingImage}
+													onClick={() => setPendingDeleteImageId(img.id)}
+													className='rounded px-2 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+												>
+													Borrar
+												</button>
+											</div>
+										</div>
+									))}
 								</div>
-								))}
+							)}
+							<div
+								onDragOver={(e) => e.preventDefault()}
+								onDrop={(e) => {
+									e.preventDefault();
+									const dropped = Array.from(e.dataTransfer.files || []).filter((file) =>
+										['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type),
+									);
+									if (dropped.length === 0) {
+										toast.error('Solo se permiten imágenes jpg, jpeg, png o webp');
+										return;
+									}
+									setUploadFiles((prev) => [...prev, ...dropped]);
+								}}
+								className='mb-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3 text-center text-xs text-gray-600'
+							>
+								Arrastra y suelta imágenes aquí o usa el selector
 							</div>
-						)}
-						<div
-							onDragOver={(e) => e.preventDefault()}
-							onDrop={(e) => {
-								e.preventDefault();
-								const dropped = Array.from(e.dataTransfer.files || []).filter((file) =>
-									['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type),
-								);
-								if (dropped.length === 0) {
-									toast.error('Solo se permiten imágenes jpg, jpeg, png o webp');
-									return;
-								}
-								setUploadFiles((prev) => [...prev, ...dropped]);
-							}}
-							className='mb-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3 text-center text-xs text-gray-600'
-						>
-							Arrastra y suelta imágenes aquí o usa el selector
-						</div>
-						<div className='grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end'>
-							<div>
-								<Input
-									label='Subir nuevas imágenes'
-									name='uploadImages'
-									type='file'
-									multiple
-									accept='image/jpeg,image/jpg,image/png,image/webp'
-									onChange={(e) => {
-										const files = Array.from(e.target.files ?? []);
-										setUploadFiles(files);
-									}}
-									variant='flat'
-									radius='lg'
-									size='sm'
-								/>
-								{uploadFiles.length > 0 && (
-									<p className='mt-1 text-xs text-gray-600'>{uploadFiles.length} archivo(s) seleccionado(s)</p>
+							<div className='grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end'>
+								<div>
+									<Input
+										label='Subir nuevas imágenes'
+										name='uploadImages'
+										type='file'
+										multiple
+										accept='image/jpeg,image/jpg,image/png,image/webp'
+										onChange={(e) => {
+											const files = Array.from(e.target.files ?? []);
+											setUploadFiles(files);
+										}}
+										variant='flat'
+										radius='lg'
+										size='sm'
+									/>
+									{uploadFiles.length > 0 && (
+										<p className='mt-1 text-xs text-gray-600'>
+											{uploadFiles.length} archivo(s) seleccionado(s)
+										</p>
+									)}
+									<Checkbox
+										size='sm'
+										isSelected={makePrimaryUpload}
+										onValueChange={setMakePrimaryUpload}
+										className='mt-2'
+									>
+										<span className='text-xs text-gray-600'>Marcar como imagen principal</span>
+									</Checkbox>
+									{!initialData?.id && uploadFiles.length > 0 && (
+										<p className='mt-1 text-xs text-blue-700'>
+											Las imágenes se subirán automáticamente al crear el producto.
+										</p>
+									)}
+								</div>
+								{initialData?.id ? (
+									<Button
+										type='button'
+										isDisabled={uploadFiles.length === 0 || uploadingImage}
+										onPress={() => void handleUploadImage()}
+										variant='solid'
+										color='default'
+									>
+										{uploadingImage ? 'Subiendo...' : 'Subir imagen'}
+									</Button>
+								) : (
+									<div className='h-10 rounded-lg bg-gray-100 px-4 text-sm leading-10 text-gray-500'>
+										Se subirán al guardar
+									</div>
 								)}
-								<Checkbox
-									size='sm'
-									isSelected={makePrimaryUpload}
-									onValueChange={setMakePrimaryUpload}
-									className='mt-2'
-								>
-									<span className='text-xs text-gray-600'>Marcar como imagen principal</span>
-								</Checkbox>
-								{!initialData?.id && uploadFiles.length > 0 && (
-									<p className='mt-1 text-xs text-blue-700'>
-										Las imágenes se subirán automáticamente al crear el producto.
+							</div>
+
+							{uploadTask && uploadTask.total > 0 && (
+								<div className='mt-3 rounded-lg border border-gray-200 bg-white p-3'>
+									<div className='mb-2 flex items-center justify-between gap-2 text-xs text-gray-600'>
+										<span>{uploadTask.active ? 'Subiendo imágenes...' : 'Subida finalizada'}</span>
+										<Chip
+											size='sm'
+											variant='flat'
+											color={uploadTask.failedCount > 0 ? 'warning' : 'success'}
+										>
+											{uploadTask.completed}/{uploadTask.total}
+										</Chip>
+									</div>
+									<Progress
+										value={
+											uploadTask.total > 0 ? (uploadTask.completed / uploadTask.total) * 100 : 0
+										}
+										color={uploadTask.failedCount > 0 ? 'warning' : 'success'}
+										size='sm'
+										aria-label='Progreso de subida de imágenes'
+									/>
+									{uploadTask.currentFileName && (
+										<p className='mt-2 truncate text-xs text-gray-500'>
+											Archivo: {uploadTask.currentFileName}
+										</p>
+									)}
+								</div>
+							)}
+
+							{initialData?.id && pendingRetryFiles && pendingRetryFiles.length > 0 && (
+								<div className='mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3'>
+									<p className='text-xs text-orange-800'>
+										{pendingRetryFiles.length} imagen(es) fallaron en la subida automática.
 									</p>
-								)}
-							</div>
-							{initialData?.id ? (
-								<Button
-									type='button'
-									isDisabled={uploadFiles.length === 0 || uploadingImage}
-									onPress={() => void handleUploadImage()}
-									variant='solid'
-									color='default'
-								>
-									{uploadingImage ? 'Subiendo...' : 'Subir imagen'}
-								</Button>
-							) : (
-								<div className='h-10 rounded-lg bg-gray-100 px-4 text-sm leading-10 text-gray-500'>
-									Se subirán al guardar
+									<Button
+										size='sm'
+										variant='flat'
+										color='warning'
+										onPress={() => void handleRetryFailedUploads()}
+									>
+										Reintentar fallidas
+									</Button>
 								</div>
 							)}
 						</div>
+					)}
 
-						{uploadTask && uploadTask.total > 0 && (
-							<div className='mt-3 rounded-lg border border-gray-200 bg-white p-3'>
-								<div className='mb-2 flex items-center justify-between gap-2 text-xs text-gray-600'>
-									<span>
-										{uploadTask.active ? 'Subiendo imágenes...' : 'Subida finalizada'}
-									</span>
-									<Chip size='sm' variant='flat' color={uploadTask.failedCount > 0 ? 'warning' : 'success'}>
-										{uploadTask.completed}/{uploadTask.total}
-									</Chip>
-								</div>
-								<Progress
-									value={uploadTask.total > 0 ? (uploadTask.completed / uploadTask.total) * 100 : 0}
-									color={uploadTask.failedCount > 0 ? 'warning' : 'success'}
-									size='sm'
-									aria-label='Progreso de subida de imágenes'
-								/>
-								{uploadTask.currentFileName && (
-									<p className='mt-2 truncate text-xs text-gray-500'>Archivo: {uploadTask.currentFileName}</p>
-								)}
-							</div>
-						)}
-
-						{initialData?.id && pendingRetryFiles && pendingRetryFiles.length > 0 && (
-							<div className='mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3'>
-								<p className='text-xs text-orange-800'>
-									{pendingRetryFiles.length} imagen(es) fallaron en la subida automática.
-								</p>
-								<Button
-									size='sm'
-									variant='flat'
-									color='warning'
-									onPress={() => void handleRetryFailedUploads()}
-								>
-									Reintentar fallidas
-								</Button>
-							</div>
-						)}
+					<div className='sm:col-span-2'>
+						<Input
+							label='Título *'
+							name='title'
+							defaultValue={initialData?.title}
+							key={initialData?.id ?? 'new-title'}
+							required
+							variant='flat'
+							radius='lg'
+							size='sm'
+						/>
 					</div>
-				)}
-
-				<div className='sm:col-span-2'>
+					<div className='sm:col-span-2'>
+						<Textarea
+							label='Descripción *'
+							name='description'
+							defaultValue={initialData?.description}
+							key={initialData?.id ?? 'new-desc'}
+							required
+							rows={3}
+							variant='flat'
+							radius='lg'
+							size='sm'
+						/>
+					</div>
 					<Input
-						label='Título *'
-						name='title'
-						defaultValue={initialData?.title}
-						key={initialData?.id ?? 'new-title'}
-						required
-						variant='flat'
-						radius='lg'
-						size='sm'
-					/>
-				</div>
-				<div className='sm:col-span-2'>
-					<Textarea
-						label='Descripción *'
-						name='description'
-						defaultValue={initialData?.description}
-						key={initialData?.id ?? 'new-desc'}
-						required
-						rows={3}
-						variant='flat'
-						radius='lg'
-						size='sm'
-					/>
-				</div>
-				<Input
-					label='Slug *'
+						label='Slug *'
 						name='slug'
 						defaultValue={initialData?.slug}
 						key={initialData?.id ?? 'new-slug'}
 						required
-					variant='flat'
-					radius='lg'
-					size='sm'
-				/>
-				<Input
-					label='SKU'
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='SKU'
 						name='sku'
 						defaultValue={initialData?.sku ?? ''}
 						key={initialData?.id ?? 'new-sku'}
-					variant='flat'
-					radius='lg'
-					size='sm'
-				/>
-				<Input
-					label='Precio *'
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Precio *'
 						name='price'
 						type='number'
 						step='0.01'
@@ -906,118 +916,120 @@ function ProductFormModal({
 						defaultValue={String(initialData?.price ?? 0)}
 						key={initialData?.id ?? 'new-price'}
 						required
-					variant='flat'
-					radius='lg'
-					size='sm'
-				/>
-				<Input
-					label='Precio comparativo'
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Precio comparativo'
 						name='comparePrice'
 						type='number'
 						step='0.01'
 						min='0'
 						defaultValue={initialData?.comparePrice != null ? String(initialData.comparePrice) : ''}
 						key={initialData?.id ?? 'new-compare'}
-					variant='flat'
-					radius='lg'
-					size='sm'
-				/>
-				<Input
-					label='Stock *'
+						variant='flat'
+						radius='lg'
+						size='sm'
+					/>
+					<Input
+						label='Stock *'
 						name='inStock'
 						type='number'
 						min='0'
 						defaultValue={String(initialData?.inStock ?? 0)}
 						key={initialData?.id ?? 'new-stock'}
 						required
-					variant='flat'
-					radius='lg'
-					size='sm'
-				/>
-				<div className='sm:col-span-2'>
-					<Select
-						label='Género'
-						size='sm'
-						variant='flat'
-						selectedKeys={new Set([gender])}
-						onSelectionChange={(keys) => {
-							const k = Array.from(keys as Set<string>)[0];
-							if (k) setGender(String(k));
-						}}
-					>
-						{GENDER_OPTIONS.map((g) => (
-							<SelectItem key={g.value} textValue={g.label}>
-								{g.label}
-							</SelectItem>
-						))}
-					</Select>
-				</div>
-				<div className='sm:col-span-2'>
-					<Autocomplete
-						label='Categoría'
-						size='sm'
-						variant='flat'
-						placeholder='Buscar categoría'
-						selectedKey={categoryKey}
-						onSelectionChange={(key) => {
-							setCategoryId(key === CATEGORY_PLACEHOLDER_KEY || !key ? '' : String(key));
-						}}
-					>
-						{categoryItems.map((item) => (
-							<AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
-						))}
-					</Autocomplete>
-				</div>
-				<div className='sm:col-span-2'>
-					<Input
-						label='Tags'
-						name='tags'
-						defaultValue={initialData?.tags.join(', ') ?? ''}
-						key={initialData?.id ?? 'new-tags'}
-						placeholder='tag1, tag2'
 						variant='flat'
 						radius='lg'
 						size='sm'
 					/>
-				</div>
-				<div className='sm:col-span-2'>
-					<p className='mb-2 text-sm font-medium text-gray-700'>Tallas</p>
-					<div className='flex flex-wrap gap-3'>
-						{SIZE_OPTIONS.map((s) => (
-							<Checkbox
-								key={s}
-								size='sm'
-								isSelected={selectedSizes.includes(s)}
-								onValueChange={(checked) => {
-									setSelectedSizes((prev) => (checked ? [...prev, s] : prev.filter((x) => x !== s)));
-								}}
-							>
-								{s}
-							</Checkbox>
-						))}
+					<div className='sm:col-span-2'>
+						<Select
+							label='Género'
+							size='sm'
+							variant='flat'
+							selectedKeys={new Set([gender])}
+							onSelectionChange={(keys) => {
+								const k = Array.from(keys as Set<string>)[0];
+								if (k) setGender(String(k));
+							}}
+						>
+							{GENDER_OPTIONS.map((g) => (
+								<SelectItem key={g.value} textValue={g.label}>
+									{g.label}
+								</SelectItem>
+							))}
+						</Select>
 					</div>
-				</div>
-				<div className='sm:col-span-2'>
-					<Textarea
-						label='URLs de imágenes manuales (opcional, una por línea)'
-						name='images'
-						defaultValue={initialData?.ProductImage.map((i) => i.url).join('\n') ?? ''}
-						key={initialData?.id ?? 'new-images'}
-						rows={3}
-						placeholder='/img/product1.png'
-						variant='flat'
-						radius='lg'
-						size='sm'
-					/>
-				</div>
-				<div className='flex flex-wrap items-center gap-6 sm:col-span-2'>
-					<Checkbox size='sm' isSelected={featured} onValueChange={setFeatured}>
-						Destacado
-					</Checkbox>
-					<Checkbox size='sm' isSelected={isActive} onValueChange={setIsActive}>
-						Activo
-					</Checkbox>
-				</div>
+					<div className='sm:col-span-2'>
+						<Autocomplete
+							label='Categoría'
+							size='sm'
+							variant='flat'
+							placeholder='Buscar categoría'
+							selectedKey={categoryKey}
+							onSelectionChange={(key) => {
+								setCategoryId(key === CATEGORY_PLACEHOLDER_KEY || !key ? '' : String(key));
+							}}
+						>
+							{categoryItems.map((item) => (
+								<AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+							))}
+						</Autocomplete>
+					</div>
+					<div className='sm:col-span-2'>
+						<Input
+							label='Tags'
+							name='tags'
+							defaultValue={initialData?.tags.join(', ') ?? ''}
+							key={initialData?.id ?? 'new-tags'}
+							placeholder='tag1, tag2'
+							variant='flat'
+							radius='lg'
+							size='sm'
+						/>
+					</div>
+					<div className='sm:col-span-2'>
+						<p className='mb-2 text-sm font-medium text-gray-700'>Tallas</p>
+						<div className='flex flex-wrap gap-3'>
+							{SIZE_OPTIONS.map((s) => (
+								<Checkbox
+									key={s}
+									size='sm'
+									isSelected={selectedSizes.includes(s)}
+									onValueChange={(checked) => {
+										setSelectedSizes((prev) =>
+											checked ? [...prev, s] : prev.filter((x) => x !== s),
+										);
+									}}
+								>
+									{s}
+								</Checkbox>
+							))}
+						</div>
+					</div>
+					<div className='sm:col-span-2'>
+						<Textarea
+							label='URLs de imágenes manuales (opcional, una por línea)'
+							name='images'
+							defaultValue={initialData?.ProductImage.map((i) => i.url).join('\n') ?? ''}
+							key={initialData?.id ?? 'new-images'}
+							rows={3}
+							placeholder='/img/product1.png'
+							variant='flat'
+							radius='lg'
+							size='sm'
+						/>
+					</div>
+					<div className='flex flex-wrap items-center gap-6 sm:col-span-2'>
+						<Checkbox size='sm' isSelected={featured} onValueChange={setFeatured}>
+							Destacado
+						</Checkbox>
+						<Checkbox size='sm' isSelected={isActive} onValueChange={setIsActive}>
+							Activo
+						</Checkbox>
+					</div>
 				</div>
 			</FormModal>
 

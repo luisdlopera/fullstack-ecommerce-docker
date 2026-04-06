@@ -178,6 +178,12 @@ export type InventoryItem = {
 		slug: string;
 		sku: string | null;
 		isActive: boolean;
+		gender: string;
+		price: number;
+		comparePrice: number | null;
+		discountPrice: number | null;
+		discountStartsAt: string | null;
+		discountEndsAt: string | null;
 		ProductImage: { id: number; url: string; isPrimary: boolean }[];
 	};
 };

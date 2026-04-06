@@ -190,7 +190,10 @@ function AuthPageContent() {
 					)}
 				</div>
 
-				<Form className='flex w-full flex-col items-start gap-2 text-black md:w-1/2 lg:w-1/3' onSubmit={onRegister}>
+				<Form
+					className='flex w-full flex-col items-start gap-2 text-black md:w-1/2 lg:w-1/3'
+					onSubmit={onRegister}
+				>
 					<h2 className='mb-6 text-3xl font-bold'>Crear una cuenta</h2>
 					<Input isRequired name='name' label='Nombre' placeholder='Tu nombre' minLength={2} />
 					<Input isRequired name='email' type='email' label='Correo' placeholder='Ingresa tu correo' />

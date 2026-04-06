@@ -4,7 +4,7 @@ services:
       context: ./back
       dockerfile: Dockerfile
       target: builder
-    command: sh -c "npx prisma db push --skip-generate && npm run start:dev"
+    command: sh -c "npx prisma db push && npm run start:dev"
     environment:
       PORT: 5007
       CHOKIDAR_USEPOLLING: "true"

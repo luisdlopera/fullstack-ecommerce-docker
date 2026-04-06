@@ -1,21 +1,11 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import {
-  HealthCheckService,
-  PrismaHealthIndicator,
-  MemoryHealthIndicator,
-} from '@nestjs/terminus';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 
 @Public()
 @Controller('health')
 export class HealthController {
-  constructor(
-    private health: HealthCheckService,
-    private prismaHealth: PrismaHealthIndicator,
-    private memory: MemoryHealthIndicator,
-    @Inject(PrismaService) private readonly prisma: PrismaService,
-  ) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   @Get()
   async check() {
@@ -35,7 +25,7 @@ export class HealthController {
     const used = process.memoryUsage();
     const heapUsedMB = Math.round(used.heapUsed / 1024 / 1024);
     const rssMB = Math.round(used.rss / 1024 / 1024);
-    
+
     checks.memory = {
       status: heapUsedMB < 150 ? 'up' : 'warning',
       details: { heapUsed: `${heapUsedMB}MB`, rss: `${rssMB}MB` },

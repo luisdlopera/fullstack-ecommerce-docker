@@ -22,16 +22,45 @@ import {
 	Wallet,
 	Percent,
 	Boxes,
+	ChevronDown,
+	Layers,
 } from 'lucide-react';
 const Toaster = dynamic(() => import('react-hot-toast').then((m) => ({ default: m.Toaster })), { ssr: false });
 
-const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; permission: PermissionKey }[] = [
+type NavItem = {
+	href: string;
+	label: string;
+	icon: typeof LayoutDashboard;
+	permission: PermissionKey;
+	children?: { href: string; label: string; icon: typeof LayoutDashboard; permission: PermissionKey }[];
+};
+
+const NAV_ITEMS: NavItem[] = [
 	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard, permission: PERMISSIONS.DASHBOARD_READ },
 	{ href: '/admin/users', label: 'Usuarios', icon: Users, permission: PERMISSIONS.USERS_READ },
 	{ href: '/admin/orders', label: 'Órdenes', icon: ShoppingCart, permission: PERMISSIONS.ORDERS_READ },
-	{ href: '/admin/products', label: 'Productos', icon: Package, permission: PERMISSIONS.PRODUCTS_READ },
-	{ href: '/admin/categories', label: 'Categorías', icon: FolderTree, permission: PERMISSIONS.CATEGORIES_READ },
-	{ href: '/admin/inventory', label: 'Inventario', icon: Boxes, permission: PERMISSIONS.INVENTORY_READ },
+	{
+		href: '/admin/products',
+		label: 'Productos',
+		icon: Package,
+		permission: PERMISSIONS.PRODUCTS_READ,
+		children: [
+			{
+				href: '/admin/products',
+				label: 'Todos los Productos',
+				icon: Package,
+				permission: PERMISSIONS.PRODUCTS_READ,
+			},
+			{ href: '/admin/inventory', label: 'Inventario', icon: Boxes, permission: PERMISSIONS.INVENTORY_READ },
+			{
+				href: '/admin/categories',
+				label: 'Categorías',
+				icon: FolderTree,
+				permission: PERMISSIONS.CATEGORIES_READ,
+			},
+			{ href: '/admin/collections', label: 'Colecciones', icon: Layers, permission: PERMISSIONS.CATEGORIES_READ },
+		],
+	},
 	{ href: '/admin/promotions', label: 'Promociones', icon: Percent, permission: PERMISSIONS.PROMOTIONS_MANAGE },
 	{ href: '/admin/payments', label: 'Pagos', icon: Wallet, permission: PERMISSIONS.PAYMENTS_READ },
 	{ href: '/admin/audit-logs', label: 'Audit Logs', icon: ShieldCheck, permission: PERMISSIONS.AUDIT_READ },
@@ -64,6 +93,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 	const pathname = usePathname();
 	const { user, loading, logout, hasPermission, isAdmin } = usePermissions();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
 	const visibleNavItems = useMemo(() => {
 		if (!user) return [];
@@ -117,7 +147,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 					<Link href='/admin' className='text-xl font-bold tracking-tight text-black'>
 						NEXSTORE
 					</Link>
-					<span className={`rounded px-1.5 py-0.5 text-[10px] uppercase font-bold tracking-wider shadow-sm ${getRoleBadgeClass(user.role)}`}>
+					<span
+						className={`rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase shadow-sm ${getRoleBadgeClass(user.role)}`}
+					>
 						{formatRoleLabel(user.role)}
 					</span>
 					<button className='ml-auto lg:hidden' onClick={() => setSidebarOpen(false)}>
@@ -129,6 +161,55 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 					{visibleNavItems.map((item) => {
 						const isActive =
 							item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
+						const hasChildren = item.children && item.children.length > 0;
+						const isExpanded = expandedMenu === item.href;
+
+						if (hasChildren) {
+							return (
+								<div key={item.href} className='space-y-1'>
+									<button
+										onClick={() => setExpandedMenu(isExpanded ? null : item.href)}
+										className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+											isActive
+												? 'bg-black text-white'
+												: 'text-gray-600 hover:bg-gray-100 hover:text-black'
+										}`}
+									>
+										<div className='flex items-center gap-3'>
+											<item.icon size={18} />
+											{item.label}
+										</div>
+										<ChevronDown
+											size={16}
+											className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+										/>
+									</button>
+									{isExpanded && (
+										<div className='ml-4 space-y-1 border-l border-gray-200 pl-3'>
+											{item.children?.map((child) => {
+												const isChildActive =
+													pathname === child.href || pathname.startsWith(child.href);
+												return (
+													<Link
+														key={child.href}
+														href={child.href}
+														onClick={() => setSidebarOpen(false)}
+														className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+															isChildActive
+																? 'bg-gray-100 text-black'
+																: 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+														}`}
+													>
+														<child.icon size={16} />
+														{child.label}
+													</Link>
+												);
+											})}
+										</div>
+									)}
+								</div>
+							);
+						}
 
 						return (
 							<Link

@@ -86,7 +86,10 @@ export function canManageUsersWrite(role: string): boolean {
 }
 
 export function canManageProductsWrite(role: string): boolean {
-	return hasPermissionForRole(role, PERMISSIONS.PRODUCTS_UPDATE) || hasPermissionForRole(role, PERMISSIONS.PRODUCTS_CREATE);
+	return (
+		hasPermissionForRole(role, PERMISSIONS.PRODUCTS_UPDATE) ||
+		hasPermissionForRole(role, PERMISSIONS.PRODUCTS_CREATE)
+	);
 }
 
 export function canDeleteProduct(role: string): boolean {
@@ -94,7 +97,10 @@ export function canDeleteProduct(role: string): boolean {
 }
 
 export function canManageCategoriesWrite(role: string): boolean {
-	return hasPermissionForRole(role, PERMISSIONS.CATEGORIES_CREATE) || hasPermissionForRole(role, PERMISSIONS.CATEGORIES_UPDATE);
+	return (
+		hasPermissionForRole(role, PERMISSIONS.CATEGORIES_CREATE) ||
+		hasPermissionForRole(role, PERMISSIONS.CATEGORIES_UPDATE)
+	);
 }
 
 export function canDeleteCategory(role: string): boolean {

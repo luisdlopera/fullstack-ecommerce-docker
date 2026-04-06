@@ -1,4 +1,11 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -60,7 +67,12 @@ export class AuthorizationGuard implements CanActivate {
 
     if (!user || !user.isActive || user.deletedAt) {
       if (process.env.AUTH_DEBUG_LOGS === 'true') {
-        console.log('[AUTH DEBUG] User forbidden:', { userId: payload.sub, exists: !!user, isActive: user?.isActive, deletedAt: user?.deletedAt });
+        console.log('[AUTH DEBUG] User forbidden:', {
+          userId: payload.sub,
+          exists: !!user,
+          isActive: user?.isActive,
+          deletedAt: user?.deletedAt,
+        });
       }
       throw new ForbiddenException(AuthMessages.ACCOUNT_NOT_ALLOWED);
     }
@@ -93,7 +105,7 @@ export class AuthorizationGuard implements CanActivate {
           userId: user.id,
           role: user.role,
           requiredPermissions,
-          userPermissions: rolePermissions.map(p => p.permissionId),
+          userPermissions: rolePermissions.map((p) => p.permissionId),
         });
       }
       throw new ForbiddenException(AuthMessages.INSUFFICIENT_PERMISSIONS);

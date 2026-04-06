@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { MercadoPagoPaymentApiPort } from '../../domain/ports/mercadopago-payment-api.port';
 import { MERCADOPAGO_PAYMENT_API } from '../../domain/ports/mercadopago-payment-api.port';
-import { PAYMENT_ORDER_REPOSITORY, type PaymentOrderRepositoryPort } from '../../domain/ports/payment-order-repository.port';
+import {
+  PAYMENT_ORDER_REPOSITORY,
+  type PaymentOrderRepositoryPort,
+} from '../../domain/ports/payment-order-repository.port';
 import {
   BadRequestError,
   ForbiddenError,
@@ -25,7 +28,9 @@ export class InitMercadoPagoCheckoutUseCase {
     const order = await this.paymentOrders.findOrderById(orderId);
     if (!order) throw new NotFoundError('Order not found');
 
-    const isAuthorized = order.userId ? order.userId === userId : order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken;
+    const isAuthorized = order.userId
+      ? order.userId === userId
+      : order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken;
     if (!isAuthorized) {
       throw new ForbiddenError('You cannot pay this order');
     }
@@ -38,10 +43,11 @@ export class InitMercadoPagoCheckoutUseCase {
       };
     }
 
-    const appBaseUrl = (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(
-      /\/$/,
-      '',
-    );
+    const appBaseUrl = (
+      process.env.FRONTEND_URL ??
+      process.env.NEXT_PUBLIC_APP_URL ??
+      this.buildFallbackFrontendUrl()
+    ).replace(/\/$/, '');
 
     const confirmationBase = `${appBaseUrl}/checkout/confirmation?orderId=${encodeURIComponent(order.id)}`;
     const notificationUrl = process.env.MP_WEBHOOK_URL;

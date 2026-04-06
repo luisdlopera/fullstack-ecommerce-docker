@@ -71,24 +71,59 @@ type FeaturedApiRow = {
 
 export async function getFeaturedProducts(limit = 8): Promise<FeaturedProduct[]> {
 	const baseUrl = getBaseApiUrl();
-	const response = await fetch(`${baseUrl}/products/featured?limit=${limit}`, {
-		next: { revalidate: 60 },
-	});
 
-	if (!response.ok) {
-		throw new Error(`Failed to fetch products: ${response.status}`);
+	try {
+		// Use a shorter timeout during build to fail fast and use fallback data
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+		const response = await fetch(`${baseUrl}/products/featured?limit=${limit}`, {
+			next: { revalidate: 60 },
+			signal: controller.signal,
+		});
+
+		clearTimeout(timeoutId);
+
+		if (!response.ok) {
+			throw new Error(`Failed to fetch products: ${response.status}`);
+		}
+
+		const rows = (await response.json()) as FeaturedApiRow[];
+
+		return rows.map((row) => {
+			const images =
+				row.ProductImage?.map((img) => {
+					// Si tenemos storageKey y es R2, construimos URL dinámica
+					if (img.storageKey && img.storageProvider === 'r2') {
+						const baseUrl = process.env.NEXT_PUBLIC_STORAGE_BASE_URL || '';
+						if (baseUrl) {
+							return `${baseUrl.replace(/\/$/g, '')}/${img.storageKey}`;
+						}
+					}
+					// Si la URL ya es completa, la usamos directamente
+					if (img.url?.startsWith('http')) {
+						return img.url;
+					}
+					return img.url;
+				}) ?? [];
+
+			return {
+				id: row.id,
+				title: row.title,
+				price: row.price,
+				slug: row.slug,
+				gender: row.gender,
+				tags: row.tags,
+				images,
+			};
+		});
+	} catch (error) {
+		// During build time, if API is not available, throw to allow fallback
+		if (typeof window === 'undefined') {
+			throw error;
+		}
+		throw error;
 	}
-
-	const rows = (await response.json()) as FeaturedApiRow[];
-	return rows.map((row) => ({
-		id: row.id,
-		title: row.title,
-		price: row.price,
-		slug: row.slug,
-		gender: row.gender,
-		tags: row.tags,
-		images: row.ProductImage?.map((img) => img.url) ?? [],
-	}));
 }
 
 export async function getProductBySlug(slug: string): Promise<Product> {

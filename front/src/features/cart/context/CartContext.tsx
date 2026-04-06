@@ -15,7 +15,7 @@ export type CartItem = {
 
 type CartContextType = {
 	items: CartItem[];
-	addItem: (item: CartItem) => void;
+	addItem: (item: CartItem, openDrawer?: boolean) => void;
 	removeItem: (productId: string, size: string) => void;
 	updateQuantity: (productId: string, size: string, quantity: number) => void;
 	clearCart: () => void;
@@ -62,9 +62,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 		saveCart(items);
 	}, [items, hydrated]);
 
-	const addItem = useCallback((newItem: CartItem) => {
+	const addItem = useCallback((newItem: CartItem, openDrawer = true) => {
 		setItems((prev) => addOrMergeCartLine(prev, newItem));
-		setIsOpen(true);
+		if (openDrawer) {
+			setIsOpen(true);
+		}
 	}, []);
 
 	const removeItem = useCallback((productId: string, size: string) => {
@@ -85,7 +87,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 	const closeCart = useCallback(() => setIsOpen(false), []);
 
 	const value = useMemo(
-		() => ({ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice, isOpen, openCart, closeCart }),
+		() => ({
+			items,
+			addItem,
+			removeItem,
+			updateQuantity,
+			clearCart,
+			totalItems,
+			totalPrice,
+			isOpen,
+			openCart,
+			closeCart,
+		}),
 		[items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice, isOpen, openCart, closeCart],
 	);
 

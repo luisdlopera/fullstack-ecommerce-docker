@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-04-05T13:29:25.353Z",
+  "bucket": "nexstore",
+  "sourceRoot": "front/public",
+  "summary": {
+    "total": 3,
+    "uploaded": 3,
+    "overwritten": 0,
+    "skipped": 0,
+    "errors": 0
+  },
+  "files": [
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/home/slider/slider-1.webp",
+      "r2Key": "home/slider/slider-1.webp",
+      "publicUrl": "https://pub-e14c4ed4e514428faeb13ca8f02c15a7.r2.dev/home/slider/slider-1.webp",
+      "contentType": "image/webp",
+      "size": 208755,
+      "lastModified": "2026-04-05T13:29:25.353Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/home/slider/slider-2.webp",
+      "r2Key": "home/slider/slider-2.webp",
+      "publicUrl": "https://pub-e14c4ed4e514428faeb13ca8f02c15a7.r2.dev/home/slider/slider-2.webp",
+      "contentType": "image/webp",
+      "size": 107235,
+      "lastModified": "2026-04-05T13:29:25.353Z",
+      "operation": "uploaded"
+    },
+    {
+      "localPath": "/Users/luisdlopera/Documents/projects/cv/fullstack-ecommerce-docker/front/public/seed/home/slider/slider-3.webp",
+      "r2Key": "home/slider/slider-3.webp",
+      "publicUrl": "https://pub-e14c4ed4e514428faeb13ca8f02c15a7.r2.dev/home/slider/slider-3.webp",
+      "contentType": "image/webp",
+      "size": 220464,
+      "lastModified": "2026-04-05T13:29:25.353Z",
+      "operation": "uploaded"
+    }
+  ]
+}

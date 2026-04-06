@@ -19,13 +19,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     try {
       await Promise.race([
         this.$connect(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('DB connection timeout after 10s')), 10000)
-        )
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB connection timeout after 10s')), 10000)),
       ]);
-      console.log('[PrismaService] Conexión exitosa');
+      console.log('[PrismaService] Conexion exitosa');
     } catch (error) {
-      console.error('[PrismaService] Error de conexión:', error);
+      console.error('[PrismaService] Error de conexion:', error);
       throw error;
     }
   }

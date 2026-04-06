@@ -35,8 +35,7 @@ export interface ApiResponseParams<T = unknown> {
 }
 
 export function apiResponse<T = unknown>(params: ApiResponseParams<T>): ApiResponseBody<T> {
-  const status =
-    params.status ?? (params.ok === true ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+  const status = params.status ?? (params.ok === true ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
 
   const ok = params.ok ?? status < HttpStatus.BAD_REQUEST;
 

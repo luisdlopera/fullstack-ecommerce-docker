@@ -18,7 +18,9 @@ export class S3CompatibleStorageAdapter implements StoragePort {
         secretAccessKey: this.storageConfig.secretKey,
       },
     });
-    this.logger.debug(`Initialized with endpoint: ${this.storageConfig.endpoint}, bucket: ${this.storageConfig.bucket}`);
+    this.logger.debug(
+      `Initialized with endpoint: ${this.storageConfig.endpoint}, bucket: ${this.storageConfig.bucket}`,
+    );
   }
 
   async upload(input: StorageUploadInput): Promise<void> {

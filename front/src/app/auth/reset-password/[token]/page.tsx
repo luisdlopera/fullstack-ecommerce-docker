@@ -105,7 +105,7 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
 				/>
 
 				{(touched.newPassword || newPassword.length > 0) && (
-					<div className='rounded-lg bg-gray-50 p-3 space-y-1'>
+					<div className='space-y-1 rounded-lg bg-gray-50 p-3'>
 						<p className='text-xs font-semibold text-gray-600 uppercase'>Requisitos de contraseña:</p>
 						<RequirementItem met={validation.minLength} label='Mínimo 10 caracteres' />
 						<RequirementItem met={validation.hasLowercase} label='Una minúscula (a-z)' />
@@ -137,7 +137,12 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
 				{message ? <p className='rounded-lg bg-green-50 p-3 text-sm text-green-700'>{message}</p> : null}
 				{error ? <p className='rounded-lg bg-red-50 p-3 text-sm text-red-600'>{error}</p> : null}
 
-				<Button type='submit' color='primary' isLoading={loading} isDisabled={!isFormValid && (newPassword.length > 0 || confirmPassword.length > 0)}>
+				<Button
+					type='submit'
+					color='primary'
+					isLoading={loading}
+					isDisabled={!isFormValid && (newPassword.length > 0 || confirmPassword.length > 0)}
+				>
 					Guardar nueva contraseña
 				</Button>
 

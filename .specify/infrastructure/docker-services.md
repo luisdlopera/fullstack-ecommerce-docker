@@ -2,7 +2,8 @@
 
 ## Overview
 
-Nexstore uses Docker Compose for local development infrastructure: PostgreSQL, Redis, and MinIO.
+Nexstore uses Docker Compose for local development infrastructure: PostgreSQL and Redis.
+Storage is handled by Cloudflare R2 (S3-compatible object storage).
 
 ## Services
 
@@ -147,20 +148,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
       redis:
         condition: service_started
     env_file:
       - .env
     environment:
-      PORT: 5001
+      PORT: 5007
       DATABASE_URL: postgresql://...
       REDIS_URL: redis://redis:6379
     ports:
-      - '5001:5001'
+      - '5007:5007'
     healthcheck:
-      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:5001/api/health || exit 1']
+      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:5007/api/health || exit 1']
       interval: 15s
       timeout: 5s
       retries: 10
@@ -196,15 +195,14 @@ services:
 ```yaml
 volumes:
   pg_data:      # PostgreSQL persistent storage
-  minio_data:   # MinIO object storage
   redis_data:   # Redis persistent storage
 ```
 
 ## Network
 
 All services communicate via default Docker Compose network:
-- Services can reach each other by service name (e.g., `postgres`, `redis`, `minio`)
-- Backend connects to: `postgres:5432`, `redis:6379`, `minio:9000`
+- Services can reach each other by service name (e.g., `postgres`, `redis`)
+- Backend connects to: `postgres:5432`, `redis:6379`
 
 ## Commands
 
@@ -212,7 +210,7 @@ All services communicate via default Docker Compose network:
 ```bash
 npm run dev:db
 # or
-docker-compose up -d postgres minio redis
+docker-compose up -d postgres redis
 ```
 
 ### Start Full Stack
@@ -258,7 +256,6 @@ All services include health checks for startup ordering:
 | Service | Health Check | Startup Delay |
 |---------|--------------|---------------|
 | postgres | `pg_isready` | ~5s |
-| minio | HTTP /minio/health/live | ~3s |
 | redis | (no check, assumes fast) | ~1s |
 | back | HTTP /api/health | ~10s |
 
@@ -298,4 +295,4 @@ CMD ["npm", "start"]
 
 - [Ports Configuration](./ports.md)
 - [Environment Variables](./environment-vars.md)
-- [MinIO Storage](./minio-storage.md)
+- [R2 Storage Setup](../../r2-setup.md)

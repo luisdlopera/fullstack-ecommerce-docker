@@ -6,7 +6,19 @@ import { UploadProductImageUseCase } from './application/use-cases/upload-produc
 import { DeleteProductImageUseCase } from './application/use-cases/delete-product-image.use-case';
 import { ReorderProductImagesUseCase } from './application/use-cases/reorder-product-images.use-case';
 import { SetPrimaryProductImageUseCase } from './application/use-cases/set-primary-product-image.use-case';
+import { GetHomeBannersUseCase } from './application/use-cases/get-home-banners.use-case';
+import { UploadHomeBannerUseCase } from './application/use-cases/upload-home-banner.use-case';
+import { DeleteHomeBannerUseCase } from './application/use-cases/delete-home-banner.use-case';
+import { UpdateHomeBannerUseCase } from './application/use-cases/update-home-banner.use-case';
+import { ReorderHomeBannersUseCase } from './application/use-cases/reorder-home-banners.use-case';
 import { GetDashboardSummaryUseCase } from './application/use-cases/get-dashboard-summary.use-case';
+import {
+  GetCollectionsUseCase,
+  GetCollectionByIdUseCase,
+  CreateCollectionUseCase,
+  UpdateCollectionUseCase,
+  DeleteCollectionUseCase,
+} from './application/use-cases/collection.use-cases';
 import { GetSalesChartUseCase } from './application/use-cases/get-sales-chart.use-case';
 import { GetRecentOrdersUseCase } from './application/use-cases/get-recent-orders.use-case';
 import { GetTopProductsUseCase } from './application/use-cases/get-top-products.use-case';
@@ -94,6 +106,16 @@ import { PrismaAdminUserRepository } from './infrastructure/persistence/prisma-a
     DeleteProductImageUseCase,
     ReorderProductImagesUseCase,
     SetPrimaryProductImageUseCase,
+    GetHomeBannersUseCase,
+    UploadHomeBannerUseCase,
+    DeleteHomeBannerUseCase,
+    UpdateHomeBannerUseCase,
+    ReorderHomeBannersUseCase,
+    GetCollectionsUseCase,
+    GetCollectionByIdUseCase,
+    CreateCollectionUseCase,
+    UpdateCollectionUseCase,
+    DeleteCollectionUseCase,
     {
       provide: ADMIN_METRICS_REPOSITORY,
       useClass: PrismaAdminMetricsRepository,

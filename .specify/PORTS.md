@@ -8,8 +8,6 @@
 | **Backend** | 5007 | `BACKEND_PORT` | NestJS API |
 | **Database** | 5008 | `DATABASE_PORT` | PostgreSQL |
 | **Redis** | 5009 | `REDIS_PORT` | Cache/Queue |
-| **MinIO API** | 5010 | `MINIO_PORT` | Object Storage |
-| **MinIO Console** | 5011 | `MINIO_CONSOLE_PORT` | MinIO Web UI |
 
 ### Alias Legacy (Backwards Compatibility)
 
@@ -26,8 +24,6 @@ Frontend:    http://localhost:5006
 Backend:     http://localhost:5007/api
 PostgreSQL:  localhost:5008
 Redis:       localhost:5009
-MinIO:       http://localhost:5010
-MinIO UI:    http://localhost:5011
 ```
 
 ### Puertos Internos de Contenedores (Docker)
@@ -35,7 +31,6 @@ MinIO UI:    http://localhost:5011
 ```
 postgres:    5432 (interno)
 redis:       6379 (interno)
-minio:       9000 (API), 9001 (Console)
 backend:     5007 (host) → 5007 (contenedor)
 frontend:    5006 (host) → 5006 (contenedor)
 ```
@@ -52,8 +47,6 @@ FRONTEND_PORT=5006
 BACKEND_PORT=5007
 DATABASE_PORT=5008
 REDIS_PORT=5009
-MINIO_PORT=5010
-MINIO_CONSOLE_PORT=5011
 
 # ============================================
 # 2. URLs (construidas desde puertos)
@@ -63,7 +56,6 @@ NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT}/api
 INTERNAL_API_URL=http://localhost:${BACKEND_PORT}/api
 DATABASE_URL=postgresql://user:pass@localhost:${DATABASE_PORT}/db
 REDIS_URL=redis://localhost:${REDIS_PORT}
-MINIO_ENDPOINT=http://localhost:${MINIO_PORT}
 ```
 
 ### Frontend `.env.local`
@@ -145,11 +137,6 @@ services:
   redis:
     ports:
       - '${REDIS_PORT:-5009}:6379'
-  
-  minio:
-    ports:
-      - '${MINIO_PORT:-5010}:9000'
-      - '${MINIO_CONSOLE_PORT:-5011}:9001'
 ```
 
 ## Tests
@@ -178,7 +165,7 @@ const backPort = process.env.BACKEND_PORT || 5007;
 npm run dev:clean
 
 # O manualmente
-npx kill-port 5006 5007 5008 5009 5010 5011
+npx kill-port 5006 5007 5008 5009
 ```
 
 ### Verificar configuración
@@ -188,7 +175,7 @@ npx kill-port 5006 5007 5008 5009 5010 5011
 node -e "console.log(process.env.FRONTEND_PORT)"
 
 # Ver qué procesos usan los puertos
-lsof -i :5006,:5007,:5008,:5009,:5010,:5011
+lsof -i :5006,:5007,:5008,:5009
 ```
 
 ## Referencias

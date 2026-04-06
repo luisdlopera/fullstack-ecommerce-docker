@@ -9,9 +9,9 @@ export function CheckoutOrderSummary({ tax, total }: { tax: number; total: numbe
 		<div className='rounded-3xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-200'>
 			<h2 className='mb-6 pl-1 text-lg font-bold text-gray-900'>Resumen del pedido</h2>
 			<div className='flex flex-col gap-4 text-sm'>
-				<div className='flex flex-col gap-3 max-h-60 overflow-y-auto pr-2'>
+				<div className='flex max-h-60 flex-col gap-3 overflow-y-auto pr-2'>
 					{items.map((item) => (
-						<div key={`${item.productId}-${item.size}`} className='flex justify-between items-center gap-4'>
+						<div key={`${item.productId}-${item.size}`} className='flex items-center justify-between gap-4'>
 							<div className='flex items-center gap-3'>
 								<div className='relative flex h-16 w-14 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50'>
 									{/* eslint-disable-next-line @next/next/no-img-element */}
@@ -21,8 +21,12 @@ export function CheckoutOrderSummary({ tax, total }: { tax: number; total: numbe
 									</span>
 								</div>
 								<div className='flex flex-col'>
-									<span className='font-semibold text-gray-700 line-clamp-1 break-all'>{item.title}</span>
-									<span className='text-xs font-medium text-gray-500 uppercase tracking-widest'>{item.size}</span>
+									<span className='line-clamp-1 font-semibold break-all text-gray-700'>
+										{item.title}
+									</span>
+									<span className='text-xs font-medium tracking-widest text-gray-500 uppercase'>
+										{item.size}
+									</span>
 								</div>
 							</div>
 							<span className='font-bold text-gray-900'>${(item.price * item.quantity).toFixed(2)}</span>
@@ -31,7 +35,7 @@ export function CheckoutOrderSummary({ tax, total }: { tax: number; total: numbe
 				</div>
 
 				<hr className='my-3 border-gray-100' />
-				
+
 				<div className='flex justify-between text-gray-500'>
 					<span>Subtotal</span>
 					<span className='font-semibold text-gray-800'>${totalPrice.toFixed(2)}</span>
@@ -44,9 +48,9 @@ export function CheckoutOrderSummary({ tax, total }: { tax: number; total: numbe
 					<span>Envío</span>
 					<span className='font-semibold text-gray-800'>Calculado en el siguiente paso</span>
 				</div>
-				
+
 				<hr className='my-3 border-gray-100' />
-				
+
 				<div className='flex justify-between text-xl font-black text-gray-900'>
 					<span>Total</span>
 					<span>${total.toFixed(2)}</span>

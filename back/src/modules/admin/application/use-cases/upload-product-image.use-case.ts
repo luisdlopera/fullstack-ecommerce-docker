@@ -5,11 +5,7 @@ import {
   ADMIN_PRODUCT_IMAGE_REPOSITORY,
   type AdminProductImageRepositoryPort,
 } from '../../domain/ports/admin-product-image.repository.port';
-import {
-  MIME_TO_EXTENSION,
-  normalizeMimeType,
-  validateProductImageFile,
-} from './product-image-file-validation.util';
+import { MIME_TO_EXTENSION, normalizeMimeType, validateProductImageFile } from './product-image-file-validation.util';
 import { buildProductImageKey } from './build-product-image-key.util';
 import type { UploadFile } from './upload-file.type';
 import { InternalError, NotFoundError } from '../../../../shared/domain/errors/domain-error';
@@ -51,7 +47,7 @@ export class UploadProductImageUseCase {
     const key = buildProductImageKey(input.productId, extension);
 
     try {
-      this.logger.debug(`Uploading image for product ${input.productId} to MinIO with key ${key}`);
+      this.logger.debug(`Uploading image for product ${input.productId} to storage with key ${key}`);
       await this.storage.upload({
         key,
         body: input.file.buffer,
@@ -61,7 +57,7 @@ export class UploadProductImageUseCase {
       this.logger.debug(`Image uploaded successfully to key ${key}`);
     } catch (error) {
       this.logger.error(
-        `Failed to upload product image to MinIO: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to upload product image to storage: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw new InternalError('Error al subir la imagen al servidor de almacenamiento');

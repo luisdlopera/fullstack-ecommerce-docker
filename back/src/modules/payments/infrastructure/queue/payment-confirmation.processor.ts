@@ -17,7 +17,7 @@ export class PaymentConfirmationProcessor implements JobProcessor, OnModuleInit 
 
   onModuleInit(): void {
     console.log('[PaymentConfirmationProcessor] onModuleInit - registrando procesador...');
-    // Desactivado temporalmente para diagnóstico  
+    // Desactivado temporalmente para diagnóstico
     // this.queueService.registerProcessor(this);
     console.log('[PaymentConfirmationProcessor] Procesador desactivado para diagnóstico');
   }

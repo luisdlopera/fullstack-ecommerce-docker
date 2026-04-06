@@ -22,17 +22,13 @@ import { LegacyVersionController } from './shared/infrastructure/http/legacy-ver
     SharedModule,
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 400 }] }),
     JwtModule.register({}),
-    // HealthModule activado - PrismaHealthIndicator removido para evitar bloqueo
     HealthModule,
     AuthModule,
     UsersModule,
     ProductsModule,
-    // Paso 4: OrdersModule + InventoryModule
     OrdersModule,
     InventoryModule,
-    // Paso 5: PaymentsModule
     PaymentsModule,
-    // Paso 6: AdminModule
     AdminModule,
   ],
   controllers: [LegacyVersionController],

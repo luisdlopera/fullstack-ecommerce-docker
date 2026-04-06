@@ -16,6 +16,7 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

@@ -8,7 +8,7 @@ import { seedCatalog } from './seed-catalog';
 
 // Monorepo: allow `npm run prisma:seed -w back` with `.env` at repo root.
 config({ path: resolve(process.cwd(), '..', '.env') });
-config({ path: resolve(process.cwd(), '.env') });
+config({ path: resolve(process.cwd(), '.env'), override: true });
 
 const prisma = new PrismaClient(createPrismaClientOptions());
 
@@ -98,217 +98,10 @@ async function main() {
   }
 
   // ── Products ──────────────────────────────────────────────────────────
-  const productsToSeed: Array<{
-    title: string;
-    description: string;
-    slug: string;
-    sku: string;
-    price: number;
-    comparePrice?: number;
-    inStock: number;
-    sizes: Size[];
-    gender: Gender;
-    tags: string[];
-    images: string[];
-    categorySlug: string;
-    featured?: boolean;
-  }> = [
-    {
-      title: 'Camiseta Hombre Essential',
-      description: 'Camiseta premium para hombre, ideal para uso diario.',
-      slug: 'camiseta-hombre-essential',
-      sku: 'CAM-H-ESS-001',
-      price: 89.9,
-      comparePrice: 119.9,
-      inStock: 40,
-      sizes: [Size.S, Size.M, Size.L, Size.XL],
-      gender: Gender.men,
-      tags: ['hombre', 'casual', 'algodon'],
-      images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'camisetas',
-      featured: true,
-    },
-    {
-      title: 'Hoodie Hombre Urban',
-      description: 'Hoodie de corte urbano para clima fresco.',
-      slug: 'hoodie-hombre-urban',
-      sku: 'HOO-H-URB-001',
-      price: 149.9,
-      inStock: 25,
-      sizes: [Size.M, Size.L, Size.XL],
-      gender: Gender.men,
-      tags: ['hombre', 'hoodie', 'urbano'],
-      images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'hoodies',
-    },
-    {
-      title: 'Jogger Hombre Sport',
-      description: 'Jogger cómodo con ajuste moderno.',
-      slug: 'jogger-hombre-sport',
-      sku: 'JOG-H-SPO-001',
-      price: 119.9,
-      inStock: 30,
-      sizes: [Size.S, Size.M, Size.L],
-      gender: Gender.men,
-      tags: ['hombre', 'sport', 'jogger'],
-      images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'pantalones',
-    },
-    {
-      title: 'Blusa Mujer Minimal',
-      description: 'Blusa versátil para looks casuales y elegantes.',
-      slug: 'blusa-mujer-minimal',
-      sku: 'BLU-M-MIN-001',
-      price: 99.9,
-      comparePrice: 129.9,
-      inStock: 36,
-      sizes: [Size.XS, Size.S, Size.M, Size.L],
-      gender: Gender.women,
-      tags: ['mujer', 'blusa', 'minimal'],
-      images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'camisetas',
-      featured: true,
-    },
-    {
-      title: 'Vestido Mujer Breeze',
-      description: 'Vestido ligero perfecto para clima cálido.',
-      slug: 'vestido-mujer-breeze',
-      sku: 'VES-M-BRE-001',
-      price: 159.9,
-      inStock: 20,
-      sizes: [Size.S, Size.M, Size.L],
-      gender: Gender.women,
-      tags: ['mujer', 'vestido', 'verano'],
-      images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'vestidos',
-    },
-    {
-      title: 'Chaqueta Mujer Denim',
-      description: 'Chaqueta denim atemporal para cualquier temporada.',
-      slug: 'chaqueta-mujer-denim',
-      sku: 'CHA-M-DEN-001',
-      price: 189.9,
-      inStock: 18,
-      sizes: [Size.S, Size.M, Size.L, Size.XL],
-      gender: Gender.women,
-      tags: ['mujer', 'denim', 'chaqueta'],
-      images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'chaquetas',
-    },
-    {
-      title: 'Camiseta Niño Fun',
-      description: 'Camiseta cómoda y resistente para niños.',
-      slug: 'camiseta-nino-fun',
-      sku: 'CAM-N-FUN-001',
-      price: 69.9,
-      inStock: 35,
-      sizes: [Size.XS, Size.S, Size.M],
-      gender: Gender.kid,
-      tags: ['nino', 'camiseta', 'kids'],
-      images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'camisetas',
-    },
-    {
-      title: 'Sudadera Niño Active',
-      description: 'Sudadera suave para actividades diarias.',
-      slug: 'sudadera-nino-active',
-      sku: 'SUD-N-ACT-001',
-      price: 99.9,
-      inStock: 22,
-      sizes: [Size.S, Size.M, Size.L],
-      gender: Gender.kid,
-      tags: ['nino', 'sudadera', 'active'],
-      images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'hoodies',
-    },
-    {
-      title: 'Pantalón Niño Play',
-      description: 'Pantalón flexible para máxima movilidad.',
-      slug: 'pantalon-nino-play',
-      sku: 'PAN-N-PLY-001',
-      price: 84.9,
-      inStock: 28,
-      sizes: [Size.S, Size.M, Size.L],
-      gender: Gender.kid,
-      tags: ['nino', 'pantalon', 'play'],
-      images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'pantalones',
-    },
-    {
-      title: 'Colección Eclipse',
-      description: 'Edición nueva de temporada con diseño exclusivo.',
-      slug: 'coleccion-eclipse',
-      sku: 'COL-U-ECL-001',
-      price: 199.9,
-      comparePrice: 249.9,
-      inStock: 15,
-      sizes: [Size.S, Size.M, Size.L, Size.XL],
-      gender: Gender.unisex,
-      tags: ['nuevo', 'edicion', 'unisex'],
-      images: ['/img/shirt/shirt-black-2.png', '/img/shirt/shirt-black-1.png'],
-      categorySlug: 'camisetas',
-      featured: true,
-    },
-    {
-      title: 'Colección Nova',
-      description: 'Prenda destacada de la nueva colección.',
-      slug: 'coleccion-nova',
-      sku: 'COL-U-NOV-001',
-      price: 179.9,
-      inStock: 0,
-      sizes: [Size.S, Size.M, Size.L],
-      gender: Gender.unisex,
-      tags: ['nuevo', 'coleccion', 'trend'],
-      images: ['/img/shirt/shirt-black-1.png', '/img/shirt/shirt-black-2.png'],
-      categorySlug: 'camisetas',
-    },
-  ];
-
-  for (const productData of productsToSeed) {
-    const catId = categoryMap.get(productData.categorySlug);
-    if (!catId) continue;
-
-    const product = await prisma.product.upsert({
-      where: { slug: productData.slug },
-      update: {
-        title: productData.title,
-        description: productData.description,
-        sku: productData.sku,
-        inStock: productData.inStock,
-        price: productData.price,
-        comparePrice: productData.comparePrice,
-        sizes: productData.sizes,
-        tags: productData.tags.map((tag) => tag.toLowerCase()),
-        gender: productData.gender,
-        categoryId: catId,
-        featured: productData.featured ?? false,
-      },
-      create: {
-        title: productData.title,
-        description: productData.description,
-        sku: productData.sku,
-        inStock: productData.inStock,
-        price: productData.price,
-        comparePrice: productData.comparePrice,
-        sizes: productData.sizes,
-        slug: productData.slug,
-        tags: productData.tags.map((tag) => tag.toLowerCase()),
-        gender: productData.gender,
-        categoryId: catId,
-        featured: productData.featured ?? false,
-      },
-    });
-
-    await prisma.productImage.deleteMany({ where: { productId: product.id } });
-    await prisma.productImage.createMany({
-      data: productData.images.map((url, i) => ({
-        url,
-        productId: product.id,
-        sortOrder: i,
-        isPrimary: i === 0,
-      })),
-    });
-  }
+  // NOTE: Products are now seeded from seed-catalog.ts with R2 images
+  // The old local image products have been removed to ensure all images
+  // are served from Cloudflare R2.
+  console.log('Skipping legacy products in seed.ts - using seed-catalog.ts instead');
 
   // ── Users ─────────────────────────────────────────────────────────────
   const users = [
@@ -446,6 +239,68 @@ async function main() {
     }
   }
 
+  // ── Home Banners ─────────────────────────────────────────────────────
+  // Using images from R2 bucket
+  const storageProvider = 'r2';
+  const baseUrl = process.env.STORAGE_PUBLIC_URL || '';
+
+  if (!baseUrl) {
+    console.warn('STORAGE_PUBLIC_URL not set, skipping banner image URLs');
+  }
+
+  const homeBanners = [
+    {
+      title: 'Tu outfit soñado, ahora con oferta',
+      subtitle: 'Hasta 60% de descuento en ropa de mujer y hombre. ¡Corre antes de que se agoten!',
+      ctaText: 'Ropa de mujer',
+      ctaLink: '/women',
+      secondaryText: 'Accesorios',
+      secondaryLink: '/accessories',
+      imageUrl: 'home/slider/slider-1.webp',
+      storageKey: 'home/slider/slider-1.webp',
+      storageProvider,
+      altText: 'Slider 1 - Outfit con oferta',
+      sortOrder: 0,
+      isActive: true,
+    },
+    {
+      title: 'El look que deseas, al mejor precio',
+      subtitle: 'Encuentra las tendencias más exclusivas con descuentos irresistibles. ¡Solo por tiempo limitado!',
+      ctaText: 'Conocer outfits',
+      ctaLink: '/collections',
+      secondaryText: null,
+      secondaryLink: null,
+      imageUrl: 'home/slider/slider-2.webp',
+      storageKey: 'home/slider/slider-2.webp',
+      storageProvider,
+      altText: 'Slider 2 - Tendencias exclusivas',
+      sortOrder: 1,
+      isActive: true,
+    },
+    {
+      title: 'La moda que te define, a precios que te encantan',
+      subtitle: 'Descubre colecciones diseñadas para expresar tu estilo único sin gastar de más.',
+      ctaText: 'Ver colección',
+      ctaLink: '/new-arrivals',
+      secondaryText: null,
+      secondaryLink: null,
+      imageUrl: 'home/slider/slider-3.webp',
+      storageKey: 'home/slider/slider-3.webp',
+      storageProvider,
+      altText: 'Slider 3 - Colección nueva',
+      sortOrder: 2,
+      isActive: true,
+    },
+  ];
+
+  // Clear existing banners and create new ones
+  await prisma.homeBanner.deleteMany();
+  for (const banner of homeBanners) {
+    await prisma.homeBanner.create({ data: banner });
+  }
+  console.log(`Seeded ${homeBanners.length} home banners`);
+
+  // Se habilitan los productos despues de actualizar el bucket de r2 a las variables de entorno
   await seedCatalog(prisma);
   console.log('Seed completed.');
 }

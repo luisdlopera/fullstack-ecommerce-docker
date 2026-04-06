@@ -3,6 +3,8 @@
 export type ProductImage = {
 	id: number;
 	url: string;
+	storageKey?: string | null;
+	storageProvider?: string | null;
 };
 
 export type Category = {
@@ -74,6 +76,8 @@ export type FavoriteItem = {
 	title: string;
 	price: number;
 	image: string;
+	imageStorageKey?: string | null;
+	imageStorageProvider?: string | null;
 };
 
 export type FavoritesListResponse = {

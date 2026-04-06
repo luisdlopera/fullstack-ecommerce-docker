@@ -10,8 +10,6 @@ Nexstore uses a **strict, non-negotiable** port allocation in the 5000+ range:
 | **Backend API** | 5007 | `BACKEND_PORT` | `BACK_PORT` |
 | **PostgreSQL** | 5008 | `DATABASE_PORT` | `POSTGRES_PORT` |
 | **Redis** | 5009 | `REDIS_PORT` | - |
-| **MinIO API** | 5010 | `MINIO_PORT` | - |
-| **MinIO Console** | 5011 | `MINIO_CONSOLE_PORT` | - |
 
 **Critical Rules:**
 1. **Never** use the same port for two services
@@ -55,8 +53,6 @@ FRONTEND_PORT=5006
 BACKEND_PORT=5007
 DATABASE_PORT=5008
 REDIS_PORT=5009
-MINIO_PORT=5010
-MINIO_CONSOLE_PORT=5011
 
 # Legacy aliases supported for backwards compatibility
 FRONT_PORT=5006
@@ -67,12 +63,9 @@ POSTGRES_PORT=5008
 ### Service Dependencies
 
 ```
-postgres (5002) ──┐
-                  ├──▶ back (5001) ──▶ front (5000)
-redis (5003) ─────┤         ▲
-                  │         │
-minio (5004) ─────┘         │ (after healthy)
-                    minio-init
+postgres (5008) ──┐
+                  ├──▶ back (5007) ──▶ front (5006)
+redis (5009) ─────┘
 ```
 
 ## Docker Compose Mapping
@@ -91,10 +84,6 @@ services:
   redis:
     ports:
       - '${REDIS_PORT:-5009}:6379'
-  minio:
-    ports:
-      - '${MINIO_PORT:-5010}:9000'
-      - '${MINIO_CONSOLE_PORT:-5011}:9001'
 ```
 
 ## URL Reference
@@ -107,8 +96,6 @@ services:
 | Health Check | `http://localhost:5007/api/v1/health/simple` |
 | PostgreSQL | `localhost:5008` |
 | Redis | `localhost:5009` |
-| MinIO API | `http://localhost:5010` |
-| MinIO Console | `http://localhost:5011` |
 
 ## Port Conflicts
 
@@ -174,7 +161,7 @@ INTERNAL_API_URL=http://localhost:5007/api
 | Backend | 3000 / 4000 | Container internal |
 | PostgreSQL | 5432 | Internal only |
 | Redis | 6379 | Internal only |
-| MinIO/R2 | 9000 / 443 | S3-compatible endpoint |
+| R2 | 443 | S3-compatible endpoint |
 
 ## Testing Ports
 

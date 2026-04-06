@@ -19,6 +19,6 @@ export function getRoleBadgeClass(role: string): string {
 	if (normalized === 'MANAGER') return 'bg-amber-100 text-amber-800';
 	if (normalized === 'SUPPORT') return 'bg-teal-100 text-teal-800';
 	if (normalized === 'CUSTOMER') return 'bg-green-100 text-green-700';
-	
+
 	return 'bg-gray-100 text-gray-700'; // fallback visual consistente
 }

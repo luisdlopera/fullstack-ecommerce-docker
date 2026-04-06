@@ -127,7 +127,7 @@ export default function AdminUsersPage() {
 		{
 			key: 'role',
 			header: 'Rol',
-			render: (u) => (
+			render: (u) =>
 				canManageUsers ? (
 					<Select
 						size='sm'
@@ -148,8 +148,7 @@ export default function AdminUsersPage() {
 					</Select>
 				) : (
 					<span className='text-xs font-medium text-gray-600'>{u.role}</span>
-				)
-			),
+				),
 		},
 		{
 			key: 'status',
@@ -177,7 +176,7 @@ export default function AdminUsersPage() {
 			key: 'actions',
 			header: '',
 			className: 'text-right',
-			render: (u) => (
+			render: (u) =>
 				canManageUsers ? (
 					<div className='flex justify-end gap-2'>
 						<button
@@ -193,8 +192,7 @@ export default function AdminUsersPage() {
 							Eliminar
 						</button>
 					</div>
-				) : null
-			),
+				) : null,
 		},
 	];
 
@@ -214,12 +212,12 @@ export default function AdminUsersPage() {
 				description='Administra los usuarios registrados en la plataforma'
 				actions={
 					canManageUsers ? (
-					<button
-						onClick={() => setCreateOpen(true)}
-						className='flex items-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800'
-					>
-						<Plus size={16} /> Nuevo usuario
-					</button>
+						<button
+							onClick={() => setCreateOpen(true)}
+							className='flex items-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800'
+						>
+							<Plus size={16} /> Nuevo usuario
+						</button>
 					) : null
 				}
 			/>

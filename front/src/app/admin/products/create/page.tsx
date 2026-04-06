@@ -37,13 +37,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { usePermissions } from '@/hooks/usePermissions';
-import {
-	AdminPageHeader,
-	categoriesApi,
-	PERMISSIONS,
-	productsApi,
-	type AdminCategory,
-} from '@/features/admin';
+import { AdminPageHeader, categoriesApi, PERMISSIONS, productsApi, type AdminCategory } from '@/features/admin';
 
 /* ─── Constants ───────────────────────────────────────────────────────── */
 
@@ -268,17 +262,13 @@ export default function AdminProductCreatePage() {
 
 				for (let idx = 0; idx < pendingImages.length; idx++) {
 					const img = pendingImages[idx];
-					setPendingImages((prev) =>
-						prev.map((i) => (i.id === img.id ? { ...i, status: 'uploading' } : i)),
-					);
+					setPendingImages((prev) => prev.map((i) => (i.id === img.id ? { ...i, status: 'uploading' } : i)));
 					setUploadProgress((prev) => ({ ...prev, current: img.file.name }));
 
 					try {
 						const shouldBePrimary = makePrimary && idx === 0;
 						await productsApi.uploadImage(product.id, img.file, shouldBePrimary);
-						setPendingImages((prev) =>
-							prev.map((i) => (i.id === img.id ? { ...i, status: 'done' } : i)),
-						);
+						setPendingImages((prev) => prev.map((i) => (i.id === img.id ? { ...i, status: 'done' } : i)));
 					} catch (err) {
 						failCount++;
 						setPendingImages((prev) =>
@@ -363,7 +353,7 @@ export default function AdminProductCreatePage() {
 					<div className='flex flex-col gap-6 lg:col-span-2'>
 						{/* Basic info */}
 						<Card shadow='sm'>
-							<CardHeader className='flex items-center gap-2 px-6 pb-0 pt-5'>
+							<CardHeader className='flex items-center gap-2 px-6 pt-5 pb-0'>
 								<Package size={18} className='text-default-500' />
 								<h2 className='text-base font-semibold'>Información básica</h2>
 							</CardHeader>
@@ -396,9 +386,7 @@ export default function AdminProductCreatePage() {
 										className='flex-1'
 										isDisabled={isSubmitting}
 										description={
-											slugManual
-												? 'Editando manualmente'
-												: 'Se genera automáticamente del título'
+											slugManual ? 'Editando manualmente' : 'Se genera automáticamente del título'
 										}
 									/>
 									{slugManual && (
@@ -443,7 +431,7 @@ export default function AdminProductCreatePage() {
 
 						{/* Media / Images */}
 						<Card shadow='sm'>
-							<CardHeader className='flex items-center gap-2 px-6 pb-0 pt-5'>
+							<CardHeader className='flex items-center gap-2 px-6 pt-5 pb-0'>
 								<ImagePlus size={18} className='text-default-500' />
 								<h2 className='text-base font-semibold'>Imágenes del producto</h2>
 								{pendingImages.length > 0 && (
@@ -480,10 +468,10 @@ export default function AdminProductCreatePage() {
 										/>
 									</div>
 									<div className='text-center'>
-										<p className='text-sm font-medium text-default-700'>
+										<p className='text-default-700 text-sm font-medium'>
 											Arrastra y suelta imágenes aquí
 										</p>
-										<p className='mt-1 text-xs text-default-400'>
+										<p className='text-default-400 mt-1 text-xs'>
 											JPG, PNG o WebP • Máximo 5MB por imagen
 										</p>
 									</div>
@@ -511,7 +499,7 @@ export default function AdminProductCreatePage() {
 								{/* Image preview grid */}
 								{pendingImages.length > 0 && (
 									<div className='mt-4'>
-										<p className='mb-2 text-xs text-default-500'>
+										<p className='text-default-500 mb-2 text-xs'>
 											Arrastra para reordenar • La primera imagen será la principal
 										</p>
 										<div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4'>
@@ -538,7 +526,7 @@ export default function AdminProductCreatePage() {
 													}`}
 												>
 													{/* Image */}
-													<div className='relative aspect-square bg-default-100'>
+													<div className='bg-default-100 relative aspect-square'>
 														<Image
 															src={img.preview}
 															alt={img.file.name}
@@ -553,14 +541,14 @@ export default function AdminProductCreatePage() {
 																type='button'
 																onClick={() => removeImage(img.id)}
 																disabled={isSubmitting}
-																className='rounded-full bg-white/90 p-1.5 text-danger hover:bg-white disabled:opacity-50'
+																className='text-danger rounded-full bg-white/90 p-1.5 hover:bg-white disabled:opacity-50'
 															>
 																<Trash2 size={14} />
 															</button>
 														</div>
 
 														{/* grip icon */}
-														<div className='absolute left-1 top-1 rounded bg-black/30 p-0.5 opacity-0 transition-opacity group-hover:opacity-100'>
+														<div className='absolute top-1 left-1 rounded bg-black/30 p-0.5 opacity-0 transition-opacity group-hover:opacity-100'>
 															<GripVertical size={12} className='text-white' />
 														</div>
 
@@ -571,14 +559,14 @@ export default function AdminProductCreatePage() {
 															</div>
 														)}
 														{img.status === 'done' && (
-															<div className='absolute right-1 top-1'>
+															<div className='absolute top-1 right-1'>
 																<Chip size='sm' color='success' variant='solid'>
 																	✓
 																</Chip>
 															</div>
 														)}
 														{img.status === 'error' && (
-															<div className='absolute right-1 top-1'>
+															<div className='absolute top-1 right-1'>
 																<Chip size='sm' color='danger' variant='solid'>
 																	✗
 																</Chip>
@@ -587,7 +575,7 @@ export default function AdminProductCreatePage() {
 													</div>
 
 													{/* Info footer */}
-													<div className='border-t border-default-100 bg-default-50 px-2 py-1.5'>
+													<div className='border-default-100 bg-default-50 border-t px-2 py-1.5'>
 														<div className='flex items-center justify-between'>
 															{idx === 0 && makePrimary ? (
 																<Chip
@@ -599,19 +587,19 @@ export default function AdminProductCreatePage() {
 																	Principal
 																</Chip>
 															) : (
-																<span className='text-[10px] text-default-400'>
+																<span className='text-default-400 text-[10px]'>
 																	#{idx + 1}
 																</span>
 															)}
-															<span className='text-[10px] text-default-400'>
+															<span className='text-default-400 text-[10px]'>
 																{formatFileSize(img.file.size)}
 															</span>
 														</div>
-														<p className='mt-0.5 truncate text-[10px] text-default-500'>
+														<p className='text-default-500 mt-0.5 truncate text-[10px]'>
 															{img.file.name}
 														</p>
 														{img.status === 'error' && img.errorMessage && (
-															<p className='mt-0.5 truncate text-[10px] text-danger'>
+															<p className='text-danger mt-0.5 truncate text-[10px]'>
 																{img.errorMessage}
 															</p>
 														)}
@@ -624,12 +612,10 @@ export default function AdminProductCreatePage() {
 
 								{/* Upload progress bar */}
 								{uploadProgress.total > 0 && (
-									<div className='mt-4 rounded-xl border border-default-200 bg-default-50 p-4'>
+									<div className='border-default-200 bg-default-50 mt-4 rounded-xl border p-4'>
 										<div className='mb-2 flex items-center justify-between text-xs'>
 											<span className='text-default-600'>
-												{uploadProgress.active
-													? 'Subiendo imágenes...'
-													: 'Subida finalizada'}
+												{uploadProgress.active ? 'Subiendo imágenes...' : 'Subida finalizada'}
 											</span>
 											<Chip
 												size='sm'
@@ -650,7 +636,7 @@ export default function AdminProductCreatePage() {
 											aria-label='Progreso de subida'
 										/>
 										{uploadProgress.current && (
-											<p className='mt-2 truncate text-xs text-default-500'>
+											<p className='text-default-500 mt-2 truncate text-xs'>
 												Subiendo: {uploadProgress.current}
 											</p>
 										)}
@@ -666,7 +652,7 @@ export default function AdminProductCreatePage() {
 											onValueChange={setMakePrimary}
 											isDisabled={isSubmitting}
 										>
-											<span className='text-xs text-default-600'>
+											<span className='text-default-600 text-xs'>
 												Marcar la primera imagen como principal
 											</span>
 										</Checkbox>
@@ -680,7 +666,7 @@ export default function AdminProductCreatePage() {
 					<div className='flex flex-col gap-6'>
 						{/* Pricing & Stock */}
 						<Card shadow='sm'>
-							<CardHeader className='flex items-center gap-2 px-6 pb-0 pt-5'>
+							<CardHeader className='flex items-center gap-2 px-6 pt-5 pb-0'>
 								<Tag size={18} className='text-default-500' />
 								<h2 className='text-base font-semibold'>Precio y stock</h2>
 							</CardHeader>
@@ -698,9 +684,7 @@ export default function AdminProductCreatePage() {
 									variant='flat'
 									radius='lg'
 									size='sm'
-									startContent={
-										<span className='text-xs text-default-400'>$</span>
-									}
+									startContent={<span className='text-default-400 text-xs'>$</span>}
 									isDisabled={isSubmitting}
 								/>
 								<Input
@@ -714,9 +698,7 @@ export default function AdminProductCreatePage() {
 									variant='flat'
 									radius='lg'
 									size='sm'
-									startContent={
-										<span className='text-xs text-default-400'>$</span>
-									}
+									startContent={<span className='text-default-400 text-xs'>$</span>}
 									description='Precio tachado (precio anterior)'
 									isDisabled={isSubmitting}
 								/>
@@ -738,7 +720,7 @@ export default function AdminProductCreatePage() {
 
 						{/* Classification */}
 						<Card shadow='sm'>
-							<CardHeader className='flex items-center gap-2 px-6 pb-0 pt-5'>
+							<CardHeader className='flex items-center gap-2 px-6 pt-5 pb-0'>
 								<Sparkles size={18} className='text-default-500' />
 								<h2 className='text-base font-semibold'>Clasificación</h2>
 							</CardHeader>
@@ -795,7 +777,7 @@ export default function AdminProductCreatePage() {
 
 						{/* Sizes */}
 						<Card shadow='sm'>
-							<CardHeader className='px-6 pb-0 pt-5'>
+							<CardHeader className='px-6 pt-5 pb-0'>
 								<h2 className='text-base font-semibold'>Tallas</h2>
 							</CardHeader>
 							<Divider className='mt-3' />
@@ -810,9 +792,7 @@ export default function AdminProductCreatePage() {
 											onClick={() => {
 												if (isSubmitting) return;
 												setSelectedSizes((prev) =>
-													prev.includes(s)
-														? prev.filter((x) => x !== s)
-														: [...prev, s],
+													prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
 												);
 											}}
 										>
@@ -821,16 +801,14 @@ export default function AdminProductCreatePage() {
 									))}
 								</div>
 								{selectedSizes.length === 0 && (
-									<p className='mt-2 text-xs text-danger'>
-										Selecciona al menos una talla
-									</p>
+									<p className='text-danger mt-2 text-xs'>Selecciona al menos una talla</p>
 								)}
 							</CardBody>
 						</Card>
 
 						{/* Settings */}
 						<Card shadow='sm'>
-							<CardHeader className='px-6 pb-0 pt-5'>
+							<CardHeader className='px-6 pt-5 pb-0'>
 								<h2 className='text-base font-semibold'>Configuración</h2>
 							</CardHeader>
 							<Divider className='mt-3' />
@@ -857,14 +835,9 @@ export default function AdminProductCreatePage() {
 				</div>
 
 				{/* ─── Bottom action bar ─────────────────────────────────────── */}
-				<div className='sticky bottom-0 z-10 -mx-4 mt-8 flex items-center justify-between gap-4 border-t border-default-200 bg-white/80 px-4 py-4 backdrop-blur-lg lg:-mx-8 lg:px-8'>
+				<div className='border-default-200 sticky bottom-0 z-10 -mx-4 mt-8 flex items-center justify-between gap-4 border-t bg-white/80 px-4 py-4 backdrop-blur-lg lg:-mx-8 lg:px-8'>
 					<Link href='/admin/products'>
-						<Button
-							variant='flat'
-							startContent={<X size={16} />}
-							isDisabled={isSubmitting}
-							type='button'
-						>
+						<Button variant='flat' startContent={<X size={16} />} isDisabled={isSubmitting} type='button'>
 							Cancelar
 						</Button>
 					</Link>

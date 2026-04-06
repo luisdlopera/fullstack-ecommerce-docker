@@ -46,7 +46,10 @@ import {
 
 /* ─── Movement Type Labels ───────────────────────────────────────────── */
 
-const MOVEMENT_LABELS: Record<string, { label: string; color: 'success' | 'danger' | 'warning' | 'primary' | 'default' }> = {
+const MOVEMENT_LABELS: Record<
+	string,
+	{ label: string; color: 'success' | 'danger' | 'warning' | 'primary' | 'default' }
+> = {
 	IN: { label: 'Ingreso', color: 'success' },
 	OUT: { label: 'Salida', color: 'danger' },
 	ADJUSTMENT: { label: 'Ajuste', color: 'warning' },
@@ -62,6 +65,14 @@ const FILTER_OPTIONS = [
 	{ value: 'outOfStock', label: 'Agotados' },
 ];
 
+const GENDER_FILTER_OPTIONS = [
+	{ value: '', label: 'Todas las colecciones' },
+	{ value: 'men', label: 'Hombres' },
+	{ value: 'women', label: 'Mujeres' },
+	{ value: 'kid', label: 'Niños' },
+	{ value: 'unisex', label: 'Unisex' },
+];
+
 /* ─── Page ────────────────────────────────────────────────────────────── */
 
 export default function AdminInventoryPage() {
@@ -74,9 +85,11 @@ export default function AdminInventoryPage() {
 	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState('');
 	const [filter, setFilter] = useState('');
+	const [genderFilter, setGenderFilter] = useState('');
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 	const [adjustItem, setAdjustItem] = useState<InventoryItem | null>(null);
 	const [movementsItem, setMovementsItem] = useState<InventoryItem | null>(null);
+	const [variantsItem, setVariantsItem] = useState<InventoryItem | null>(null);
 	const [adjustQty, setAdjustQty] = useState('');
 	const [adjustReason, setAdjustReason] = useState('');
 
@@ -88,7 +101,7 @@ export default function AdminInventoryPage() {
 	});
 
 	const { data, isLoading, error, refetch } = useQuery({
-		queryKey: ['admin', 'inventory', 'items', page, search, filter],
+		queryKey: ['admin', 'inventory', 'items', page, search, filter, genderFilter],
 		queryFn: () =>
 			inventoryApi.listItems({
 				page,
@@ -96,6 +109,7 @@ export default function AdminInventoryPage() {
 				search: search || undefined,
 				lowStock: filter === 'lowStock' ? true : undefined,
 				outOfStock: filter === 'outOfStock' ? true : undefined,
+				gender: genderFilter || undefined,
 			}),
 	});
 
@@ -146,6 +160,29 @@ export default function AdminInventoryPage() {
 					</div>
 				</div>
 			),
+		},
+		{
+			key: 'collection',
+			header: 'Colección',
+			render: (item) => {
+				const genderLabels: Record<string, string> = {
+					men: 'Hombres',
+					women: 'Mujeres',
+					kid: 'Niños',
+					unisex: 'Unisex',
+				};
+				const genderColors: Record<string, 'primary' | 'danger' | 'warning' | 'default'> = {
+					men: 'primary',
+					women: 'danger',
+					kid: 'warning',
+					unisex: 'default',
+				};
+				return (
+					<Chip size='sm' variant='flat' color={genderColors[item.product.gender] || 'default'}>
+						{genderLabels[item.product.gender] || item.product.gender}
+					</Chip>
+				);
+			},
 		},
 		{
 			key: 'size',
@@ -203,6 +240,34 @@ export default function AdminInventoryPage() {
 			),
 		},
 		{
+			key: 'price',
+			header: 'Precio',
+			render: (item) => {
+				const hasDiscount = item.product.discountPrice && item.product.discountPrice > 0;
+				const isDiscountActive =
+					hasDiscount &&
+					(!item.product.discountStartsAt || new Date(item.product.discountStartsAt) <= new Date()) &&
+					(!item.product.discountEndsAt || new Date(item.product.discountEndsAt) >= new Date());
+				return (
+					<div className='flex flex-col'>
+						<span
+							className={`text-sm font-medium ${isDiscountActive ? 'text-green-600' : 'text-gray-900'}`}
+						>
+							${item.product.discountPrice || item.product.price}
+						</span>
+						{isDiscountActive && item.product.comparePrice && (
+							<span className='text-xs text-gray-400 line-through'>${item.product.comparePrice}</span>
+						)}
+						{isDiscountActive && (
+							<Chip size='sm' variant='flat' color='success' className='mt-1 w-fit'>
+								En oferta
+							</Chip>
+						)}
+					</div>
+				);
+			},
+		},
+		{
 			key: 'actions',
 			header: '',
 			className: 'text-right',
@@ -214,6 +279,13 @@ export default function AdminInventoryPage() {
 						className='rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100'
 					>
 						Movimientos
+					</button>
+					<button
+						type='button'
+						onClick={() => setVariantsItem(item)}
+						className='rounded-lg px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50'
+					>
+						Variantes
 					</button>
 					{canAdjust && (
 						<button
@@ -244,43 +316,16 @@ export default function AdminInventoryPage() {
 
 	return (
 		<>
-			<AdminPageHeader
-				title='Inventario'
-				description='Gestión operativa de stock por producto y variante'
-			/>
+			<AdminPageHeader title='Inventario' description='Gestión operativa de stock por producto y variante' />
 
 			{/* ─── Summary Cards ──────────────────────────────────────────── */}
 			<div className='mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6'>
-				<StatCard
-					title='Ítems registrados'
-					value={summary?.totalItems ?? 0}
-					icon={Boxes}
-				/>
-				<StatCard
-					title='Disponible total'
-					value={summary?.totalAvailable ?? 0}
-					icon={ArrowUpCircle}
-				/>
-				<StatCard
-					title='Reservado'
-					value={summary?.totalReserved ?? 0}
-					icon={Clock}
-				/>
-				<StatCard
-					title='Comprometido'
-					value={summary?.totalCommitted ?? 0}
-					icon={ArrowDownCircle}
-				/>
-				<StatCard
-					title='Stock bajo'
-					value={summary?.lowStockCount ?? 0}
-					icon={TrendingDown}
-				/>
-				<StatCard
-					title='Agotados'
-					value={summary?.outOfStockCount ?? 0}
-					icon={PackageX}
-				/>
+				<StatCard title='Ítems registrados' value={summary?.totalItems ?? 0} icon={Boxes} />
+				<StatCard title='Disponible total' value={summary?.totalAvailable ?? 0} icon={ArrowUpCircle} />
+				<StatCard title='Reservado' value={summary?.totalReserved ?? 0} icon={Clock} />
+				<StatCard title='Comprometido' value={summary?.totalCommitted ?? 0} icon={ArrowDownCircle} />
+				<StatCard title='Stock bajo' value={summary?.lowStockCount ?? 0} icon={TrendingDown} />
+				<StatCard title='Agotados' value={summary?.outOfStockCount ?? 0} icon={PackageX} />
 			</div>
 
 			{/* ─── Low Stock Alert Banner ─────────────────────────────────── */}
@@ -293,7 +338,10 @@ export default function AdminInventoryPage() {
 								{lowStockItems!.length} producto(s) con stock bajo
 							</p>
 							<p className='mt-0.5 text-xs text-amber-700'>
-								{lowStockItems!.slice(0, 3).map((i) => `${i.product.title} (${i.size})`).join(', ')}
+								{lowStockItems!
+									.slice(0, 3)
+									.map((i) => `${i.product.title} (${i.size})`)
+									.join(', ')}
 								{lowStockItems!.length > 3 && ` y ${lowStockItems!.length - 3} más...`}
 							</p>
 						</div>
@@ -303,6 +351,7 @@ export default function AdminInventoryPage() {
 							color='warning'
 							onPress={() => {
 								setFilter('lowStock');
+								setGenderFilter('');
 								setPage(1);
 							}}
 						>
@@ -335,6 +384,25 @@ export default function AdminInventoryPage() {
 					aria-label='Filtro de stock'
 				>
 					{FILTER_OPTIONS.map((opt) => (
+						<SelectItem key={opt.value} textValue={opt.label}>
+							{opt.label}
+						</SelectItem>
+					))}
+				</Select>
+				<Select
+					size='sm'
+					variant='flat'
+					className='w-48'
+					placeholder='Filtrar por colección'
+					selectedKeys={new Set([genderFilter])}
+					onSelectionChange={(keys) => {
+						const k = Array.from(keys as Set<string>)[0] ?? '';
+						setGenderFilter(k);
+						setPage(1);
+					}}
+					aria-label='Filtro de colección'
+				>
+					{GENDER_FILTER_OPTIONS.map((opt) => (
 						<SelectItem key={opt.value} textValue={opt.label}>
 							{opt.label}
 						</SelectItem>
@@ -442,12 +510,10 @@ export default function AdminInventoryPage() {
 			</Modal>
 
 			{/* ─── Movements Modal ───────────────────────────────────────── */}
-			{movementsItem && (
-				<MovementsModal
-					item={movementsItem}
-					onClose={() => setMovementsItem(null)}
-				/>
-			)}
+			{movementsItem && <MovementsModal item={movementsItem} onClose={() => setMovementsItem(null)} />}
+
+			{/* ─── Variants Modal ───────────────────────────────────────── */}
+			{variantsItem && <VariantsModal item={variantsItem} onClose={() => setVariantsItem(null)} />}
 		</>
 	);
 }
@@ -497,7 +563,8 @@ function MovementsModal({ item, onClose }: { item: InventoryItem; onClose: () =>
 				<span
 					className={`text-sm font-bold ${m.quantity > 0 ? 'text-green-600' : m.quantity < 0 ? 'text-red-600' : 'text-gray-500'}`}
 				>
-					{m.quantity > 0 ? '+' : ''}{m.quantity}
+					{m.quantity > 0 ? '+' : ''}
+					{m.quantity}
 				</span>
 			),
 		},
@@ -548,6 +615,134 @@ function MovementsModal({ item, onClose }: { item: InventoryItem; onClose: () =>
 				<ModalFooter>
 					<Button variant='flat' onPress={onClose}>
 						Cerrar
+					</Button>
+				</ModalFooter>
+			</ModalContent>
+		</Modal>
+	);
+}
+
+/* ─── Variants Modal Component ───────────────────────────────────────── */
+
+function VariantsModal({ item, onClose }: { item: InventoryItem; onClose: () => void }) {
+	const [variants, setVariants] = useState<
+		Array<{ size: string; color: string; colorName: string; sku: string; inStock: number }>
+	>([
+		{ size: item.size, color: '#000000', colorName: 'Negro', sku: item.product.sku || '', inStock: item.available },
+	]);
+	const [newVariant, setNewVariant] = useState({ size: 'M', color: '#000000', colorName: '', sku: '', inStock: 0 });
+
+	const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+	const handleAddVariant = () => {
+		if (!newVariant.colorName) return;
+		setVariants([...variants, { ...newVariant, sku: newVariant.sku || `${item.product.sku}-${newVariant.size}` }]);
+		setNewVariant({ size: 'M', color: '#000000', colorName: '', sku: '', inStock: 0 });
+	};
+
+	const handleRemoveVariant = (index: number) => {
+		setVariants(variants.filter((_, i) => i !== index));
+	};
+
+	return (
+		<Modal isOpen onClose={onClose} size='3xl' scrollBehavior='inside'>
+			<ModalContent>
+				<ModalHeader className='flex flex-col gap-1'>
+					<span className='text-lg font-semibold'>Gestionar Variantes</span>
+					<span className='text-sm font-normal text-gray-500'>
+						{item.product.title} — Tallas y colores disponibles
+					</span>
+				</ModalHeader>
+				<ModalBody>
+					<div className='space-y-4'>
+						{/* Existing Variants */}
+						<div className='space-y-2'>
+							<h4 className='text-sm font-medium'>Variantes Existentes</h4>
+							{variants.map((variant, index) => (
+								<div key={index} className='flex items-center gap-3 rounded-lg bg-gray-50 p-3'>
+									<div
+										className='h-6 w-6 rounded-full border'
+										style={{ backgroundColor: variant.color }}
+									/>
+									<span className='w-20 text-sm font-medium'>{variant.size}</span>
+									<span className='flex-1 text-sm'>{variant.colorName}</span>
+									<span className='w-24 text-sm text-gray-500'>SKU: {variant.sku}</span>
+									<span className='w-16 text-sm font-medium'>{variant.inStock} uds</span>
+									<button
+										type='button'
+										onClick={() => handleRemoveVariant(index)}
+										className='text-red-500 hover:text-red-700'
+									>
+										×
+									</button>
+								</div>
+							))}
+						</div>
+
+						{/* Add New Variant */}
+						<div className='border-t pt-4'>
+							<h4 className='mb-3 text-sm font-medium'>Agregar Nueva Variante</h4>
+							<div className='grid grid-cols-2 gap-3'>
+								<Select
+									label='Talla'
+									selectedKeys={new Set([newVariant.size])}
+									onSelectionChange={(keys) => {
+										const value = Array.from(keys as Set<string>)[0];
+										if (value) setNewVariant({ ...newVariant, size: value });
+									}}
+									size='sm'
+								>
+									{SIZE_OPTIONS.map((size) => (
+										<SelectItem key={size}>{size}</SelectItem>
+									))}
+								</Select>
+								<Input
+									label='Color (hex)'
+									type='color'
+									value={newVariant.color}
+									onValueChange={(v) => setNewVariant({ ...newVariant, color: v })}
+									size='sm'
+								/>
+								<Input
+									label='Nombre del color'
+									placeholder='Ej: Rojo, Azul marino...'
+									value={newVariant.colorName}
+									onValueChange={(v) => setNewVariant({ ...newVariant, colorName: v })}
+									size='sm'
+								/>
+								<Input
+									label='SKU'
+									placeholder='SKU de la variante'
+									value={newVariant.sku}
+									onValueChange={(v) => setNewVariant({ ...newVariant, sku: v })}
+									size='sm'
+								/>
+								<Input
+									label='Stock inicial'
+									type='number'
+									value={String(newVariant.inStock)}
+									onValueChange={(v) => setNewVariant({ ...newVariant, inStock: parseInt(v) || 0 })}
+									size='sm'
+								/>
+							</div>
+							<Button
+								color='primary'
+								size='sm'
+								className='mt-3'
+								onPress={handleAddVariant}
+								isDisabled={!newVariant.colorName}
+							>
+								Agregar Variante
+							</Button>
+						</div>
+					</div>
+				</ModalBody>
+				<ModalFooter>
+					<Button variant='flat' onPress={onClose}>
+						Cerrar
+					</Button>
+					<Button color='primary' onPress={onClose}>
+						Guardar Cambios
 					</Button>
 				</ModalFooter>
 			</ModalContent>

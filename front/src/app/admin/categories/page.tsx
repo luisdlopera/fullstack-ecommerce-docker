@@ -34,7 +34,7 @@ export default function AdminCategoriesPage() {
 		queryKey: ['admin', 'categories'],
 		queryFn: () => categoriesApi.list(),
 	});
- 
+
 	const filtered = (categories ?? []).filter(
 		(c) =>
 			!search ||
@@ -240,7 +240,10 @@ function CategoryFormModal({
 		});
 	};
 
-	const parentItems = [{ id: NONE_PARENT_KEY, name: 'Ninguna' }, ...categories.map((c) => ({ id: c.id, name: c.name }))];
+	const parentItems = [
+		{ id: NONE_PARENT_KEY, name: 'Ninguna' },
+		...categories.map((c) => ({ id: c.id, name: c.name })),
+	];
 
 	return (
 		<FormModal open={open} title={title} onClose={onClose} onSubmit={handleSubmit} loading={loading}>

@@ -159,10 +159,13 @@ export const productsApi = {
 			formData.append('makePrimary', String(makePrimary));
 		}
 
-		return adminFetch<{ id: number; url: string; sortOrder: number; isPrimary: boolean }>(`/admin/products/${id}/images`, {
-			method: 'POST',
-			body: formData,
-		});
+		return adminFetch<{ id: number; url: string; sortOrder: number; isPrimary: boolean }>(
+			`/admin/products/${id}/images`,
+			{
+				method: 'POST',
+				body: formData,
+			},
+		);
 	},
 
 	addImage: (id: string, imageUrl: string) =>
@@ -229,12 +232,12 @@ export const inventoryApi = {
 		outOfStock?: boolean;
 		productId?: string;
 		location?: string;
+		gender?: string;
 	}) => adminFetch<PaginatedResponse<InventoryItem>>(`/admin/inventory/items${buildQuery(params)}`),
 
 	getItemById: (id: string) => adminFetch<InventoryItem>(`/admin/inventory/items/${id}`),
 
-	getItemsByProduct: (productId: string) =>
-		adminFetch<InventoryItem[]>(`/admin/inventory/products/${productId}`),
+	getItemsByProduct: (productId: string) => adminFetch<InventoryItem[]>(`/admin/inventory/products/${productId}`),
 
 	adjustInventory: (id: string, quantity: number, reason: string) =>
 		adminFetch<InventoryItem>(`/admin/inventory/items/${id}/adjust`, {

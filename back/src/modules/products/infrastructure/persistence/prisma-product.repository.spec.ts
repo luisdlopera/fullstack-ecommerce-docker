@@ -1,5 +1,6 @@
 import { PrismaProductRepository } from './prisma-product.repository';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { StorageConfig } from '../../../../shared/infrastructure/storage/storage.config';
 
 describe('PrismaProductRepository', () => {
   const findMany = jest.fn().mockResolvedValue([]);
@@ -14,13 +15,18 @@ describe('PrismaProductRepository', () => {
     $transaction,
   } as unknown as PrismaService;
 
+  // Mock StorageConfig
+  const storageConfig = {
+    publicUrl: 'https://test.example.com',
+  } as StorageConfig;
+
   let repository: PrismaProductRepository;
 
   beforeEach(() => {
     jest.clearAllMocks();
     findMany.mockResolvedValue([]);
     findFirst.mockResolvedValue(null);
-    repository = new PrismaProductRepository(prisma);
+    repository = new PrismaProductRepository(prisma, storageConfig);
   });
 
   it('findFeatured only includes featured, active, non-deleted products', async () => {

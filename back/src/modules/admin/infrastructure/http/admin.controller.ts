@@ -15,7 +15,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { OrderStatus, PaymentStatus, Role } from '@prisma/client';
+import { OrderStatus, PaymentStatus, Role, Gender } from '@prisma/client';
 import { Auth } from '../../../../shared/infrastructure/auth/auth.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
@@ -24,6 +24,11 @@ import { DeleteProductImageUseCase } from '../../application/use-cases/delete-pr
 import { ReorderProductImagesUseCase } from '../../application/use-cases/reorder-product-images.use-case';
 import { SetPrimaryProductImageUseCase } from '../../application/use-cases/set-primary-product-image.use-case';
 import { UploadProductImageUseCase } from '../../application/use-cases/upload-product-image.use-case';
+import { GetHomeBannersUseCase } from '../../application/use-cases/get-home-banners.use-case';
+import { UploadHomeBannerUseCase } from '../../application/use-cases/upload-home-banner.use-case';
+import { DeleteHomeBannerUseCase } from '../../application/use-cases/delete-home-banner.use-case';
+import { UpdateHomeBannerUseCase } from '../../application/use-cases/update-home-banner.use-case';
+import { ReorderHomeBannersUseCase } from '../../application/use-cases/reorder-home-banners.use-case';
 import { GetDashboardSummaryUseCase } from '../../application/use-cases/get-dashboard-summary.use-case';
 import { GetSalesChartUseCase } from '../../application/use-cases/get-sales-chart.use-case';
 import { GetRecentOrdersUseCase } from '../../application/use-cases/get-recent-orders.use-case';
@@ -67,6 +72,14 @@ import { UpsertCategoryDto } from './dto/upsert-category.dto';
 import { UpsertCountryDto } from './dto/upsert-country.dto';
 import { UploadProductImageDto } from './dto/upload-product-image.dto';
 import { ReorderProductImagesDto } from './dto/reorder-product-images.dto';
+import { UpsertCollectionDto } from './dto/upsert-collection.dto';
+import {
+  GetCollectionsUseCase,
+  GetCollectionByIdUseCase,
+  CreateCollectionUseCase,
+  UpdateCollectionUseCase,
+  DeleteCollectionUseCase,
+} from '../../application/use-cases/collection.use-cases';
 import type { UploadFile } from '../../application/use-cases/upload-file.type';
 
 @Controller('admin')
@@ -113,6 +126,21 @@ export class AdminController {
     private readonly reorderProductImagesUseCase: ReorderProductImagesUseCase,
     @Inject(SetPrimaryProductImageUseCase)
     private readonly setPrimaryProductImageUseCase: SetPrimaryProductImageUseCase,
+    @Inject(GetHomeBannersUseCase)
+    private readonly getHomeBannersUseCase: GetHomeBannersUseCase,
+    @Inject(UploadHomeBannerUseCase)
+    private readonly uploadHomeBannerUseCase: UploadHomeBannerUseCase,
+    @Inject(DeleteHomeBannerUseCase)
+    private readonly deleteHomeBannerUseCase: DeleteHomeBannerUseCase,
+    @Inject(UpdateHomeBannerUseCase)
+    private readonly updateHomeBannerUseCase: UpdateHomeBannerUseCase,
+    @Inject(ReorderHomeBannersUseCase)
+    private readonly reorderHomeBannersUseCase: ReorderHomeBannersUseCase,
+    @Inject(GetCollectionsUseCase) private readonly getCollectionsUseCase: GetCollectionsUseCase,
+    @Inject(GetCollectionByIdUseCase) private readonly getCollectionByIdUseCase: GetCollectionByIdUseCase,
+    @Inject(CreateCollectionUseCase) private readonly createCollectionUseCase: CreateCollectionUseCase,
+    @Inject(UpdateCollectionUseCase) private readonly updateCollectionUseCase: UpdateCollectionUseCase,
+    @Inject(DeleteCollectionUseCase) private readonly deleteCollectionUseCase: DeleteCollectionUseCase,
   ) {}
 
   // ─── Dashboard ──────────────────────────────────────────────────────
@@ -314,6 +342,81 @@ export class AdminController {
     return this.setPrimaryProductImageUseCase.execute(productId, imageId);
   }
 
+  // ─── Home Banners ───────────────────────────────────────────────────
+
+  @Auth(PERMISSIONS.DASHBOARD_READ)
+  @Get('banners')
+  getHomeBanners() {
+    return this.getHomeBannersUseCase.execute();
+  }
+
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
+  @Post('banners')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadHomeBanner(
+    @UploadedFile() file: UploadFile | undefined,
+    @Body('title') title: string,
+    @Body('subtitle') subtitle?: string,
+    @Body('ctaText') ctaText?: string,
+    @Body('ctaLink') ctaLink?: string,
+    @Body('secondaryText') secondaryText?: string,
+    @Body('secondaryLink') secondaryLink?: string,
+    @Body('altText') altText?: string,
+    @Body('sortOrder') sortOrder?: number,
+  ) {
+    return this.uploadHomeBannerUseCase.execute({
+      title,
+      subtitle,
+      ctaText,
+      ctaLink,
+      secondaryText,
+      secondaryLink,
+      altText,
+      sortOrder: sortOrder !== undefined ? Number(sortOrder) : undefined,
+      file,
+    });
+  }
+
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
+  @Patch('banners/:id')
+  updateHomeBanner(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('title') title?: string,
+    @Body('subtitle') subtitle?: string,
+    @Body('ctaText') ctaText?: string,
+    @Body('ctaLink') ctaLink?: string,
+    @Body('secondaryText') secondaryText?: string,
+    @Body('secondaryLink') secondaryLink?: string,
+    @Body('altText') altText?: string,
+    @Body('sortOrder') sortOrder?: number,
+    @Body('isActive') isActive?: boolean,
+  ) {
+    return this.updateHomeBannerUseCase.execute({
+      id,
+      title,
+      subtitle,
+      ctaText,
+      ctaLink,
+      secondaryText,
+      secondaryLink,
+      altText,
+      sortOrder: sortOrder !== undefined ? Number(sortOrder) : undefined,
+      isActive,
+    });
+  }
+
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
+  @Delete('banners/:id')
+  deleteHomeBanner(@Param('id', ParseIntPipe) id: number) {
+    return this.deleteHomeBannerUseCase.execute(id);
+  }
+
+  @Auth(PERMISSIONS.SETTINGS_MANAGE)
+  @Patch('banners/reorder')
+  reorderHomeBanners(@Body('bannerIds') bannerIds: number[]) {
+    return this.reorderHomeBannersUseCase.execute({ bannerIds });
+  }
+
   // ─── Categories ─────────────────────────────────────────────────────
 
   @Auth(PERMISSIONS.CATEGORIES_READ)
@@ -344,6 +447,43 @@ export class AdminController {
   @Delete('categories/:id')
   deleteCategory(@Param('id') id: string) {
     return this.deleteCategoryUseCase.execute(id);
+  }
+
+  // ─── Collections ────────────────────────────────────────────────────
+
+  @Auth(PERMISSIONS.CATEGORIES_READ)
+  @Get('collections')
+  getCollections(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('search') search?: string,
+    @Query('gender') gender?: string,
+  ) {
+    return this.getCollectionsUseCase.execute({ page, limit, search, gender: gender as Gender });
+  }
+
+  @Auth(PERMISSIONS.CATEGORIES_READ)
+  @Get('collections/:id')
+  getCollectionById(@Param('id') id: string) {
+    return this.getCollectionByIdUseCase.execute(id);
+  }
+
+  @Auth(PERMISSIONS.CATEGORIES_CREATE)
+  @Post('collections')
+  createCollection(@Body() dto: UpsertCollectionDto) {
+    return this.createCollectionUseCase.execute(dto);
+  }
+
+  @Auth(PERMISSIONS.CATEGORIES_UPDATE)
+  @Patch('collections/:id')
+  updateCollection(@Param('id') id: string, @Body() dto: UpsertCollectionDto) {
+    return this.updateCollectionUseCase.execute(id, dto);
+  }
+
+  @Auth(PERMISSIONS.CATEGORIES_DELETE)
+  @Delete('collections/:id')
+  deleteCollection(@Param('id') id: string) {
+    return this.deleteCollectionUseCase.execute(id);
   }
 
   // ─── Countries ──────────────────────────────────────────────────────

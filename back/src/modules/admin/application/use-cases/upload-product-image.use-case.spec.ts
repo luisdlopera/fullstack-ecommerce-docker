@@ -23,7 +23,7 @@ describe('UploadProductImageUseCase', () => {
   };
 
   const storageConfig = {
-    provider: 'minio',
+    provider: 'r2',
     maxFileSizeBytes: 1024 * 1024,
   } as StorageConfig;
 
@@ -35,12 +35,14 @@ describe('UploadProductImageUseCase', () => {
 
   it('uploads image and persists metadata through repository', async () => {
     repository.existsProductById.mockResolvedValue(true);
-    storage.getPublicUrl.mockReturnValue('http://localhost:5010/nexstore-products/products/p1/a.jpg');
+    storage.getPublicUrl.mockReturnValue(
+      'https://pub-e14c4ed4e514428faeb13ca8f02c15a7.r2.dev/products/p1/a.jpg',
+    );
     repository.createProductImage.mockResolvedValue({
       id: 10,
       productId: 'p1',
-      url: 'http://localhost:5010/nexstore-products/products/p1/a.jpg',
-      storageProvider: 'minio',
+      url: 'https://pub-e14c4ed4e514428faeb13ca8f02c15a7.r2.dev/products/p1/a.jpg',
+      storageProvider: 'r2',
       storageKey: 'products/p1/a.jpg',
       contentType: 'image/jpeg',
       sizeBytes: 123,
@@ -62,7 +64,7 @@ describe('UploadProductImageUseCase', () => {
     expect(repository.createProductImage).toHaveBeenCalledWith(
       expect.objectContaining({
         productId: 'p1',
-        storageProvider: 'minio',
+        storageProvider: 'r2',
         contentType: 'image/jpeg',
         sizeBytes: 123,
         isPrimaryPreferred: true,

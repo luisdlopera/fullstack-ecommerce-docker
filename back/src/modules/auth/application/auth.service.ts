@@ -57,7 +57,10 @@ export class AuthService {
   }
 
   private getFrontendBaseUrl(): string {
-    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(/\/$/, '');
+    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(
+      /\/$/,
+      '',
+    );
   }
 
   private buildFallbackFrontendUrl(): string {
@@ -167,15 +170,16 @@ export class AuthService {
     const tokenHash = this.hashValue(token);
     const verification = await this.authRepository.findEmailVerificationToken(tokenHash);
 
-    if (!verification || verification.usedAt || (verification.expiresAt && verification.expiresAt <= new Date()) || !verification.user?.isActive) {
+    if (
+      !verification ||
+      verification.usedAt ||
+      (verification.expiresAt && verification.expiresAt <= new Date()) ||
+      !verification.user?.isActive
+    ) {
       throw new UnauthorizedException(AuthMessages.INVALID_TOKEN);
     }
 
-    await this.authRepository.completeEmailVerification(
-      verification.userId,
-      verification.id,
-      new Date(),
-    );
+    await this.authRepository.completeEmailVerification(verification.userId, verification.id, new Date());
 
     return { ok: true, message: AuthMessages.EMAIL_VERIFICATION_SUCCESSFUL };
   }
@@ -226,7 +230,12 @@ export class AuthService {
     const tokenHash = this.hashResetToken(token);
     const resetToken = await this.authRepository.findPasswordResetToken(tokenHash);
 
-    if (!resetToken || resetToken.usedAt || (resetToken.expiresAt && resetToken.expiresAt <= new Date()) || !resetToken.user?.isActive) {
+    if (
+      !resetToken ||
+      resetToken.usedAt ||
+      (resetToken.expiresAt && resetToken.expiresAt <= new Date()) ||
+      !resetToken.user?.isActive
+    ) {
       throw new UnauthorizedException(AuthMessages.INVALID_TOKEN);
     }
 

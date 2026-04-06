@@ -107,11 +107,7 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post('refresh')
-  async refresh(
-    @Body() dto: RefreshDto,
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  async refresh(@Body() dto: RefreshDto, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const requestId = (request as { requestId?: string }).requestId;
     authDebugLog('[AUTH-BACK] refresh hit', {
       requestId,
@@ -225,6 +221,4 @@ export class AuthController {
   disableMfa(@CurrentUser() user: JwtPayload, @Body() dto: MfaVerifyDto) {
     return this.authService.disableMfa(user.sub, dto.code);
   }
-
-  
 }

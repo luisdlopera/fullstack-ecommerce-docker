@@ -8,11 +8,14 @@ import { ListCategoriesUseCase } from './application/use-cases/list-categories.u
 import { ListCountriesUseCase } from './application/use-cases/list-countries.use-case';
 import { GetProductFacetsUseCase } from './application/use-cases/get-product-facets.use-case';
 import { ListProductsUseCase } from './application/use-cases/list-products.use-case';
+import { GetHomeBannersUseCase } from '../admin/application/use-cases/get-home-banners.use-case';
 import { CategoriesController } from './infrastructure/http/categories.controller';
 import { CountriesController } from './infrastructure/http/countries.controller';
 import { ProductsController } from './infrastructure/http/products.controller';
 import { PrismaProductRepository } from './infrastructure/persistence/prisma-product.repository';
 import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
+
+import { StorageConfig } from '../../shared/infrastructure/storage/storage.config';
 
 @Module({
   imports: [SharedModule],
@@ -20,8 +23,8 @@ import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service
   providers: [
     {
       provide: PRODUCT_REPOSITORY,
-      useFactory: (prisma: PrismaService) => new PrismaProductRepository(prisma),
-      inject: [PrismaService],
+      useFactory: (prisma: PrismaService, storageConfig: StorageConfig) => new PrismaProductRepository(prisma, storageConfig),
+      inject: [PrismaService, StorageConfig],
     },
     GetFeaturedProductsUseCase,
     ListProductsUseCase,
@@ -30,6 +33,7 @@ import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service
     GetProductStockBySlugUseCase,
     ListCategoriesUseCase,
     ListCountriesUseCase,
+    GetHomeBannersUseCase,
   ],
 })
 export class ProductsModule {}

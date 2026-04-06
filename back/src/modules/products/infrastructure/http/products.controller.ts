@@ -15,6 +15,7 @@ import { GetProductBySlugUseCase } from '../../application/use-cases/get-product
 import { GetProductFacetsUseCase } from '../../application/use-cases/get-product-facets.use-case';
 import { GetProductStockBySlugUseCase } from '../../application/use-cases/get-product-stock-by-slug.use-case';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
+import { GetHomeBannersUseCase } from '../../../admin/application/use-cases/get-home-banners.use-case';
 import { toProductListFilters } from './product-list-query.util';
 
 @Public()
@@ -31,12 +32,19 @@ export class ProductsController {
     private readonly getProductBySlug: GetProductBySlugUseCase,
     @Inject(GetProductStockBySlugUseCase)
     private readonly getProductStockBySlug: GetProductStockBySlugUseCase,
+    @Inject(GetHomeBannersUseCase)
+    private readonly getHomeBanners: GetHomeBannersUseCase,
   ) {}
 
   @Get('featured')
   getFeatured(@Query('limit') limit?: string) {
     const parsedLimit = Number(limit ?? 8);
     return this.getFeaturedProducts.execute(Number.isNaN(parsedLimit) ? 8 : parsedLimit);
+  }
+
+  @Get('banners')
+  getBanners() {
+    return this.getHomeBanners.execute();
   }
 
   @Get('facets')

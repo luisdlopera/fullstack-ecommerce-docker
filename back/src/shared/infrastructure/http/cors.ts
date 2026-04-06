@@ -87,9 +87,8 @@ export function buildCorsOptions(config: CorsEnvConfig): CorsOptions {
 
       // Log rejected origins in development for debugging
       if (process.env.APP_ENV === 'development' || process.env.NODE_ENV === 'development') {
-         
         console.warn(`[CORS] Rejected origin: ${origin}`);
-         
+
         console.warn(`[CORS] Allowed origins: ${originArray.join(', ')}`);
       }
 

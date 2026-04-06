@@ -20,7 +20,10 @@ async function refreshTokens(refreshToken: string): Promise<{ accessToken: strin
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ refreshToken }),
 	});
-	const raw = await r.clone().text().catch(() => '');
+	const raw = await r
+		.clone()
+		.text()
+		.catch(() => '');
 	authRouteLog('refresh response', {
 		status: r.status,
 		body: raw.slice(0, 800),
@@ -56,7 +59,10 @@ export async function GET(request: NextRequest) {
 		rotated?: { accessToken: string; refreshToken: string },
 	): Promise<NextResponse | null> => {
 		const me = await meWithToken(accessToken);
-		const raw = await me.clone().text().catch(() => '');
+		const raw = await me
+			.clone()
+			.text()
+			.catch(() => '');
 		authRouteLog('me response', { status: me.status, body: raw.slice(0, 800) });
 		if (!me.ok) return null;
 		const userPayload = (await me.json()) as { data?: unknown; user?: unknown };

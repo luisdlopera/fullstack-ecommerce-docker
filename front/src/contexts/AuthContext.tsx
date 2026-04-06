@@ -73,7 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			credentials: 'include',
 		});
 		const res = await fetch('/api/auth/session', { credentials: 'include' });
-		const raw = await res.clone().text().catch(() => '');
+		const raw = await res
+			.clone()
+			.text()
+			.catch(() => '');
 		authFrontLog('session response', {
 			status: res.status,
 			body: raw.slice(0, 800),
@@ -119,7 +122,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			body: JSON.stringify({ email: email.trim(), password }),
 		});
 
-		const raw = await res.clone().text().catch(() => '');
+		const raw = await res
+			.clone()
+			.text()
+			.catch(() => '');
 		authFrontLog('login response', {
 			status: res.status,
 			body: raw.slice(0, 800),
@@ -238,7 +244,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			logout,
 			refreshSession,
 		}),
-		[ user, loading, login, register, verifyEmail, resendVerification, forgotPassword, resetPassword, logout, refreshSession ],
+		[
+			user,
+			loading,
+			login,
+			register,
+			verifyEmail,
+			resendVerification,
+			forgotPassword,
+			resetPassword,
+			logout,
+			refreshSession,
+		],
 	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -23,22 +23,9 @@ function CheckoutFlowContent() {
 	const { items } = useCart();
 	const { user } = useAuth();
 
-	const {
-		activeStep,
-		goNext,
-		goBack,
-		addressData,
-		setAddressData,
-	} = useCheckoutFlow();
+	const { activeStep, goNext, goBack, addressData, setAddressData } = useCheckoutFlow();
 
-	const {
-		submitAddress,
-		validateCartStock,
-		submitting,
-		error,
-		tax,
-		total,
-	} = useCheckoutSubmit();
+	const { submitAddress, validateCartStock, submitting, error, tax, total } = useCheckoutSubmit();
 
 	const [countries, setCountries] = useState<Country[]>([]);
 	const [countryId, setCountryId] = useState('');
@@ -96,8 +83,8 @@ function CheckoutFlowContent() {
 
 	return (
 		<main className='mx-auto mt-28 w-11/12 max-w-6xl pb-16 text-black'>
-			<h1 className='text-4xl font-black mb-4'>Checkout</h1>
-			
+			<h1 className='mb-4 text-4xl font-black'>Checkout</h1>
+
 			<CheckoutStepper currentStep={activeStep} />
 
 			<div className='grid grid-cols-1 gap-10 lg:grid-cols-3'>
@@ -145,7 +132,7 @@ function CheckoutFlowContent() {
 
 export default function CheckoutPage() {
 	return (
-		<Suspense fallback={<div className="min-h-screen pt-28 text-center">Cargando...</div>}>
+		<Suspense fallback={<div className='min-h-screen pt-28 text-center'>Cargando...</div>}>
 			<CheckoutFlowContent />
 		</Suspense>
 	);

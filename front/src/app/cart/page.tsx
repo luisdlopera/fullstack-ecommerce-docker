@@ -38,7 +38,12 @@ export default function CartPage() {
 		<main className='mx-auto mt-28 w-11/12 max-w-6xl pb-16 text-black'>
 			<div className='mb-6 flex items-center justify-between'>
 				<h1 className='text-3xl font-bold'>Carrito ({totalItems})</h1>
-				<Button variant='light' color='danger' onPress={() => setClearOpen(true)} startContent={<Trash2 size={16} />}>
+				<Button
+					variant='light'
+					color='danger'
+					onPress={() => setClearOpen(true)}
+					startContent={<Trash2 size={16} />}
+				>
 					Vaciar carrito
 				</Button>
 			</div>
@@ -95,7 +100,11 @@ export default function CartPage() {
 										variant='light'
 										color='danger'
 										onPress={() =>
-											setRemoveTarget({ productId: item.productId, size: item.size, title: item.title })
+											setRemoveTarget({
+												productId: item.productId,
+												size: item.size,
+												title: item.title,
+											})
 										}
 									>
 										<Trash2 size={16} />

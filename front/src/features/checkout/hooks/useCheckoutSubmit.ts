@@ -46,7 +46,8 @@ export function useCheckoutSubmit() {
 			if (!res.ok) {
 				const body = await res.json().catch(() => ({}));
 				const msg = (body as { message?: string | string[] }).message;
-				const text = typeof msg === 'string' ? msg : Array.isArray(msg) ? msg.join('. ') : 'Error al validar el carrito';
+				const text =
+					typeof msg === 'string' ? msg : Array.isArray(msg) ? msg.join('. ') : 'Error al validar el carrito';
 				throw new Error(text);
 			}
 

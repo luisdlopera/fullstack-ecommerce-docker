@@ -88,7 +88,9 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path?: s
 		if (ct) res.headers.set('content-type', ct);
 
 		if (!upstream.ok) {
-			console.error(`[BFF Proxy Error] Upstream returned status ${upstream.status} for ${target}\nBody: ${bodyText.slice(0, 500)}`);
+			console.error(
+				`[BFF Proxy Error] Upstream returned status ${upstream.status} for ${target}\nBody: ${bodyText.slice(0, 500)}`,
+			);
 		}
 
 		return res;

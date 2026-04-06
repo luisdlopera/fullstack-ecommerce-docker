@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 		authRouteLog('api login error', { error: error instanceof Error ? error.message : 'Unknown error' });
 		return NextResponse.json(
 			{ message: 'Backend connection error', error: error instanceof Error ? error.message : 'Unknown error' },
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }

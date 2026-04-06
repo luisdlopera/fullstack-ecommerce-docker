@@ -327,6 +327,129 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ---
 
+**Síntoma:** El frontend muestra 404 al llamar `/api/products/featured` o similares.
+
+**Causa:** Next.js intercepta rutas `/api/*` y las trata como API routes locales en lugar de enviarlas al backend.
+
+**Solución:**
+- Verifica `NEXT_PUBLIC_API_URL` apunte al backend (port 5001), no al frontend:
+  ```bash
+  # front/.env.local
+  NEXT_PUBLIC_API_URL=http://localhost:5001/api
+  ```
+- Nunca uses rutas relativas `/api/...` en fetch del frontend - usa la URL completa del backend.
+
+### Error: "Backend no responde" o timeouts
+
+**Verificación paso a paso:**
+```bash
+# 1. Verifica infraestructura
+docker ps  # Debe mostrar postgres, redis, minio
+
+# 2. Verifica puertos
+lsof -i :5000  # Frontend
+lsof -i :5001  # Backend
+
+# 3. Test health endpoints
+curl http://localhost:5001/api/v1/health/simple
+
+# 4. Verifica variables de entorno
+cat front/.env.local | grep API_URL
+cat back/.env | grep PORT
+```
+
+### Error: Prisma P3009 - Failed Migrations
+
+**Síntoma:** Error durante `npm run dev:stack`
+```
+Error: P3009
+migrate found failed migrations in the target database, new migrations will not be applied.
+The `0001_init` migration failed
+```
+
+**Solución (Desarrollo Local):**
+```bash
+cd back
+
+# Ver estado de migraciones
+npx prisma migrate status
+
+# Marcar migración fallida como rolled back
+npx prisma migrate resolve --rolled-back "0001_init"
+
+# Resetear base de datos y re-aplicar migraciones
+npx prisma migrate reset --force
+```
+
+**Luego volver a ejecutar:**
+```bash
+npm run dev:stack
+```
+
+**Documentación completa:** `.specify/troubleshooting/prisma-migrations.md`
+
+---
+
+### Error: CORS bloqueando requests
+
+**Síntoma:** El navegador bloquea requests al backend.
+
+**Solución:**
+- Verifica `CORS_ORIGIN` en backend apunte al frontend correcto:
+  ```bash
+  # back/.env
+  CORS_ORIGIN=http://localhost:5000
+  ```
+
+### Error: Prisma/Database connection failed
+
+**Síntoma:** Backend logs muestran errores de conexión a PostgreSQL.
+
+**Verificación:**
+```bash
+# Test directo a la base
+docker exec nexstore_db psql -U nexstore -d nexstore -c "SELECT 1;"
+
+# Verifica DATABASE_URL
+# Debe ser: postgresql://nexstore:nexstore@localhost:5002/nexstore?schema=public
+```
+
+### Otros errores comunes
+
+- **Login responde 500:** Comprueba que el API tenga `JWT_SECRET` (en Docker, el `docker-compose.yml` carga `.env` y define JWT). Reinicia el contenedor o el proceso de Nest tras cambios en auth.
+- **Seed sin datos / sin usuarios:** Ejecuta `npm run prisma:seed -w back` o el `docker exec` indicado arriba con la base ya levantada.
+- **Redis connection error:** Verifica que el contenedor redis esté corriendo: `docker ps | grep redis`
+
+## Tests (backend)
+
+```bash
+npm run test -w back          # ejecutar tests
+npm run test:watch -w back    # modo watch
+npm run test:cov -w back      # con cobertura
+```
+
+## Gobernanza del repositorio
+
+- Licencia: ver `LICENSE`.
+- Seguridad: política y reporte en `SECURITY.md`.
+- Contribución: flujo de ramas, commits y PR checklist en `CONTRIBUTING.md`.
+
+## Calidad y CI
+
+- CI principal en `.github/workflows/ci.yml`.
+- Escaneo de secretos en `.github/workflows/secret-scan.yml`.
+- Auditoría de dependencias en `.github/workflows/security-audit.yml`.
+- Actualizaciones automáticas de dependencias en `.github/dependabot.yml`.
+
+## Architecture
+
+This project follows Spec-Driven Development using GitHub Spec Kit.
+
+See:
+- .specify/spec.md
+- .specify/plan.md
+- .specify/tasks/
+
 <p align="center">
   <strong>Built with love for small businesses in Latin America</strong>
 </p>

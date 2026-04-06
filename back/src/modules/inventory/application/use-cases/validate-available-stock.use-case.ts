@@ -1,8 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  INVENTORY_REPOSITORY,
-  type InventoryRepositoryPort,
-} from '../ports/inventory-repository.port';
+import { INVENTORY_REPOSITORY, type InventoryRepositoryPort } from '../ports/inventory-repository.port';
 
 @Injectable()
 export class ValidateAvailableStockUseCase {

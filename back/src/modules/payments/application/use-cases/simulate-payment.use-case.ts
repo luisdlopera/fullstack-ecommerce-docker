@@ -1,5 +1,8 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { PAYMENT_ORDER_REPOSITORY, type PaymentOrderRepositoryPort } from '../../domain/ports/payment-order-repository.port';
+import {
+  PAYMENT_ORDER_REPOSITORY,
+  type PaymentOrderRepositoryPort,
+} from '../../domain/ports/payment-order-repository.port';
 
 @Injectable()
 export class SimulatePaymentUseCase {
@@ -9,7 +12,9 @@ export class SimulatePaymentUseCase {
     const order = await this.paymentOrders.findOrderById(orderId);
     if (!order) throw new NotFoundException('Order not found');
 
-    const isAuthorized = order.userId ? order.userId === userId : order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken;
+    const isAuthorized = order.userId
+      ? order.userId === userId
+      : order.guestCheckoutToken === guestCheckoutToken && !!guestCheckoutToken;
 
     if (!isAuthorized) {
       throw new ForbiddenException('You cannot pay this order');

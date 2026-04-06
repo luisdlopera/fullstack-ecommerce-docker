@@ -1,13 +1,14 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  INVENTORY_REPOSITORY,
-  type InventoryRepositoryPort,
-} from '../ports/inventory-repository.port';
+import { INVENTORY_REPOSITORY, type InventoryRepositoryPort } from '../ports/inventory-repository.port';
 import { LOW_STOCK_NOTIFIER, type LowStockNotifierPort } from '../ports/low-stock-notifier.port';
 import { PRODUCT_REPOSITORY, type ProductRepositoryPort } from '../ports/product-repository.port';
 import { WAREHOUSE_REPOSITORY, type WarehouseRepositoryPort } from '../ports/warehouse-repository.port';
 import type { InventoryCommand } from '../dto/inventory-command.dto';
-import { AUDIT_REPOSITORY, AuditEntityType, type AuditRepositoryPort } from '../../../../shared/domain/ports/audit-repository.port';
+import {
+  AUDIT_REPOSITORY,
+  AuditEntityType,
+  type AuditRepositoryPort,
+} from '../../../../shared/domain/ports/audit-repository.port';
 
 @Injectable()
 export class AdjustStockUseCase {

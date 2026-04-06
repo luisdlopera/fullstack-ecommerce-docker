@@ -199,7 +199,11 @@ export class InventoryController {
 
   @Auth(PERMISSIONS.INVENTORY_ADJUST)
   @Patch('items/:id/adjust')
-  async adjustInventoryLegacy(@Param('id') id: string, @Body() dto: { quantity: number; reason: string }, @CurrentUser() user: JwtPayload) {
+  async adjustInventoryLegacy(
+    @Param('id') id: string,
+    @Body() dto: { quantity: number; reason: string },
+    @CurrentUser() user: JwtPayload,
+  ) {
     const row = await this.prisma.inventory.findUnique({ where: { id } });
     if (!row) {
       return null;

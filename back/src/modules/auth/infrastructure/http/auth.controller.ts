@@ -1,12 +1,30 @@
-import { Body, Controller, Get, Headers, Inject, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Post, Req, Res, UseInterceptors } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
+import { RateLimit } from '../../../../rate-limit/infrastructure/decorators/rate-limit.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import { ResponseFormatInterceptor } from '../../../../shared/infrastructure/http/response-format.interceptor';
 import { authDebugLog } from '../../../../shared/infrastructure/observability/auth-debug';
-import { AuthService } from '../../application/auth.service';
+import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
+
+// Use-cases
+import {
+  RegisterUseCase,
+  LoginUseCase,
+  RefreshTokenUseCase,
+  LogoutUseCase,
+  VerifyEmailUseCase,
+  ResendVerificationUseCase,
+  ForgotPasswordUseCase,
+  ResetPasswordUseCase,
+  EnrollMfaUseCase,
+  VerifyMfaUseCase,
+  DisableMfaUseCase,
+  GetMeUseCase,
+} from '../../application/use-cases';
+
+// DTOs
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { MfaVerifyDto } from './dto/mfa-verify.dto';
@@ -15,12 +33,24 @@ import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
-import { UnauthorizedError } from '../../../../shared/domain/errors/domain-error';
 
 @Controller('auth')
 @UseInterceptors(ResponseFormatInterceptor)
 export class AuthController {
-  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+  constructor(
+    @Inject(RegisterUseCase) private readonly registerUseCase: RegisterUseCase,
+    @Inject(LoginUseCase) private readonly loginUseCase: LoginUseCase,
+    @Inject(RefreshTokenUseCase) private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    @Inject(LogoutUseCase) private readonly logoutUseCase: LogoutUseCase,
+    @Inject(VerifyEmailUseCase) private readonly verifyEmailUseCase: VerifyEmailUseCase,
+    @Inject(ResendVerificationUseCase) private readonly resendVerificationUseCase: ResendVerificationUseCase,
+    @Inject(ForgotPasswordUseCase) private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
+    @Inject(ResetPasswordUseCase) private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    @Inject(EnrollMfaUseCase) private readonly enrollMfaUseCase: EnrollMfaUseCase,
+    @Inject(VerifyMfaUseCase) private readonly verifyMfaUseCase: VerifyMfaUseCase,
+    @Inject(DisableMfaUseCase) private readonly disableMfaUseCase: DisableMfaUseCase,
+    @Inject(GetMeUseCase) private readonly getMeUseCase: GetMeUseCase,
+  ) {}
 
   private extractClientIp(request: Request): string | undefined {
     const forwarded = request.headers['x-forwarded-for'];
@@ -34,19 +64,17 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 12, ttl: 60000 } })
+  @RateLimit({ limit: 12, ttl: 60, policy: 'register' })
   @Post('register')
   register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+    return this.registerUseCase.execute(dto);
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 12, ttl: 60000 } })
+  @RateLimit({ limit: 12, ttl: 60, policy: 'login' })
   @Post('login')
   async login(@Body() dto: LoginDto, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
-    const requestId = (request as { requestId?: string }).requestId;
+    const requestId = request.requestId;
     authDebugLog('[AUTH-BACK] login hit', {
       requestId,
       method: request.method,
@@ -64,7 +92,7 @@ export class AuthController {
     });
 
     try {
-      const result = await this.authService.login(dto, {
+      const result = await this.loginUseCase.execute(dto, {
         ip: this.extractClientIp(request),
         userAgent: request.headers['user-agent'],
       });
@@ -104,11 +132,10 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @RateLimit({ limit: 30, ttl: 60, policy: 'refresh' })
   @Post('refresh')
   async refresh(@Body() dto: RefreshDto, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
-    const requestId = (request as { requestId?: string }).requestId;
+    const requestId = request.requestId;
     authDebugLog('[AUTH-BACK] refresh hit', {
       requestId,
       method: request.method,
@@ -127,7 +154,7 @@ export class AuthController {
     const token = dto.refreshToken || request.cookies?.refreshToken;
     if (!token) throw new UnauthorizedError('Missing refresh token');
 
-    const result = await this.authService.refresh(token, {
+    const result = await this.refreshTokenUseCase.execute(token, {
       ip: this.extractClientIp(request),
       userAgent: request.headers['user-agent'],
     });
@@ -160,35 +187,31 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 12, ttl: 60000 } })
+  @RateLimit({ limit: 12, ttl: 60, policy: 'verify-email' })
   @Post('verify-email')
   verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.authService.verifyEmail(dto.token);
+    return this.verifyEmailUseCase.execute(dto.token);
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @RateLimit({ limit: 5, ttl: 60, policy: 'resend-verification' })
   @Post('resend-verification')
   resendVerification(@Body() dto: ResendVerificationDto) {
-    return this.authService.resendVerification(dto.email);
+    return this.resendVerificationUseCase.execute(dto.email);
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 6, ttl: 60000 } })
+  @RateLimit({ limit: 6, ttl: 60, policy: 'forgot-password' })
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(dto.email);
+    return this.forgotPasswordUseCase.execute(dto.email);
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @RateLimit({ limit: 10, ttl: 60, policy: 'reset-password' })
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto.token, dto.newPassword);
+    return this.resetPasswordUseCase.execute(dto.token, dto.newPassword);
   }
 
   @Get('me')
@@ -199,26 +222,26 @@ export class AuthController {
       email: user?.email,
       tokenType: user?.type,
     });
-    return this.authService.me(user.sub);
+    return this.getMeUseCase.execute(user.sub);
   }
 
   @Post('logout')
   logout(@CurrentUser() user: JwtPayload, @Headers('x-refresh-token') refreshToken?: string) {
-    return this.authService.logout(user.sub, refreshToken);
+    return this.logoutUseCase.execute(user.sub, refreshToken);
   }
 
   @Post('mfa/enroll')
   enrollMfa(@CurrentUser() user: JwtPayload) {
-    return this.authService.enrollMfa(user.sub);
+    return this.enrollMfaUseCase.execute(user.sub);
   }
 
   @Post('mfa/verify')
   verifyMfa(@CurrentUser() user: JwtPayload, @Body() dto: MfaVerifyDto) {
-    return this.authService.verifyMfaEnrollment(user.sub, dto.code);
+    return this.verifyMfaUseCase.execute(user.sub, dto.code);
   }
 
   @Post('mfa/disable')
   disableMfa(@CurrentUser() user: JwtPayload, @Body() dto: MfaVerifyDto) {
-    return this.authService.disableMfa(user.sub, dto.code);
+    return this.disableMfaUseCase.execute(user.sub, dto.code);
   }
 }

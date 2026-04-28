@@ -1,10 +1,21 @@
 export { AuthModule } from './auth.module';
 
-// Application
-export { AuthService } from './application/auth.service';
-export { RegisterUseCase } from './application/use-cases/register.use-case';
-export { LoginUseCase } from './application/use-cases/login.use-case';
-export { RefreshTokenUseCase } from './application/use-cases/refresh-token.use-case';
+// Use-cases
+export {
+  RegisterUseCase,
+  LoginUseCase,
+  RefreshTokenUseCase,
+  LogoutUseCase,
+  VerifyEmailUseCase,
+  ResendVerificationUseCase,
+  ForgotPasswordUseCase,
+  ResetPasswordUseCase,
+  EnrollMfaUseCase,
+  VerifyMfaUseCase,
+  DisableMfaUseCase,
+  GetMeUseCase,
+  type AuthUserPayload,
+} from './application/use-cases';
 
 // Domain
 export { AUTH_REPOSITORY, type AuthRepositoryPort } from './domain/ports/auth-repository.port';

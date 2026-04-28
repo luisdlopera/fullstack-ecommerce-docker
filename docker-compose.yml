@@ -43,7 +43,7 @@ services:
       PORT: 5007
       DATABASE_URL: postgresql://${POSTGRES_USER:-nexstore}:${POSTGRES_PASSWORD:-nexstore}@postgres:5432/${POSTGRES_DB:-nexstore}?schema=public
       CORS_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5006}
-      JWT_SECRET: ${JWT_SECRET:-11f5a3ee55273d281c78c1329e73c52e37c359b19a0ebc36338904fb78ebb0f06dca1422b53d7fa1ececc4c2ed622e53edf3587d4f67e18a4c89250f8d3372ba}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env file}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
       STORAGE_PROVIDER: r2

@@ -23,26 +23,23 @@ export class HandleMercadoPagoWebhookUseCase {
   ) {}
 
   async execute(dto: MercadoPagoWebhookBodyDto, meta: WebhookRequestMeta) {
-    const skipVerify = process.env.MP_WEBHOOK_SKIP_VERIFY === 'true';
     const dataIdRaw = dto.data?.id ?? meta.dataIdQuery;
     const dataId = dataIdRaw != null && dataIdRaw !== '' ? String(dataIdRaw) : '';
 
-    if (!skipVerify) {
-      const secret = process.env.MP_WEBHOOK_SECRET;
-      if (!secret) {
-        this.logger.warn('MP_WEBHOOK_SECRET is not configured');
-        throw new UnauthorizedError('Webhook not configured');
-      }
-      if (
-        !verifyMercadoPagoWebhookSignature({
-          secret,
-          xSignature: meta.xSignature,
-          xRequestId: meta.xRequestId,
-          dataId,
-        })
-      ) {
-        throw new UnauthorizedError('Invalid webhook signature');
-      }
+    const secret = process.env.MP_WEBHOOK_SECRET;
+    if (!secret) {
+      this.logger.warn('MP_WEBHOOK_SECRET is not configured');
+      throw new UnauthorizedError('Webhook not configured');
+    }
+    if (
+      !verifyMercadoPagoWebhookSignature({
+        secret,
+        xSignature: meta.xSignature,
+        xRequestId: meta.xRequestId,
+        dataId,
+      })
+    ) {
+      throw new UnauthorizedError('Invalid webhook signature');
     }
 
     const type = dto.type ?? dto.action;

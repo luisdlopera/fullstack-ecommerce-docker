@@ -1,13 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
+
 import { resolveMx } from 'node:dns/promises';
 import { AUTH_REPOSITORY, type AuthRepositoryPort } from '../../domain/ports/auth-repository.port';
 import { EMAIL_SENDER, type EmailSenderPort } from '../../domain/ports/email-sender.port';
 import { RegisterDto } from '../../infrastructure/http/dto/register.dto';
 import { BadRequestError, ConflictError } from '../../../../shared/domain/errors/domain-error';
 import { AuthMessages } from '../../domain/enums/auth-messages.enum';
+import {
+  normalizeEmail,
+  hashValue,
+  getFrontendBaseUrl,
+  getEmailVerificationTtlMs,
+  getDisposableDomains,
+} from '../../../../shared/domain/utils/auth.utils';
 
 @Injectable()
 export class RegisterUseCase {
@@ -17,7 +25,7 @@ export class RegisterUseCase {
   ) {}
 
   async execute(input: RegisterDto) {
-    const normalizedEmail = this.normalizeEmail(input.email);
+    const normalizedEmail = normalizeEmail(input.email);
     await this.assertTrustedEmailAddress(normalizedEmail);
 
     const existingUser = await this.authRepository.findUserByEmail(normalizedEmail);
@@ -41,49 +49,13 @@ export class RegisterUseCase {
     };
   }
 
-  private normalizeEmail(email: string): string {
-    return email.trim().toLowerCase();
-  }
-
-  private getEmailVerificationTtlMs(): number {
-    const minutes = Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES ?? 60 * 24);
-    if (!Number.isFinite(minutes) || minutes <= 0) return 24 * 60 * 60 * 1000;
-    return Math.floor(minutes * 60 * 1000);
-  }
-
-  private getFrontendBaseUrl(): string {
-    return (process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? this.buildFallbackFrontendUrl()).replace(
-      /\/$/,
-      '',
-    );
-  }
-
-  private buildFallbackFrontendUrl(): string {
-    const port = process.env.FRONTEND_PORT || process.env.FRONT_PORT || '5006';
-    const host = process.env.FRONTEND_HOST || 'localhost';
-    return `http://${host}:${port}`;
-  }
-
-  private hashValue(value: string): string {
-    return createHash('sha256').update(value).digest('hex');
-  }
-
-  private getDisposableDomains(): Set<string> {
-    const configured = (process.env.DISPOSABLE_EMAIL_DOMAINS ?? '')
-      .split(',')
-      .map((domain) => domain.trim().toLowerCase())
-      .filter(Boolean);
-    const defaults = ['mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com'];
-    return new Set([...defaults, ...configured]);
-  }
-
   private async assertTrustedEmailAddress(email: string): Promise<void> {
     const domain = email.split('@')[1]?.toLowerCase();
     if (!domain) {
       throw new BadRequestError(AuthMessages.VALIDATION_ERROR);
     }
 
-    if (this.getDisposableDomains().has(domain)) {
+    if (getDisposableDomains().has(domain)) {
       throw new BadRequestError(AuthMessages.VALIDATION_ERROR);
     }
 
@@ -105,8 +77,8 @@ export class RegisterUseCase {
 
   private async issueEmailVerification(userId: string, email: string): Promise<void> {
     const rawToken = randomBytes(32).toString('hex');
-    const tokenHash = this.hashValue(rawToken);
-    const ttlMs = this.getEmailVerificationTtlMs();
+    const tokenHash = hashValue(rawToken);
+    const ttlMs = getEmailVerificationTtlMs();
 
     await this.authRepository.issueEmailVerificationToken({
       userId,
@@ -114,7 +86,7 @@ export class RegisterUseCase {
       expiresAt: new Date(Date.now() + ttlMs),
     });
 
-    const verifyUrl = `${this.getFrontendBaseUrl()}/auth/verify-email?token=${encodeURIComponent(rawToken)}`;
+    const verifyUrl = `${getFrontendBaseUrl()}/auth/verify-email?token=${encodeURIComponent(rawToken)}`;
     await this.emailSender.sendEmailVerificationEmail({
       to: email,
       verifyUrl,

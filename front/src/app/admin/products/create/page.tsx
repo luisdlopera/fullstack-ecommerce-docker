@@ -38,17 +38,11 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import { AdminPageHeader, categoriesApi, PERMISSIONS, productsApi, type AdminCategory } from '@/features/admin';
+import { GENDER_OPTIONS, SIZE_OPTIONS } from '@/config/constants';
 
 /* ─── Constants ───────────────────────────────────────────────────────── */
 
-const GENDER_OPTIONS = [
-	{ value: 'men', label: 'Hombre' },
-	{ value: 'women', label: 'Mujer' },
-	{ value: 'kid', label: 'Niño' },
-	{ value: 'unisex', label: 'Unisex' },
-];
-
-const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 

@@ -185,12 +185,15 @@ export class PrismaProductRepository implements ProductRepositoryPort {
       },
     });
     if (!row) return null;
-    const totalAvailable = row.inventories.reduce((sum: number, i: any) => sum + i.availableQuantity, 0);
+    const totalAvailable = row.inventories.reduce(
+      (sum: number, i: { availableQuantity: number }) => sum + i.availableQuantity,
+      0,
+    );
     return {
       id: row.id,
       slug: row.slug,
       inStock: row.inStock,
-      sizeStock: row.inventories.map((i: any) => ({
+      sizeStock: row.inventories.map((i: { availableQuantity: number; reservedQuantity: number }) => ({
         size: 'UNIFIED',
         available: i.availableQuantity,
         reserved: i.reservedQuantity,

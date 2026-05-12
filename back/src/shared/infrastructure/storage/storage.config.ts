@@ -34,8 +34,8 @@ export class StorageConfig {
     this.region = (process.env.STORAGE_REGION ?? (this.provider === 'r2' ? 'auto' : 'us-east-1')).trim();
     this.endpoint = process.env.STORAGE_ENDPOINT?.trim() || undefined;
 
-    this.accessKey = (process.env.STORAGE_ACCESS_KEY ?? 'minioadmin').trim();
-    this.secretKey = (process.env.STORAGE_SECRET_KEY ?? 'minioadmin').trim();
+    this.accessKey = process.env.STORAGE_ACCESS_KEY?.trim() ?? '';
+    this.secretKey = process.env.STORAGE_SECRET_KEY?.trim() ?? '';
 
     const rawPublicUrl =
       process.env.STORAGE_PUBLIC_URL?.trim() ||

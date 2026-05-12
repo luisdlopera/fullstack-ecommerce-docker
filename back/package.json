@@ -6,10 +6,11 @@
     "node": "22"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "start": "npm run prisma:generate && node dist/src/main.js",
     "start:dev": "npm run prisma:generate && prisma migrate deploy && tsx watch src/main.ts",
-    "lint": "eslint \"src/**/*.ts\" --fix",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"prisma/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"prisma/**/*.ts\"",
     "prisma:generate": "prisma generate",
@@ -29,7 +30,8 @@
   "overrides": {
     "path-to-regexp": "8.4.0",
     "handlebars": "4.7.9",
-    "effect": "3.20.0"
+    "effect": "3.20.0",
+    "fast-uri": "3.1.2"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1019.0",
@@ -46,6 +48,7 @@
     "bullmq": "^5.72.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "helmet": "^8.1.0",
     "mercadopago": "^2.12.0",
@@ -54,8 +57,7 @@
     "reflect-metadata": "^0.2.2",
     "resend": "^6.10.0",
     "rxjs": "^7.8.1",
-    "speakeasy": "^2.0.0",
-    "cookie-parser": "^1.4.7"
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
@@ -67,17 +69,21 @@
     "@types/node": "^20.17.19",
     "@types/nodemailer": "^7.0.11",
     "@types/speakeasy": "^2.0.10",
-
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
+    "fast-uri": "3.1.2",
     "jest": "^30.3.0",
     "prettier": "^3.5.1",
     "prisma": "^7.6.0",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.22.0"
   }
+
+ 
 }

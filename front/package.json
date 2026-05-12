@@ -14,10 +14,9 @@
 		"test:e2e:auth:real": "E2E_AUTH_REAL=1 playwright test --config playwright.auth-real.config.mjs e2e/account-authenticated.spec.ts",
 		"test:watch": "vitest",
 		"lint": "eslint .",
+		"lint:fix": "eslint --fix .",
 		"format": "prettier --write .",
-		"eslint:format": "eslint --fix .",
-		"prettier:format": "prettier --write .",
-		"prettier:check": "prettier --check ."
+		"format:check": "prettier --check ."
 	},
 	"dependencies": {
 		"@nexstore/api-types": "*",

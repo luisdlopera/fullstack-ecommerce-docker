@@ -11,7 +11,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const requestId = (request as { requestId?: string })?.requestId;
+    const requestId = request.requestId;
 
     const status =
       exception instanceof DomainError

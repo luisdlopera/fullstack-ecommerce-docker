@@ -36,8 +36,9 @@ function buildDefaultOrigins(): string[] {
     }
   });
 
-  // If no origins configured, build from port variables
-  if (origins.size === 0) {
+  // Only add localhost fallback in non-production environments
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.APP_ENV === 'production';
+  if (origins.size === 0 && !isProduction) {
     const frontendPort = process.env.FRONTEND_PORT || process.env.FRONT_PORT || '5006';
     const backendPort = process.env.BACKEND_PORT || process.env.BACK_PORT || '5007';
 

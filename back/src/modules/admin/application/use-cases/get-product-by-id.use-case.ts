@@ -1,11 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { AdminService } from '../admin.service';
+import { ADMIN_PRODUCT_REPOSITORY, type AdminProductRepositoryPort } from '../../domain/ports/admin-product.repository.port';
+import { NotFoundError } from '../../../../shared/domain/errors/domain-error';
 
 @Injectable()
 export class GetProductByIdUseCase {
-  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
+  constructor(
+    @Inject(ADMIN_PRODUCT_REPOSITORY) private readonly productRepository: AdminProductRepositoryPort,
+  ) {}
 
-  execute(productId: string) {
-    return this.adminService.getProductById(productId);
+  async execute(productId: string) {
+    const product = await this.productRepository.findById(productId);
+    if (!product) throw new NotFoundError('Product not found');
+    return product;
   }
 }

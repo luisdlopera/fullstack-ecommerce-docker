@@ -34,8 +34,6 @@ export function mapFavorite(fav: {
 }) {
   const firstImage = fav.product.ProductImage[0];
 
-  console.log('[mapFavorite] Processing product:', fav.product.slug, 'First image:', firstImage);
-
   return {
     productId: fav.product.id,
     slug: fav.product.slug,

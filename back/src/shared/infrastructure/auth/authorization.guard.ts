@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -13,6 +14,7 @@ import { AUTH_PERMISSIONS_KEY } from './auth.decorator';
 import type { JwtPayload } from './jwt-payload';
 import { isCustomerRole, type PermissionKey } from './permissions';
 import { AuthMessages } from '../../../modules/auth/domain/enums/auth-messages.enum';
+import { authDebugEnabled } from '../observability/auth-debug';
 
 type RequestWithUser = {
   url?: string;
@@ -23,6 +25,8 @@ type RequestWithUser = {
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
+  private readonly logger = new Logger(AuthorizationGuard.name);
+
   constructor(
     @Inject(Reflector) private readonly reflector: Reflector,
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -42,13 +46,13 @@ export class AuthorizationGuard implements CanActivate {
     const payload = request.user;
 
     // Debug logging
-    if (process.env.AUTH_DEBUG_LOGS === 'true') {
-      console.log('[AUTH DEBUG] AuthorizationGuard check:', {
+    if (authDebugEnabled()) {
+      this.logger.debug(`AuthorizationGuard check: ${JSON.stringify({
         url: request.url,
         method: request.method,
         requiredPermissions,
         userPayload: payload,
-      });
+      })}`);
     }
 
     if (!payload?.sub) {
@@ -66,27 +70,27 @@ export class AuthorizationGuard implements CanActivate {
     });
 
     if (!user || !user.isActive || user.deletedAt) {
-      if (process.env.AUTH_DEBUG_LOGS === 'true') {
-        console.log('[AUTH DEBUG] User forbidden:', {
+      if (authDebugEnabled()) {
+        this.logger.debug(`User forbidden: ${JSON.stringify({
           userId: payload.sub,
           exists: !!user,
           isActive: user?.isActive,
           deletedAt: user?.deletedAt,
-        });
+        })}`);
       }
       throw new ForbiddenException(AuthMessages.ACCOUNT_NOT_ALLOWED);
     }
 
     if (isCustomerRole(user.role)) {
-      if (process.env.AUTH_DEBUG_LOGS === 'true') {
-        console.log('[AUTH DEBUG] Customer role forbidden for admin resource:', { userId: user.id, role: user.role });
+      if (authDebugEnabled()) {
+        this.logger.debug(`Customer role forbidden for admin resource: ${JSON.stringify({ userId: user.id, role: user.role })}`);
       }
       throw new ForbiddenException(AuthMessages.CUSTOMER_ROLE_RESTRICTED);
     }
 
     if (user.role === Role.SUPER_ADMIN) {
-      if (process.env.AUTH_DEBUG_LOGS === 'true') {
-        console.log('[AUTH DEBUG] Super admin allowed:', { userId: user.id });
+      if (authDebugEnabled()) {
+        this.logger.debug(`Super admin allowed: ${JSON.stringify({ userId: user.id })}`);
       }
       return true;
     }
@@ -100,19 +104,19 @@ export class AuthorizationGuard implements CanActivate {
     const hasAllPermissions = requiredPermissions.every((permission) => permissionSet.has(permission));
 
     if (!hasAllPermissions) {
-      if (process.env.AUTH_DEBUG_LOGS === 'true') {
-        console.log('[AUTH DEBUG] Insufficient permissions:', {
+      if (authDebugEnabled()) {
+        this.logger.debug(`Insufficient permissions: ${JSON.stringify({
           userId: user.id,
           role: user.role,
           requiredPermissions,
           userPermissions: rolePermissions.map((p) => p.permissionId),
-        });
+        })}`);
       }
       throw new ForbiddenException(AuthMessages.INSUFFICIENT_PERMISSIONS);
     }
 
-    if (process.env.AUTH_DEBUG_LOGS === 'true') {
-      console.log('[AUTH DEBUG] Access granted:', { userId: user.id, role: user.role });
+    if (authDebugEnabled()) {
+      this.logger.debug(`Access granted: ${JSON.stringify({ userId: user.id, role: user.role })}`);
     }
 
     return true;

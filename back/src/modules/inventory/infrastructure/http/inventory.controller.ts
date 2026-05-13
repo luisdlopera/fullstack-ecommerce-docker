@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, ParseBoolPipe, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseBoolPipe, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { Auth } from '../../../../shared/infrastructure/auth/auth.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
@@ -96,6 +96,7 @@ export class InventoryController {
     @Query('outOfStock', new ParseBoolPipe({ optional: true })) outOfStock?: boolean,
     @Query('productId') productId?: string,
     @Query('location') location?: string,
+    @Query('gender') gender?: string,
   ) {
     const safePage = Math.max(page ?? 1, 1);
     const safeLimit = Math.min(Math.max(limit ?? 20, 1), 100);
@@ -104,6 +105,13 @@ export class InventoryController {
 
     if (productId) {
       baseWhere.productId = productId;
+    }
+
+    if (gender) {
+      baseWhere.product = {
+        ...(baseWhere.product as Record<string, unknown>),
+        gender,
+      };
     }
 
     if (search) {
@@ -138,6 +146,12 @@ export class InventoryController {
             slug: true,
             sku: true,
             isActive: true,
+            gender: true,
+            price: true,
+            comparePrice: true,
+            discountPrice: true,
+            discountStartsAt: true,
+            discountEndsAt: true,
             ProductImage: {
               select: { id: true, url: true, isPrimary: true },
               orderBy: { sortOrder: 'asc' },
@@ -180,6 +194,12 @@ export class InventoryController {
             slug: true,
             sku: true,
             isActive: true,
+            gender: true,
+            price: true,
+            comparePrice: true,
+            discountPrice: true,
+            discountStartsAt: true,
+            discountEndsAt: true,
             ProductImage: {
               select: { id: true, url: true, isPrimary: true },
               orderBy: { sortOrder: 'asc' },
@@ -229,6 +249,12 @@ export class InventoryController {
             slug: true,
             sku: true,
             isActive: true,
+            gender: true,
+            price: true,
+            comparePrice: true,
+            discountPrice: true,
+            discountStartsAt: true,
+            discountEndsAt: true,
             ProductImage: {
               select: { id: true, url: true, isPrimary: true },
               orderBy: { sortOrder: 'asc' },
@@ -246,6 +272,60 @@ export class InventoryController {
     return this.toLegacyInventoryItem(updated);
   }
 
+  @Auth(PERMISSIONS.INVENTORY_ADJUST)
+  @Delete('items/:id')
+  async deleteInventoryItem(@Param('id') id: string) {
+    const row = await this.prisma.inventory.findUnique({ where: { id } });
+    if (!row) {
+      throw new Error('Inventory item not found');
+    }
+
+    // Check if there are any stock movements for this item
+    const movementsCount = await this.prisma.stockMovement.count({
+      where: { inventoryId: id },
+    });
+
+    if (movementsCount > 0) {
+      throw new Error('Cannot delete inventory item with stock movement history');
+    }
+
+    await this.prisma.inventory.delete({ where: { id } });
+    return { ok: true, message: 'Inventory item deleted successfully' };
+  }
+
+  @Auth(PERMISSIONS.INVENTORY_ADJUST)
+  @Delete('items/bulk')
+  async bulkDeleteInventoryItems(@Body() dto: { ids: string[] }) {
+    const { ids } = dto;
+
+    // Check if all items exist and have no movements
+    const items = await this.prisma.inventory.findMany({
+      where: { id: { in: ids } },
+      include: { movements: { take: 1 } },
+    });
+
+    if (items.length !== ids.length) {
+      throw new Error('Some inventory items were not found');
+    }
+
+    const itemsWithMovements = items.filter((item) => item.movements.length > 0);
+    if (itemsWithMovements.length > 0) {
+      throw new Error(
+        `Cannot delete ${itemsWithMovements.length} item(s) with stock movement history`
+      );
+    }
+
+    await this.prisma.inventory.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    return {
+      ok: true,
+      deleted: ids.length,
+      message: `${ids.length} inventory item(s) deleted successfully`,
+    };
+  }
+
   @Auth(PERMISSIONS.INVENTORY_READ)
   @Get('alerts/low-stock')
   async getLowStockItems() {
@@ -260,6 +340,12 @@ export class InventoryController {
             slug: true,
             sku: true,
             isActive: true,
+            gender: true,
+            price: true,
+            comparePrice: true,
+            discountPrice: true,
+            discountStartsAt: true,
+            discountEndsAt: true,
             ProductImage: {
               select: { id: true, url: true, isPrimary: true },
               orderBy: { sortOrder: 'asc' },
@@ -290,6 +376,12 @@ export class InventoryController {
             slug: true,
             sku: true,
             isActive: true,
+            gender: true,
+            price: true,
+            comparePrice: true,
+            discountPrice: true,
+            discountStartsAt: true,
+            discountEndsAt: true,
             ProductImage: {
               select: { id: true, url: true, isPrimary: true },
               orderBy: { sortOrder: 'asc' },
@@ -318,6 +410,12 @@ export class InventoryController {
             slug: true,
             sku: true,
             isActive: true,
+            gender: true,
+            price: true,
+            comparePrice: true,
+            discountPrice: true,
+            discountStartsAt: true,
+            discountEndsAt: true,
             ProductImage: {
               select: { id: true, url: true, isPrimary: true },
               orderBy: { sortOrder: 'asc' },
@@ -491,6 +589,12 @@ export class InventoryController {
       slug: string;
       sku: string | null;
       isActive: boolean;
+      gender: string;
+      price: number;
+      comparePrice: number | null;
+      discountPrice: number | null;
+      discountStartsAt: Date | null;
+      discountEndsAt: Date | null;
       ProductImage: Array<{ id: number; url: string; isPrimary: boolean }>;
     };
   }) {

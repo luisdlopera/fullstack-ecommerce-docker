@@ -1,8 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
   private resend: Resend;
   private readonly from: string;
 
@@ -38,7 +39,7 @@ export class EmailService {
     });
 
     if (error) {
-      console.error('Error sending password reset email:', error);
+      this.logger.error(`Error sending password reset email: ${JSON.stringify(error)}`);
       throw new InternalServerErrorException('Failed to send password reset email');
     }
   }
@@ -64,7 +65,7 @@ export class EmailService {
     });
 
     if (error) {
-      console.error('Error sending verification email:', error);
+      this.logger.error(`Error sending verification email: ${JSON.stringify(error)}`);
       throw new InternalServerErrorException('Failed to send verification email');
     }
   }
@@ -92,7 +93,7 @@ export class EmailService {
     });
 
     if (error) {
-      console.error('Error sending low stock alert:', error);
+      this.logger.error(`Error sending low stock alert: ${JSON.stringify(error)}`);
     }
   }
 
@@ -118,7 +119,7 @@ export class EmailService {
     });
 
     if (error) {
-      console.error('Error sending payment confirmation email:', error);
+      this.logger.error(`Error sending payment confirmation email: ${JSON.stringify(error)}`);
     }
   }
 }

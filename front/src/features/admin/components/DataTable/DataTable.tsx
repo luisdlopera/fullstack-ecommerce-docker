@@ -1,124 +1,183 @@
 'use client';
 
-import { Checkbox, Pagination } from '@heroui/react';
+import { Checkbox } from '@heroui/react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
+import { useMemo } from 'react';
+import { DataTableToolbar } from './DataTableToolbar';
+import { DataTablePagination } from './DataTablePagination';
+import { DataTableEmptyState, DataTableErrorState } from './DataTableEmptyState';
+import { DataTableLoading } from './DataTableLoading';
+import type { DataTableProps, SortDirection } from './DataTable.types';
 
-export type Column<T> = {
-	key: string;
-	header: string;
-	render: (row: T) => React.ReactNode;
-	className?: string;
-};
-
-type DataTableProps<T> = {
-	columns: Column<T>[];
-	data: T[];
-	page?: number;
-	totalPages?: number;
-	total?: number;
-	onPageChange?: (page: number) => void;
-	isLoading?: boolean;
-	emptyMessage?: string;
-	onRowClick?: (row: T) => void;
-	/** Enable row selection checkboxes. Requires `rowKey` to identify rows. */
-	selectable?: boolean;
-	/** Function to extract a unique key from each row (required when selectable) */
-	rowKey?: (row: T) => string;
-	/** Currently selected row keys */
-	selectedKeys?: Set<string>;
-	/** Callback when selection changes */
-	onSelectionChange?: (keys: Set<string>) => void;
-};
+export * from './DataTable.types';
+export { useDataTable } from './useDataTable';
 
 export function DataTable<T>({
+	/* Data */
 	columns,
 	data,
-	page = 1,
-	totalPages = 1,
-	total,
-	onPageChange,
-	isLoading,
-	emptyMessage = 'No se encontraron resultados',
-	onRowClick,
+
+	/* Selection */
 	selectable = false,
 	rowKey,
-	selectedKeys,
-	onSelectionChange,
-}: DataTableProps<T>) {
-	const isSelectable = selectable && rowKey && selectedKeys && onSelectionChange;
+	selectedKeys: controlledSelectedKeys,
+	onSelectionChange: controlledOnSelectionChange,
 
-	const allKeys = isSelectable ? data.map((row) => rowKey(row)) : [];
-	const allSelected = isSelectable && allKeys.length > 0 && allKeys.every((k) => selectedKeys.has(k));
-	const someSelected = isSelectable && !allSelected && allKeys.some((k) => selectedKeys.has(k));
+	/* Pagination */
+	paginationMeta,
+	onPaginationChange,
+
+	/* Sorting */
+	sort,
+	onSortChange,
+
+	/* Loading & States */
+	isLoading,
+	isError,
+	errorMessage,
+	emptyMessage = 'No se encontraron resultados',
+	onRetry,
+
+	/* Row interaction */
+	onRowClick,
+
+	/* Bulk Actions */
+	bulkActions,
+
+	/* Toolbar */
+	toolbar,
+	showSearch,
+	searchPlaceholder,
+	onSearch,
+	searchValue,
+
+	/* Styling */
+	className,
+	stickyHeader = false,
+}: DataTableProps<T>) {
+	const allKeys = useMemo(() => data.map(rowKey), [data, rowKey]);
+
+	const allSelected = useMemo(
+		() => selectable && allKeys.length > 0 && allKeys.every((k) => controlledSelectedKeys?.has(k)),
+		[selectable, allKeys, controlledSelectedKeys]
+	);
+
+	const someSelected = useMemo(
+		() => selectable && !allSelected && allKeys.some((k) => controlledSelectedKeys?.has(k)),
+		[selectable, allSelected, allKeys, controlledSelectedKeys]
+	);
 
 	const handleSelectAll = () => {
-		if (!isSelectable) return;
+		if (!selectable || !controlledSelectedKeys || !controlledOnSelectionChange) return;
+
 		if (allSelected) {
-			const next = new Set(selectedKeys);
-			for (const k of allKeys) next.delete(k);
-			onSelectionChange(next);
+			const next = new Set(controlledSelectedKeys);
+			for (const k of allKeys) {
+				next.delete(k);
+			}
+			controlledOnSelectionChange(next);
 		} else {
-			const next = new Set(selectedKeys);
-			for (const k of allKeys) next.add(k);
-			onSelectionChange(next);
+			const next = new Set(controlledSelectedKeys);
+			for (const k of allKeys) {
+				next.add(k);
+			}
+			controlledOnSelectionChange(next);
 		}
 	};
 
 	const handleSelectRow = (key: string) => {
-		if (!isSelectable) return;
-		const next = new Set(selectedKeys);
+		if (!selectable || !controlledSelectedKeys || !controlledOnSelectionChange) return;
+		const next = new Set(controlledSelectedKeys);
 		if (next.has(key)) {
 			next.delete(key);
 		} else {
 			next.add(key);
 		}
-		onSelectionChange(next);
+		controlledOnSelectionChange(next);
 	};
+
+	const handleSort = (columnKey: string, sortable?: boolean) => {
+		if (!sortable || !onSortChange) return;
+
+		let direction: SortDirection = 'asc';
+		if (sort?.column === columnKey) {
+			if (sort.direction === 'asc') direction = 'desc';
+			else if (sort.direction === 'desc') direction = null;
+		}
+
+		onSortChange({
+			column: direction ? columnKey : null,
+			direction,
+		});
+	};
+
+	const selectedCount = controlledSelectedKeys?.size ?? 0;
+	const totalCount = paginationMeta?.total ?? data.length;
+
+	const selectedItems = useMemo(
+		() => data.filter((row) => controlledSelectedKeys?.has(rowKey(row))),
+		[data, controlledSelectedKeys, rowKey]
+	);
+
+	/* Render States */
 
 	if (isLoading) {
 		return (
-			<div className='overflow-hidden rounded-xl border border-gray-200 bg-white'>
-				<div className='animate-pulse'>
-					<div className='h-12 border-b border-gray-200 bg-gray-50' />
-					{Array.from({ length: 5 }).map((_, i) => (
-						<div key={i} className='flex gap-4 border-b border-gray-100 px-6 py-4'>
-							{columns.map((col) => (
-								<div key={col.key} className='h-4 flex-1 rounded bg-gray-200' />
-							))}
-						</div>
-					))}
-				</div>
+			<div className={className}>
+				<DataTableLoading columnCount={columns.length + (selectable ? 1 : 0)} />
+			</div>
+		);
+	}
+
+	if (isError) {
+		return (
+			<div className={className}>
+				<DataTableErrorState message={errorMessage ?? 'Error al cargar datos'} onRetry={onRetry} />
 			</div>
 		);
 	}
 
 	if (data.length === 0) {
 		return (
-			<div className='flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-16'>
-				<div className='mb-3 rounded-full bg-gray-100 p-3'>
-					<svg
-						width='24'
-						height='24'
-						viewBox='0 0 24 24'
-						fill='none'
-						stroke='currentColor'
-						strokeWidth='2'
-						className='text-gray-400'
-					>
-						<path d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
-					</svg>
-				</div>
-				<p className='text-sm text-gray-500'>{emptyMessage}</p>
+			<div className={className}>
+				{toolbar}
+				<DataTableEmptyState message={emptyMessage} />
 			</div>
 		);
 	}
 
 	return (
-		<div className='overflow-hidden rounded-xl border border-gray-200 bg-white'>
+		<div className={`overflow-hidden rounded-xl border border-gray-200 bg-white ${className ?? ''}`}>
+			{/* Toolbar */}
+			{(selectable || toolbar) && (
+				<DataTableToolbar<T>
+					selectedCount={selectedCount}
+					totalCount={totalCount}
+					bulkActions={bulkActions}
+					selectedItems={selectedItems}
+					selectedKeys={Array.from(controlledSelectedKeys ?? [])}
+					onClearSelection={() => controlledOnSelectionChange?.(new Set())}
+					searchComponent={
+						showSearch ? (
+							<input
+								type='text'
+								placeholder={searchPlaceholder}
+								value={searchValue}
+								onChange={(e) => onSearch?.(e.target.value)}
+								className='w-full max-w-xs rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none'
+							/>
+						) : undefined
+					}
+					filtersComponent={toolbar}
+				/>
+			)}
+
+			{/* Table */}
 			<div className='overflow-x-auto'>
 				<table className='w-full'>
-					<thead>
-						<tr className='border-b border-gray-200 bg-gray-50'>
-							{isSelectable && (
+					<thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
+						<tr className='border-y border-gray-200 bg-gray-50'>
+							{selectable && (
 								<th className='w-12 px-4 py-3'>
 									<Checkbox
 										size='sm'
@@ -129,20 +188,37 @@ export function DataTable<T>({
 									/>
 								</th>
 							)}
-							{columns.map((col) => (
-								<th
-									key={col.key}
-									className={`px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase ${col.className ?? ''}`}
-								>
-									{col.header}
-								</th>
-							))}
+							{columns.map((col) => {
+								const isSorted = sort?.column === col.key;
+								const canSort = col.sortable && onSortChange;
+
+								return (
+									<th
+										key={col.key}
+										className={`px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase ${col.className ?? ''} ${canSort ? 'cursor-pointer hover:text-gray-700' : ''}`}
+										onClick={() => handleSort(col.key, col.sortable)}
+									>
+										<div className='flex items-center gap-1'>
+											{col.header}
+											{canSort && isSorted && (
+												<span className='text-primary-600'>
+													{sort.direction === 'asc' ? (
+														<ChevronUp size={14} />
+													) : sort.direction === 'desc' ? (
+														<ChevronDown size={14} />
+													) : null}
+												</span>
+											)}
+										</div>
+									</th>
+								);
+							})}
 						</tr>
 					</thead>
 					<tbody className='divide-y divide-gray-100'>
-						{data.map((row, i) => {
-							const key = isSelectable ? rowKey(row) : String(i);
-							const isRowSelected = isSelectable && selectedKeys.has(key);
+						{data.map((row) => {
+							const key = rowKey(row);
+							const isRowSelected = selectable && controlledSelectedKeys?.has(key);
 
 							return (
 								<tr
@@ -152,13 +228,13 @@ export function DataTable<T>({
 										isRowSelected ? 'bg-primary-50' : 'hover:bg-gray-50'
 									} ${onRowClick ? 'cursor-pointer' : ''}`}
 								>
-									{isSelectable && (
-										<td className='w-12 px-4 py-4'>
+									{selectable && (
+										<td className='w-12 px-4 py-4' onClick={(e) => e.stopPropagation()}>
 											<Checkbox
 												size='sm'
 												isSelected={isRowSelected}
 												onValueChange={() => handleSelectRow(key)}
-												aria-label={`Seleccionar fila ${i + 1}`}
+												aria-label={`Seleccionar fila ${key}`}
 											/>
 										</td>
 									)}
@@ -177,29 +253,20 @@ export function DataTable<T>({
 				</table>
 			</div>
 
-			{onPageChange && totalPages > 1 && (
-				<div className='flex flex-col items-stretch gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between'>
-					<p className='text-sm text-gray-500'>
-						Página {page} de {totalPages}
-						{total !== undefined && <span className='ml-1'>({total} resultados)</span>}
-						{isSelectable && selectedKeys.size > 0 && (
-							<span className='text-primary ml-2 font-medium'>
-								• {selectedKeys.size} seleccionado{selectedKeys.size !== 1 ? 's' : ''}
-							</span>
-						)}
-					</p>
-					<div className='flex justify-center sm:justify-end'>
-						<Pagination
-							total={totalPages}
-							page={page}
-							onChange={onPageChange}
-							showControls
-							color='primary'
-							size='sm'
-						/>
-					</div>
-				</div>
+			{/* Pagination */}
+			{paginationMeta && onPaginationChange && (
+				<DataTablePagination meta={paginationMeta} onChange={onPaginationChange} />
 			)}
 		</div>
 	);
 }
+
+export type {
+	Column,
+	BulkAction,
+	DataTableProps,
+	SortState,
+	PaginationState,
+	FilterState,
+	PaginationMeta,
+} from './DataTable.types';

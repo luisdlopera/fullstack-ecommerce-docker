@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { SessionExpiredAlert } from '@/components/auth/SessionExpiredAlert';
 
 export type AuthUser = {
 	id: string;
@@ -22,6 +24,8 @@ type AuthContextType = {
 	resetPassword: (token: string, newPassword: string) => Promise<void>;
 	logout: () => Promise<void>;
 	refreshSession: () => Promise<void>;
+	sessionExpired: boolean;
+	triggerSessionExpired: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +70,13 @@ function normalizeAuthUser(user: AuthUserResponse | null | undefined): AuthUser 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<AuthUser | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [sessionExpired, setSessionExpired] = useState(false);
+	const router = useRouter();
+	const pathname = usePathname();
+
+	const triggerSessionExpired = useCallback(() => {
+		setSessionExpired(true);
+	}, []);
 
 	const refreshSession = useCallback(async () => {
 		authFrontLog('session start', {
@@ -243,6 +254,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			resetPassword,
 			logout,
 			refreshSession,
+			sessionExpired,
+			triggerSessionExpired,
 		}),
 		[
 			user,
@@ -255,10 +268,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			resetPassword,
 			logout,
 			refreshSession,
+			sessionExpired,
+			triggerSessionExpired,
 		],
 	);
 
-	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+	const handleSessionExpiredConfirm = useCallback(() => {
+		setSessionExpired(false);
+		const redirectPath = encodeURIComponent(pathname);
+		router.push(`/auth?redirect=${redirectPath}`);
+	}, [pathname, router]);
+
+	return (
+		<AuthContext.Provider value={value}>
+			{children}
+			<SessionExpiredAlert isOpen={sessionExpired} onConfirm={handleSessionExpiredConfirm} />
+		</AuthContext.Provider>
+	);
 }
 
 export function useAuth() {

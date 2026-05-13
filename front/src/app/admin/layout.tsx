@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { PERMISSIONS, type PermissionKey } from '@/features/admin';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatRoleLabel, getRoleBadgeClass } from '@/lib/format-role-label';
@@ -24,6 +25,7 @@ import {
 	Boxes,
 	ChevronDown,
 	Layers,
+	Store,
 } from 'lucide-react';
 const Toaster = dynamic(() => import('react-hot-toast').then((m) => ({ default: m.Toaster })), { ssr: false });
 
@@ -61,6 +63,7 @@ const NAV_ITEMS: NavItem[] = [
 			{ href: '/admin/collections', label: 'Colecciones', icon: Layers, permission: PERMISSIONS.CATEGORIES_READ },
 		],
 	},
+	{ href: '/admin/warehouses', label: 'Sucursales', icon: Store, permission: PERMISSIONS.INVENTORY_READ },
 	{ href: '/admin/promotions', label: 'Promociones', icon: Percent, permission: PERMISSIONS.PROMOTIONS_MANAGE },
 	{ href: '/admin/payments', label: 'Pagos', icon: Wallet, permission: PERMISSIONS.PAYMENTS_READ },
 	{ href: '/admin/audit-logs', label: 'Audit Logs', icon: ShieldCheck, permission: PERMISSIONS.AUDIT_READ },
@@ -72,7 +75,9 @@ const ROUTE_PERMISSIONS: Array<{ startsWith: string; permission: PermissionKey }
 	{ startsWith: '/admin/orders', permission: PERMISSIONS.ORDERS_READ },
 	{ startsWith: '/admin/products', permission: PERMISSIONS.PRODUCTS_READ },
 	{ startsWith: '/admin/categories', permission: PERMISSIONS.CATEGORIES_READ },
+	{ startsWith: '/admin/collections', permission: PERMISSIONS.CATEGORIES_READ },
 	{ startsWith: '/admin/inventory', permission: PERMISSIONS.INVENTORY_READ },
+	{ startsWith: '/admin/warehouses', permission: PERMISSIONS.INVENTORY_READ },
 	{ startsWith: '/admin/promotions', permission: PERMISSIONS.PROMOTIONS_MANAGE },
 	{ startsWith: '/admin/payments', permission: PERMISSIONS.PAYMENTS_READ },
 	{ startsWith: '/admin/audit-logs', permission: PERMISSIONS.AUDIT_READ },
@@ -92,6 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 	const router = useRouter();
 	const pathname = usePathname();
 	const { user, loading, logout, hasPermission, isAdmin } = usePermissions();
+	const { triggerSessionExpired } = useAuth();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
@@ -107,9 +113,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 	useEffect(() => {
 		if (!loading && (!user || !isAdmin)) {
-			router.replace('/forbidden');
+			// Trigger session expired modal instead of redirecting to forbidden
+			triggerSessionExpired();
 		}
-	}, [isAdmin, loading, user, router]);
+	}, [isAdmin, loading, user, triggerSessionExpired]);
 
 	useEffect(() => {
 		if (loading || !user || !isAdmin) return;

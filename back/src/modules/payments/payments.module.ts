@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { SharedModule } from '../../shared/shared.module';
 import { PaymentsController } from './infrastructure/http/payments.controller';
 import { MERCADOPAGO_PAYMENT_API } from './domain/ports/mercadopago-payment-api.port';
@@ -18,7 +17,7 @@ import { HandleMercadoPagoWebhookUseCase } from './application/use-cases/handle-
 import { ProcessMercadoPagoPaymentUseCase } from './application/use-cases/process-mercadopago-payment.use-case';
 
 @Module({
-  imports: [SharedModule, ThrottlerModule],
+  imports: [SharedModule],
   controllers: [PaymentsController],
   providers: [
     { provide: MERCADOPAGO_PAYMENT_API, useClass: MercadoPagoPaymentApiAdapter },

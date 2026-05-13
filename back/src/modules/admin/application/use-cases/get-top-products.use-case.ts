@@ -1,11 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { AdminService } from '../admin.service';
+import { ADMIN_METRICS_REPOSITORY, type AdminMetricsRepositoryPort } from '../../domain/ports/admin-metrics.repository.port';
 
 @Injectable()
 export class GetTopProductsUseCase {
-  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
+  constructor(
+    @Inject(ADMIN_METRICS_REPOSITORY) private readonly metricsRepository: AdminMetricsRepositoryPort,
+  ) {}
 
-  execute(limit?: number) {
-    return this.adminService.getTopProducts(limit);
+  execute(limit: number = 10) {
+    return this.metricsRepository.listTopProducts(limit);
   }
 }

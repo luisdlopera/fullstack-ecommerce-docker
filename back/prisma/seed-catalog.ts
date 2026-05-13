@@ -1,6 +1,9 @@
 import { Gender, Size } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 
+// Default warehouse ID for inventory creation
+const DEFAULT_WAREHOUSE_ID = process.env.DEFAULT_WAREHOUSE_ID || 'wh-default-001';
+
 // =============================================================================
 // R2 BUCKET IMAGE MAP - Source of truth for seed images
 // All paths are relative to the bucket root (storageKey format)
@@ -455,6 +458,19 @@ export async function seedCatalog(prisma: PrismaClient) {
       }
 
       console.log(`Created product: ${product.title} with ${images.length} images`);
+
+      // Create inventory record for the product
+      await prisma.inventory.create({
+        data: {
+          productId: newProduct.id,
+          warehouseId: DEFAULT_WAREHOUSE_ID,
+          availableQuantity: 50,
+          reservedQuantity: 0,
+          lowStockThreshold: 5,
+          allowNegativeStock: false,
+        },
+      });
+      console.log(`  → Inventory created at ${DEFAULT_WAREHOUSE_ID}`);
     } else {
       console.log(`Product ${product.slug} already exists, skipping...`);
     }
@@ -506,6 +522,19 @@ export async function seedCatalog(prisma: PrismaClient) {
       }
 
       console.log(`Created product: ${product.title} with ${images.length} images`);
+
+      // Create inventory record for the product
+      await prisma.inventory.create({
+        data: {
+          productId: newProduct.id,
+          warehouseId: DEFAULT_WAREHOUSE_ID,
+          availableQuantity: 50,
+          reservedQuantity: 0,
+          lowStockThreshold: 5,
+          allowNegativeStock: false,
+        },
+      });
+      console.log(`  → Inventory created at ${DEFAULT_WAREHOUSE_ID}`);
     }
   }
 
@@ -555,6 +584,19 @@ export async function seedCatalog(prisma: PrismaClient) {
       }
 
       console.log(`Created product: ${product.title} with ${images.length} images`);
+
+      // Create inventory record for the product
+      await prisma.inventory.create({
+        data: {
+          productId: newProduct.id,
+          warehouseId: DEFAULT_WAREHOUSE_ID,
+          availableQuantity: 50,
+          reservedQuantity: 0,
+          lowStockThreshold: 5,
+          allowNegativeStock: false,
+        },
+      });
+      console.log(`  → Inventory created at ${DEFAULT_WAREHOUSE_ID}`);
     }
   }
 
@@ -604,6 +646,19 @@ export async function seedCatalog(prisma: PrismaClient) {
       }
 
       console.log(`Created product: ${product.title} with ${images.length} images`);
+
+      // Create inventory record for the product
+      await prisma.inventory.create({
+        data: {
+          productId: newProduct.id,
+          warehouseId: DEFAULT_WAREHOUSE_ID,
+          availableQuantity: 50,
+          reservedQuantity: 0,
+          lowStockThreshold: 5,
+          allowNegativeStock: false,
+        },
+      });
+      console.log(`  → Inventory created at ${DEFAULT_WAREHOUSE_ID}`);
     }
   }
 

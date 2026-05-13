@@ -155,13 +155,14 @@ async function uploadFile(
       operation,
       size: fileStats.size,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return {
       localPath,
       r2Key,
       success: false,
       operation: 'error',
-      error: error.message,
+      error: errorMessage,
       size: 0,
     };
   }

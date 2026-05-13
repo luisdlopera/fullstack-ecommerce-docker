@@ -1,16 +1,11 @@
 import { Module } from '@nestjs/common';
 import { SharedModule } from '../../shared/shared.module';
+import { ContentModule } from '../content/content.module';
 import { AdminController } from './infrastructure/http/admin.controller';
-import { AdminService } from './application/admin.service';
 import { UploadProductImageUseCase } from './application/use-cases/upload-product-image.use-case';
 import { DeleteProductImageUseCase } from './application/use-cases/delete-product-image.use-case';
 import { ReorderProductImagesUseCase } from './application/use-cases/reorder-product-images.use-case';
 import { SetPrimaryProductImageUseCase } from './application/use-cases/set-primary-product-image.use-case';
-import { GetHomeBannersUseCase } from './application/use-cases/get-home-banners.use-case';
-import { UploadHomeBannerUseCase } from './application/use-cases/upload-home-banner.use-case';
-import { DeleteHomeBannerUseCase } from './application/use-cases/delete-home-banner.use-case';
-import { UpdateHomeBannerUseCase } from './application/use-cases/update-home-banner.use-case';
-import { ReorderHomeBannersUseCase } from './application/use-cases/reorder-home-banners.use-case';
 import { GetDashboardSummaryUseCase } from './application/use-cases/get-dashboard-summary.use-case';
 import {
   GetCollectionsUseCase,
@@ -67,14 +62,16 @@ import { PrismaAdminProductRepository } from './infrastructure/persistence/prism
 import { PrismaAdminUserRepository } from './infrastructure/persistence/prisma-admin-user.repository';
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, ContentModule],
   controllers: [AdminController],
   providers: [
-    AdminService,
+    // Dashboard
     GetDashboardSummaryUseCase,
     GetSalesChartUseCase,
     GetRecentOrdersUseCase,
     GetTopProductsUseCase,
+
+    // Users
     GetUsersUseCase,
     GetUserByIdUseCase,
     CreateUserUseCase,
@@ -82,35 +79,42 @@ import { PrismaAdminUserRepository } from './infrastructure/persistence/prisma-a
     UpdateUserRoleUseCase,
     UpdateUserStatusUseCase,
     DeleteUserUseCase,
+
+    // Orders
     GetOrdersUseCase,
     GetOrderByIdUseCase,
     UpdateOrderStatusUseCase,
     UpdatePaymentStatusUseCase,
     UpdateOrderNotesUseCase,
+
+    // Products
     GetProductsUseCase,
     GetProductByIdUseCase,
     CreateProductUseCase,
     UpdateProductUseCase,
     DeleteProductUseCase,
     UpdateProductStatusUseCase,
+
+    // Categories
     GetCategoriesUseCase,
     GetCategoryByIdUseCase,
     CreateCategoryUseCase,
     UpdateCategoryUseCase,
     DeleteCategoryUseCase,
+
+    // Countries
     GetCountriesUseCase,
     CreateCountryUseCase,
     UpdateCountryUseCase,
     DeleteCountryUseCase,
+
+    // Product Images
     UploadProductImageUseCase,
     DeleteProductImageUseCase,
     ReorderProductImagesUseCase,
     SetPrimaryProductImageUseCase,
-    GetHomeBannersUseCase,
-    UploadHomeBannerUseCase,
-    DeleteHomeBannerUseCase,
-    UpdateHomeBannerUseCase,
-    ReorderHomeBannersUseCase,
+
+    // Collections
     GetCollectionsUseCase,
     GetCollectionByIdUseCase,
     CreateCollectionUseCase,

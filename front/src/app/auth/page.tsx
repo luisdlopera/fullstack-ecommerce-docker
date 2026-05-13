@@ -101,7 +101,7 @@ function AuthPageContent() {
 		try {
 			await login(email, password);
 			const redirectTo = redirectParam || '/';
-			console.log('[AUTH-REDIRECT] landing decision', {
+			authPageLog('[AUTH-REDIRECT] landing decision', {
 				redirectTo,
 				redirectParam,
 				hostname: window.location.hostname,
@@ -110,7 +110,7 @@ function AuthPageContent() {
 			router.push(redirectTo);
 		} catch (err) {
 			setLoginError(err instanceof Error ? err.message : 'Error al iniciar sesión');
-			console.log('[AUTH-FRONT] login error', {
+			authPageLog('[AUTH-FRONT] login error', {
 				message: err instanceof Error ? err.message : String(err),
 			});
 		} finally {

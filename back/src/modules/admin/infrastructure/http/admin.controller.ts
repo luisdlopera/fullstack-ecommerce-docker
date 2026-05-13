@@ -14,21 +14,24 @@ import {
   UseInterceptors,
   Logger,
 } from '@nestjs/common';
+import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { OrderStatus, PaymentStatus, Role, Gender } from '@prisma/client';
 import { Auth } from '../../../../shared/infrastructure/auth/auth.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import { PERMISSIONS } from '../../../../shared/infrastructure/auth/permissions';
+import {
+  GetHomeBannersUseCase,
+  UploadHomeBannerUseCase,
+  DeleteHomeBannerUseCase,
+  UpdateHomeBannerUseCase,
+  ReorderHomeBannersUseCase,
+} from '../../../content/application/use-cases';
 import { DeleteProductImageUseCase } from '../../application/use-cases/delete-product-image.use-case';
 import { ReorderProductImagesUseCase } from '../../application/use-cases/reorder-product-images.use-case';
 import { SetPrimaryProductImageUseCase } from '../../application/use-cases/set-primary-product-image.use-case';
 import { UploadProductImageUseCase } from '../../application/use-cases/upload-product-image.use-case';
-import { GetHomeBannersUseCase } from '../../application/use-cases/get-home-banners.use-case';
-import { UploadHomeBannerUseCase } from '../../application/use-cases/upload-home-banner.use-case';
-import { DeleteHomeBannerUseCase } from '../../application/use-cases/delete-home-banner.use-case';
-import { UpdateHomeBannerUseCase } from '../../application/use-cases/update-home-banner.use-case';
-import { ReorderHomeBannersUseCase } from '../../application/use-cases/reorder-home-banners.use-case';
 import { GetDashboardSummaryUseCase } from '../../application/use-cases/get-dashboard-summary.use-case';
 import { GetSalesChartUseCase } from '../../application/use-cases/get-sales-chart.use-case';
 import { GetRecentOrdersUseCase } from '../../application/use-cases/get-recent-orders.use-case';
@@ -141,6 +144,7 @@ export class AdminController {
     @Inject(CreateCollectionUseCase) private readonly createCollectionUseCase: CreateCollectionUseCase,
     @Inject(UpdateCollectionUseCase) private readonly updateCollectionUseCase: UpdateCollectionUseCase,
     @Inject(DeleteCollectionUseCase) private readonly deleteCollectionUseCase: DeleteCollectionUseCase,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
   ) {}
 
   // ─── Dashboard ──────────────────────────────────────────────────────
@@ -391,18 +395,20 @@ export class AdminController {
     @Body('sortOrder') sortOrder?: number,
     @Body('isActive') isActive?: boolean,
   ) {
-    return this.updateHomeBannerUseCase.execute({
+    return this.updateHomeBannerUseCase.execute(
       id,
-      title,
-      subtitle,
-      ctaText,
-      ctaLink,
-      secondaryText,
-      secondaryLink,
-      altText,
-      sortOrder: sortOrder !== undefined ? Number(sortOrder) : undefined,
-      isActive,
-    });
+      {
+        title,
+        subtitle,
+        ctaText,
+        ctaLink,
+        secondaryText,
+        secondaryLink,
+        altText,
+        sortOrder: sortOrder !== undefined ? Number(sortOrder) : undefined,
+        isActive,
+      },
+    );
   }
 
   @Auth(PERMISSIONS.SETTINGS_MANAGE)
@@ -414,7 +420,7 @@ export class AdminController {
   @Auth(PERMISSIONS.SETTINGS_MANAGE)
   @Patch('banners/reorder')
   reorderHomeBanners(@Body('bannerIds') bannerIds: number[]) {
-    return this.reorderHomeBannersUseCase.execute({ bannerIds });
+    return this.reorderHomeBannersUseCase.execute(bannerIds);
   }
 
   // ─── Categories ─────────────────────────────────────────────────────
@@ -510,5 +516,289 @@ export class AdminController {
   @Delete('countries/:id')
   deleteCountry(@Param('id') id: string) {
     return this.deleteCountryUseCase.execute(id);
+  }
+
+  // ─── Warehouses / Sucursales ──────────────────────────────────────────
+
+  @Auth(PERMISSIONS.INVENTORY_READ)
+  @Get('warehouses')
+  async getWarehouses(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('search') search?: string,
+    @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
+  ) {
+    const safePage = Math.max(page ?? 1, 1);
+    const safeLimit = Math.min(Math.max(limit ?? 20, 1), 100);
+    const skip = (safePage - 1) * safeLimit;
+
+    const where: Record<string, unknown> = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { code: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.warehouse.findMany({
+        where,
+        skip,
+        take: safeLimit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          _count: { select: { inventories: true } },
+        },
+      }),
+      this.prisma.warehouse.count({ where }),
+    ]);
+
+    return {
+      data: rows.map((w) => ({
+        id: w.id,
+        name: w.name,
+        code: w.code,
+        location: w.location,
+        isActive: w.isActive,
+        createdAt: w.createdAt,
+        updatedAt: w.updatedAt,
+        inventoryCount: w._count.inventories,
+      })),
+      meta: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+        totalPages: Math.ceil(total / safeLimit),
+      },
+    };
+  }
+
+  @Auth(PERMISSIONS.INVENTORY_READ)
+  @Get('warehouses/:id')
+  async getWarehouseById(@Param('id') id: string) {
+    const warehouse = await this.prisma.warehouse.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { inventories: true } },
+        inventories: {
+          take: 5,
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            product: {
+              select: {
+                id: true,
+                title: true,
+                sku: true,
+                isActive: true,
+                ProductImage: { take: 1, select: { url: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!warehouse) {
+      return null;
+    }
+
+    return {
+      id: warehouse.id,
+      name: warehouse.name,
+      code: warehouse.code,
+      location: warehouse.location,
+      isActive: warehouse.isActive,
+      createdAt: warehouse.createdAt,
+      updatedAt: warehouse.updatedAt,
+      inventoryCount: warehouse._count.inventories,
+      recentInventory: warehouse.inventories.map((i) => ({
+        id: i.id,
+        productId: i.productId,
+        productTitle: i.product.title,
+        productSku: i.product.sku,
+        availableQuantity: i.availableQuantity,
+        reservedQuantity: i.reservedQuantity,
+        productImage: i.product.ProductImage[0]?.url,
+      })),
+    };
+  }
+
+  @Auth(PERMISSIONS.INVENTORY_ADJUST)
+  @Post('warehouses')
+  async createWarehouse(
+    @Body() dto: { name: string; code: string; location?: string },
+  ) {
+    // Check if code already exists
+    const existing = await this.prisma.warehouse.findUnique({
+      where: { code: dto.code },
+    });
+    if (existing) {
+      throw new Error(`Warehouse with code '${dto.code}' already exists`);
+    }
+
+    const warehouse = await this.prisma.warehouse.create({
+      data: {
+        name: dto.name,
+        code: dto.code,
+        location: dto.location,
+        isActive: true,
+      },
+    });
+
+    return {
+      id: warehouse.id,
+      name: warehouse.name,
+      code: warehouse.code,
+      location: warehouse.location,
+      isActive: warehouse.isActive,
+      createdAt: warehouse.createdAt,
+    };
+  }
+
+  @Auth(PERMISSIONS.INVENTORY_ADJUST)
+  @Patch('warehouses/:id')
+  async updateWarehouse(
+    @Param('id') id: string,
+    @Body() dto: { name?: string; code?: string; location?: string; isActive?: boolean },
+  ) {
+    const warehouse = await this.prisma.warehouse.findUnique({ where: { id } });
+    if (!warehouse) {
+      throw new Error('Warehouse not found');
+    }
+
+    // Check code uniqueness if changing
+    if (dto.code && dto.code !== warehouse.code) {
+      const existing = await this.prisma.warehouse.findUnique({
+        where: { code: dto.code },
+      });
+      if (existing) {
+        throw new Error(`Warehouse with code '${dto.code}' already exists`);
+      }
+    }
+
+    const updated = await this.prisma.warehouse.update({
+      where: { id },
+      data: dto,
+    });
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      code: updated.code,
+      location: updated.location,
+      isActive: updated.isActive,
+      updatedAt: updated.updatedAt,
+    };
+  }
+
+  @Auth(PERMISSIONS.INVENTORY_ADJUST)
+  @Delete('warehouses/:id')
+  async deleteWarehouse(@Param('id') id: string) {
+    const warehouse = await this.prisma.warehouse.findUnique({
+      where: { id },
+      include: { _count: { select: { inventories: true } } },
+    });
+
+    if (!warehouse) {
+      throw new Error('Warehouse not found');
+    }
+
+    if (warehouse._count.inventories > 0) {
+      throw new Error(`Cannot delete warehouse with ${warehouse._count.inventories} inventory items. Transfer or delete inventory first.`);
+    }
+
+    await this.prisma.warehouse.delete({ where: { id } });
+    return { ok: true, message: 'Warehouse deleted successfully' };
+  }
+
+  // ─── Inventory Transfer ────────────────────────────────────────────
+
+  @Auth(PERMISSIONS.INVENTORY_ADJUST)
+  @Post('inventory/transfer')
+  async transferInventory(
+    @Body() dto: { productId: string; sourceWarehouseId: string; targetWarehouseId: string; quantity: number; note?: string },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    // Validate warehouses exist
+    const [source, target] = await Promise.all([
+      this.prisma.warehouse.findUnique({ where: { id: dto.sourceWarehouseId } }),
+      this.prisma.warehouse.findUnique({ where: { id: dto.targetWarehouseId } }),
+    ]);
+
+    if (!source) {
+      throw new Error('Source warehouse not found');
+    }
+    if (!target) {
+      throw new Error('Target warehouse not found');
+    }
+    if (dto.sourceWarehouseId === dto.targetWarehouseId) {
+      throw new Error('Source and target warehouses must be different');
+    }
+
+    // Get or create source inventory
+    const sourceInventory = await this.prisma.inventory.findUnique({
+      where: { productId_warehouseId: { productId: dto.productId, warehouseId: dto.sourceWarehouseId } },
+    });
+
+    if (!sourceInventory) {
+      throw new Error('No inventory found at source warehouse for this product');
+    }
+
+    if (sourceInventory.availableQuantity < dto.quantity) {
+      throw new Error(`Insufficient stock at source. Available: ${sourceInventory.availableQuantity}`);
+    }
+
+    // Execute transfer in transaction
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Decrease source
+      const updatedSource = await tx.inventory.update({
+        where: { id: sourceInventory.id },
+        data: { availableQuantity: { decrement: dto.quantity } },
+      });
+
+      // Get or create target inventory
+      const targetInventory = await tx.inventory.upsert({
+        where: { productId_warehouseId: { productId: dto.productId, warehouseId: dto.targetWarehouseId } },
+        create: {
+          productId: dto.productId,
+          warehouseId: dto.targetWarehouseId,
+          availableQuantity: dto.quantity,
+          reservedQuantity: 0,
+          lowStockThreshold: sourceInventory.lowStockThreshold,
+          allowNegativeStock: sourceInventory.allowNegativeStock,
+        },
+        update: {
+          availableQuantity: { increment: dto.quantity },
+        },
+      });
+
+      // Create stock movement for audit
+      await tx.stockMovement.create({
+        data: {
+          type: 'TRANSFER',
+          quantity: dto.quantity,
+          productId: dto.productId,
+          warehouseId: dto.targetWarehouseId,
+          sourceWarehouseId: dto.sourceWarehouseId,
+          inventoryId: targetInventory.id,
+          reference: `transfer:${source.code}->${target.code}`,
+          note: dto.note || 'Transfer between warehouses',
+          userId: user.sub,
+        },
+      });
+
+      return { source: updatedSource, target: targetInventory };
+    });
+
+    return {
+      ok: true,
+      message: `Transferred ${dto.quantity} units from ${source.name} to ${target.name}`,
+      sourceWarehouse: { id: source.id, name: source.name, code: source.code, availableQuantity: result.source.availableQuantity },
+      targetWarehouse: { id: target.id, name: target.name, code: target.code, availableQuantity: result.target.availableQuantity },
+    };
   }
 }

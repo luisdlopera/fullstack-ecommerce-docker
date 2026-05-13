@@ -302,6 +302,49 @@ async function main() {
 
   // Se habilitan los productos despues de actualizar el bucket de r2 a las variables de entorno
   await seedCatalog(prisma);
+  // ── Default Warehouse & Inventory ───────────────────────────────────
+  console.log('Setting up warehouse and inventory...');
+
+  const defaultWarehouseId = process.env.DEFAULT_WAREHOUSE_ID || 'wh-default-001';
+
+  // Create default warehouse if it doesn't exist
+  await prisma.warehouse.upsert({
+    where: { id: defaultWarehouseId },
+    update: {},
+    create: {
+      id: defaultWarehouseId,
+      name: 'Sucursal Principal',
+      code: 'MAIN',
+      location: 'Ubicación Principal',
+      isActive: true,
+    },
+  });
+  console.log(`Default warehouse ready: ${defaultWarehouseId}`);
+
+  // Create inventory records for products that don't have one
+  const productsWithoutInventory = await prisma.product.findMany({
+    where: {
+      deletedAt: null,
+      inventories: { none: {} },
+    },
+    select: { id: true, inStock: true },
+  });
+
+  if (productsWithoutInventory.length > 0) {
+    await prisma.inventory.createMany({
+      data: productsWithoutInventory.map((p) => ({
+        productId: p.id,
+        warehouseId: defaultWarehouseId,
+        availableQuantity: p.inStock,
+        reservedQuantity: 0,
+        lowStockThreshold: 5,
+        allowNegativeStock: false,
+      })),
+      skipDuplicates: true,
+    });
+    console.log(`Created ${productsWithoutInventory.length} inventory records`);
+  }
+
   console.log('Seed completed.');
 }
 

@@ -1,19 +1,40 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
-import { AdminService } from '../admin.service';
+import { ADMIN_ORDER_REPOSITORY, type AdminOrderRepositoryPort } from '../../domain/ports/admin-order.repository.port';
 
 @Injectable()
 export class GetOrdersUseCase {
-  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
+  constructor(
+    @Inject(ADMIN_ORDER_REPOSITORY) private readonly orderRepository: AdminOrderRepositoryPort,
+  ) {}
 
-  execute(
-    page?: number,
-    limit?: number,
+  async execute(
+    page: number = 1,
+    limit: number = 20,
     search?: string,
     status?: OrderStatus,
     paymentStatus?: PaymentStatus,
     paid?: boolean,
   ) {
-    return this.adminService.getOrders(page, limit, search, status, paymentStatus, paid);
+    const safePage = Math.max(page, 1);
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const { data, total } = await this.orderRepository.list({
+      page: safePage,
+      limit: safeLimit,
+      search,
+      status,
+      paymentStatus,
+      paid,
+    });
+
+    return {
+      data,
+      meta: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+        totalPages: Math.max(Math.ceil(total / safeLimit), 1),
+      },
+    };
   }
 }

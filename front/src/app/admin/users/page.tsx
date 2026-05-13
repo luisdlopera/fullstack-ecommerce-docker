@@ -254,12 +254,11 @@ export default function AdminUsersPage() {
 			<DataTable
 				columns={columns}
 				data={data?.data ?? []}
-				page={page}
-				totalPages={data?.meta.totalPages ?? 1}
-				total={data?.meta.total}
-				onPageChange={setPage}
+				paginationMeta={data?.meta}
+				onPaginationChange={(p) => setPage(p.page)}
 				isLoading={isLoading}
 				emptyMessage='No se encontraron usuarios'
+				rowKey={(u) => u.id}
 			/>
 
 			{canManageUsers && (

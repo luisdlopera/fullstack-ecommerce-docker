@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Checkbox, Input, Select, SelectItem, Textarea } from '@heroui/react';
-import toast from 'react-hot-toast';
+import { Checkbox, Input, Select, SelectItem, Textarea } from '@heroui/react';
 import { FormModal } from '@/features/admin';
 import { GENDER_OPTIONS, SIZE_OPTIONS } from '@/config/constants';
 import type { AdminProduct } from '@/features/admin';

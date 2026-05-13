@@ -16,7 +16,7 @@ export interface AuditRecordInput {
   entityType: AuditEntityType | string;
   entityId?: string;
   previousToken?: string; // Para tracear cambios
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   ip?: string;
   userAgent?: string;
 }

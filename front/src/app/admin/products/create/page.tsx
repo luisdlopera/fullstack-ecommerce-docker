@@ -44,8 +44,6 @@ import { GENDER_OPTIONS, SIZE_OPTIONS } from '@/config/constants';
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-
 /* ─── Types ───────────────────────────────────────────────────────────── */
 
 type PendingImage = {

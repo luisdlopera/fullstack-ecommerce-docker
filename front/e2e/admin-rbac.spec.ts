@@ -7,7 +7,7 @@ const backPort = Number(process.env.E2E_BACK_PORT ?? 4100);
 const frontOrigin = `http://localhost:${frontPort}`;
 const backApi = `http://localhost:${backPort}/api`;
 
-async function authenticate(page: Parameters<typeof test>[1]['page'], email: string, password = 'Qwert.12345') {
+async function authenticate(page: import('@playwright/test').Page, email: string, password = 'Qwert.12345') {
 	const loginRes = await page.request.post(`${backApi}/auth/login`, {
 		data: { email, password },
 	});

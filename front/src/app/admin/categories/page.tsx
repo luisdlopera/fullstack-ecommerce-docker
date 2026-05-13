@@ -164,6 +164,7 @@ export default function AdminCategoriesPage() {
 				data={filtered}
 				isLoading={isLoading}
 				emptyMessage='No hay categorías registradas'
+				rowKey={(c) => c.id}
 			/>
 
 			<CategoryFormModal

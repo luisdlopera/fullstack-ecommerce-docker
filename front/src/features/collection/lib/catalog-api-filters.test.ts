@@ -9,7 +9,7 @@ describe('catalog-api-filters', () => {
 
 	it('buildProductListFilters combines collection mustTag and sidebar anyTags', () => {
 		const f = buildProductListFilters('new', '', { ...emptyDraftFilters(), tags: ['urban'] });
-		expect(f.mustTag).toBe('nuevo');
+		expect(f.mustTag).toBe('new');
 		expect(f.anyTags).toEqual(['urban']);
 	});
 

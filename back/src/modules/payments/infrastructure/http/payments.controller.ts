@@ -1,7 +1,7 @@
-import { BadRequestException, Body, Controller, Headers, Inject, Post, Query, UseGuards } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { BadRequestException, Body, Controller, Headers, Inject, Post, Query } from '@nestjs/common';
 import { Public } from '../../../../shared/infrastructure/auth/public.decorator';
 import { CurrentUser } from '../../../../shared/infrastructure/auth/current-user.decorator';
+import { RateLimit } from '../../../../rate-limit/infrastructure/decorators/rate-limit.decorator';
 import type { JwtPayload } from '../../../../shared/infrastructure/auth/jwt-payload';
 import { InitMercadoPagoDto } from './dto/init-mercadopago.dto';
 import { VerifyMercadoPagoDto } from './dto/verify-mercadopago.dto';
@@ -35,6 +35,8 @@ export class PaymentsController {
     );
   }
 
+  @Public()
+  @RateLimit({ limit: 30, ttl: 60, policy: 'payment-verify' })
   @Post('mercadopago/verify')
   verifyMercadoPago(@Body() dto: VerifyMercadoPagoDto) {
     return this.verifyPaymentUseCase.execute(dto.paymentId);
@@ -53,8 +55,7 @@ export class PaymentsController {
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @RateLimit({ limit: 60, ttl: 60, policy: 'webhook' })
   @Post('mercadopago/webhook')
   mercadoPagoWebhook(
     @Body() body: MercadoPagoWebhookBodyDto,

@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/infrastructure/filters/http-exception.filter';
 import { buildCorsOptions } from './shared/infrastructure/http/cors';
+import { PrismaService } from './shared/infrastructure/prisma/prisma.service';
 
 async function bootstrap() {
   try {
@@ -33,6 +34,8 @@ async function bootstrap() {
     console.log('[BOOTSTRAP] AppModule creado, inicializando...');
     const app = await NestFactory.create(AppModule);
     console.log('[BOOTSTRAP] NestFactory creada, AppModule inicializado');
+    app.enableShutdownHooks();
+    await app.get(PrismaService).enableShutdownHooks(app);
 
     app.useGlobalFilters(new HttpExceptionFilter());
     app.setGlobalPrefix('api');

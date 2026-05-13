@@ -190,6 +190,7 @@ export default function AdminCountriesPage() {
 				data={filtered}
 				isLoading={isLoading}
 				emptyMessage='No se encontraron países'
+				rowKey={(c) => c.id}
 			/>
 
 			<CountryFormModal

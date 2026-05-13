@@ -25,6 +25,7 @@
     "dev:down": "docker compose down",
     "sync:r2": "npx ts-node scripts/sync-r2-to-seed.ts",
     "build": "npm run build -w front && npm run build -w back",
+    "test": "npm run test -w front && npm run test -w back",
     "db:sync": "npm run prisma:generate -w back && npm run prisma:migrate:deploy -w back",
     "db:sync:seed": "npm run db:sync && npm run prisma:seed -w back",
     "db:seed": "npm run prisma:seed -w back",

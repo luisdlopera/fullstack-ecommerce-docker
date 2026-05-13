@@ -215,3 +215,53 @@ export type InventorySummary = {
 	lowStockCount: number;
 	outOfStockCount: number;
 };
+
+// ─── Warehouse Types ─────────────────────────────────────────────────
+
+export type Warehouse = {
+	id: string;
+	name: string;
+	code: string;
+	location: string | null;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+	inventoryCount: number;
+};
+
+export type WarehouseWithInventory = Warehouse & {
+	recentInventory: Array<{
+		id: string;
+		productId: string;
+		productTitle: string;
+		productSku: string | null;
+		availableQuantity: number;
+		reservedQuantity: number;
+		productImage: string | undefined;
+	}>;
+};
+
+export type TransferInventoryInput = {
+	productId: string;
+	sourceWarehouseId: string;
+	targetWarehouseId: string;
+	quantity: number;
+	note?: string;
+};
+
+export type TransferInventoryResult = {
+	ok: boolean;
+	message: string;
+	sourceWarehouse: {
+		id: string;
+		name: string;
+		code: string;
+		availableQuantity: number;
+	};
+	targetWarehouse: {
+		id: string;
+		name: string;
+		code: string;
+		availableQuantity: number;
+	};
+};

@@ -1,0 +1,239 @@
+# =============================================================================
+# Docker Compose para Producción con Rate Limiting Redis
+# =============================================================================
+# 
+# Este archivo configura el entorno de producción con:
+# - Redis para rate limiting distribuido
+# - Múltiples réplicas del backend (escalabilidad horizontal)
+# - Nginx como reverse proxy y load balancer
+# - Configuración segura de rate limiting
+#
+# Uso:
+#   docker-compose -f docker-compose.prod.yml up -d
+#
+# Variables requeridas en .env:
+#   - RATE_LIMIT_ENABLED=true
+#   - RATE_LIMIT_STORAGE=redis
+#   - TRUST_PROXY_ENABLED=true
+# =============================================================================
+
+services:
+  # PostgreSQL - Base de datos principal
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexstore_db_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexstore_network
+
+  # Redis - Almacenamiento de rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: nexstore_redis_prod
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data_prod:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - nexstore_network
+
+  # Redis Commander - UI para monitorear Redis (opcional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: nexstore_redis_ui
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - '127.0.0.1:8081:8081'
+    depends_on:
+      - redis
+    networks:
+      - nexstore_network
+    profiles:
+      - debug
+
+  # Backend API - Réplica 1
+  back-1:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: nexstore_back_1
+    restart: always
+    environment:
+      # Core
+      NODE_ENV: production
+      PORT: 5007
+      
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      
+      # Redis - Rate Limiting
+      REDIS_URL: redis://redis:6379
+      
+      # Rate Limiting Production Config
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_STORAGE: 'redis'
+      TRUST_PROXY_ENABLED: 'true'
+      
+      # Límites de producción (más estrictos que desarrollo)
+      RATE_LIMIT_GLOBAL_TTL: '60'
+      RATE_LIMIT_GLOBAL_LIMIT: '100'
+      RATE_LIMIT_AUTH_TTL: '300'
+      RATE_LIMIT_AUTH_LIMIT: '5'
+      RATE_LIMIT_REFRESH_TTL: '60'
+      RATE_LIMIT_REFRESH_LIMIT: '10'
+      RATE_LIMIT_PUBLIC_TTL: '60'
+      RATE_LIMIT_PUBLIC_LIMIT: '60'
+      RATE_LIMIT_AUTH_USER_TTL: '60'
+      RATE_LIMIT_AUTH_USER_LIMIT: '200'
+      
+      # Headers y logs
+      RATE_LIMIT_INCLUDE_HEADERS: 'true'
+      RATE_LIMIT_DEBUG_LOGS: 'false'
+      RATE_LIMIT_EXCLUDE_HEALTH: 'true'
+      RATE_LIMIT_EXCLUDE_METRICS: 'true'
+      
+      # Security
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+      
+      # CORS
+      CORS_ORIGIN: ${FRONTEND_ORIGIN}
+      CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN}
+      
+      # Storage
+      STORAGE_PROVIDER: r2
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      STORAGE_REGION: ${STORAGE_REGION:-auto}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:5007/api/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - nexstore_network
+
+  # Backend API - Réplica 2 (para alta disponibilidad)
+  back-2:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: nexstore_back_2
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 5007
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_URL: redis://redis:6379
+      
+      # Misma configuración de rate limiting que back-1
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_STORAGE: 'redis'
+      TRUST_PROXY_ENABLED: 'true'
+      RATE_LIMIT_GLOBAL_TTL: '60'
+      RATE_LIMIT_GLOBAL_LIMIT: '100'
+      RATE_LIMIT_AUTH_TTL: '300'
+      RATE_LIMIT_AUTH_LIMIT: '5'
+      RATE_LIMIT_REFRESH_TTL: '60'
+      RATE_LIMIT_REFRESH_LIMIT: '10'
+      RATE_LIMIT_PUBLIC_TTL: '60'
+      RATE_LIMIT_PUBLIC_LIMIT: '60'
+      RATE_LIMIT_AUTH_USER_TTL: '60'
+      RATE_LIMIT_AUTH_USER_LIMIT: '200'
+      RATE_LIMIT_INCLUDE_HEADERS: 'true'
+      RATE_LIMIT_DEBUG_LOGS: 'false'
+      
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+      CORS_ORIGIN: ${FRONTEND_ORIGIN}
+      CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN}
+      
+      STORAGE_PROVIDER: r2
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      STORAGE_REGION: ${STORAGE_REGION:-auto}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:5007/api/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - nexstore_network
+
+  # Nginx - Reverse Proxy y Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: nexstore_nginx
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - back-1
+      - back-2
+    networks:
+      - nexstore_network
+
+  # Frontend - Next.js
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: nexstore_front_prod
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      INTERNAL_API_URL: http://nginx/api
+    depends_on:
+      - nginx
+    networks:
+      - nexstore_network
+
+volumes:
+  pg_data_prod:
+  redis_data_prod:
+
+networks:
+  nexstore_network:
+    driver: bridge

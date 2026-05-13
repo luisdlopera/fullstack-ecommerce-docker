@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SharedModule } from '../../shared/shared.module';
+import { ContentModule } from '../content/content.module';
 import { PRODUCT_REPOSITORY } from './domain/ports/product-repository.port';
 import { GetFeaturedProductsUseCase } from './application/use-cases/get-featured-products.use-case';
 import { GetProductBySlugUseCase } from './application/use-cases/get-product-by-slug.use-case';
@@ -8,7 +9,6 @@ import { ListCategoriesUseCase } from './application/use-cases/list-categories.u
 import { ListCountriesUseCase } from './application/use-cases/list-countries.use-case';
 import { GetProductFacetsUseCase } from './application/use-cases/get-product-facets.use-case';
 import { ListProductsUseCase } from './application/use-cases/list-products.use-case';
-import { GetHomeBannersUseCase } from '../admin/application/use-cases/get-home-banners.use-case';
 import { CategoriesController } from './infrastructure/http/categories.controller';
 import { CountriesController } from './infrastructure/http/countries.controller';
 import { ProductsController } from './infrastructure/http/products.controller';
@@ -18,7 +18,7 @@ import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service
 import { StorageConfig } from '../../shared/infrastructure/storage/storage.config';
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, ContentModule],
   controllers: [ProductsController, CategoriesController, CountriesController],
   providers: [
     {
@@ -33,7 +33,6 @@ import { StorageConfig } from '../../shared/infrastructure/storage/storage.confi
     GetProductStockBySlugUseCase,
     ListCategoriesUseCase,
     ListCountriesUseCase,
-    GetHomeBannersUseCase,
   ],
 })
 export class ProductsModule {}

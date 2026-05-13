@@ -1,0 +1,16 @@
+export {
+  PRODUCT_REPOSITORY,
+  type ProductRepositoryPort,
+  type ProductListFilters,
+  type ProductListResult,
+  type ProductListItem,
+  type ProductStockRecord,
+  type FeaturedProductRecord,
+  type ProductFacetsResult,
+  type CategoryRecord,
+  type CountryRecord,
+  type ValidateCartItem,
+  type CartValidationResult,
+  type CartValidationError,
+  type ProductImageRecord,
+} from './product-repository.port';

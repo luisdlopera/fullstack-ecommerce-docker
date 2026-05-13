@@ -44,6 +44,7 @@ export class OrdersController {
     return this.createOrderUseCase.execute(user?.sub, dto);
   }
 
+  @Public()
   @Post('validate-cart')
   validateCart(@Body() body: { items: { productId: string; size: string; quantity: number }[] }) {
     if (!body.items || !Array.isArray(body.items)) {

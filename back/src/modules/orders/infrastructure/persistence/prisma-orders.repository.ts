@@ -27,11 +27,19 @@ export class PrismaOrdersRepository implements OrdersRepositoryPort {
     items: { productId: string; size: string; quantity: number }[],
   ): Promise<CartValidationResult> {
     const errors: CartValidationError[] = [];
+    const defaultWarehouseId = process.env.DEFAULT_WAREHOUSE_ID;
+
+    if (!defaultWarehouseId) {
+      throw new Error('DEFAULT_WAREHOUSE_ID is required for cart stock validation');
+    }
 
     for (const item of items) {
-      const inv = await this.prisma.inventory.findFirst({
+      const inv = await this.prisma.inventory.findUnique({
         where: {
-          productId: item.productId,
+          productId_warehouseId: {
+            productId: item.productId,
+            warehouseId: defaultWarehouseId,
+          },
         },
         select: { availableQuantity: true },
       });

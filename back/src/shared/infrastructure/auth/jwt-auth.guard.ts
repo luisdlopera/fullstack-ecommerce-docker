@@ -1,16 +1,18 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import type { JwtPayload } from './jwt-payload';
 import { AuthMessages } from '../../../modules/auth/domain/enums/auth-messages.enum';
-import { authDebugLog } from '../observability/auth-debug';
+import { authDebugLog, authDebugEnabled } from '../observability/auth-debug';
 
 type RequestWithUser = Request & { user?: JwtPayload };
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+
   constructor(
     @Inject(JwtService) private readonly jwtService: JwtService,
     @Inject(Reflector) private readonly reflector: Reflector,
@@ -27,15 +29,15 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
 
     // Debug logging
-    if (process.env.AUTH_DEBUG_LOGS === 'true') {
-      console.log('[AUTH DEBUG] JwtAuthGuard check:', {
+    if (authDebugEnabled()) {
+      this.logger.debug(`JwtAuthGuard check: ${JSON.stringify({
         url: request.url,
         method: request.method,
         isPublic,
         hasAuthHeader: !!authHeader,
         hasToken: !!token,
         origin: request.headers.origin,
-      });
+      })}`);
     }
 
     if (!token) {
@@ -73,12 +75,12 @@ export class JwtAuthGuard implements CanActivate {
         tokenType: payload.type,
       });
 
-      if (process.env.AUTH_DEBUG_LOGS === 'true') {
-        console.log('[AUTH DEBUG] Token valid:', { userId: payload.sub, email: payload.email, role: payload.role });
+      if (authDebugEnabled()) {
+        this.logger.debug(`Token valid: ${JSON.stringify({ userId: payload.sub, email: payload.email, role: payload.role })}`);
       }
 
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       const requestId = (request as { requestId?: string }).requestId;
       authDebugLog('[AUTH-GUARD] invalid token', {
         requestId,
@@ -89,8 +91,9 @@ export class JwtAuthGuard implements CanActivate {
         tokenLength: token.length,
       });
       if (isPublic) return true;
-      if (process.env.AUTH_DEBUG_LOGS === 'true') {
-        console.log('[AUTH DEBUG] Token verification failed:', { error: err?.message });
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      if (authDebugEnabled()) {
+        this.logger.debug(`Token verification failed: ${JSON.stringify({ error: errorMessage })}`);
       }
       throw new UnauthorizedException(AuthMessages.INVALID_TOKEN);
     }

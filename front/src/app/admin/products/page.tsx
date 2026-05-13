@@ -17,7 +17,6 @@ import {
   type AdminProduct,
   type Column,
 } from '@/features/admin';
-import { GENDER_OPTIONS, SIZE_OPTIONS } from '@/config/constants';
 import { useAdminProducts } from './hooks';
 import { ProductFilters } from './components';
 import { ProductFormModal } from './components/ProductFormModal';

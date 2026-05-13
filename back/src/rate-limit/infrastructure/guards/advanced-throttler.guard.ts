@@ -14,19 +14,16 @@ import { RateLimitStorePort, RATE_LIMIT_STORE } from '../../domain/ports/rate-li
 import {
   loadRateLimitConfig,
   RateLimitConfig,
-  RateLimitRule,
 } from '../../domain/rate-limit.config';
-import { extractClientIp, isPrivateIp } from '../utils/ip-extractor.util';
+import { extractClientIp } from '../utils/ip-extractor.util';
 import {
   buildIpKey,
   buildUserKey,
   buildAuthKey,
   buildTenantIpKey,
   isAuthRoute,
-  isAdminRoute,
   isHealthRoute,
   isMetricsRoute,
-  extractRouteKey,
   KeyBuilderOptions,
 } from '../utils/key-builder.util';
 import { RATE_LIMIT_METADATA_KEY, RateLimitMetadata } from '../decorators/rate-limit.decorator';
@@ -118,12 +115,12 @@ export class AdvancedThrottlerGuard implements CanActivate {
     metadata: RateLimitMetadata,
     request: Request,
     response: Response,
-    info: Required<Pick<KeyBuilderOptions, 'ip' | 'user' | 'route' | 'method'>> & { user?: JwtPayload },
+    info: { ip: string; user?: JwtPayload; route: string; method: string },
   ): Promise<boolean> {
     const key = metadata.key || this.buildKeyFromMetadata(metadata, info);
-    const ttl = metadata.ttl;
-    const limit = metadata.limit;
-    
+    const ttl = metadata.ttl ?? 60; // Default 60 seconds
+    const limit = metadata.limit ?? 100; // Default 100 requests
+
     const result = await this.store.checkAndUpdate({
       key,
       ttl,
@@ -182,12 +179,13 @@ export class AdvancedThrottlerGuard implements CanActivate {
   private async checkAuthenticatedUser(
     request: Request,
     response: Response,
-    info: Required<Pick<KeyBuilderOptions, 'userId' | 'route' | 'method'>> & { user: JwtPayload; ip: string },
+    info: { user: JwtPayload; ip: string; route: string; method: string },
   ): Promise<boolean> {
     const key = buildUserKey({
       userId: info.user.sub,
       tenantId: this.extractTenantId(request),
       prefix: 'user',
+      ip: info.ip, // Required by KeyBuilderOptions but not used by buildUserKey
     });
     
     const { ttl, limit } = this.config.authenticated;
@@ -343,6 +341,7 @@ export class AdvancedThrottlerGuard implements CanActivate {
    * Extrae tenantId del request
    * TODO: Implementar resolución real de tenant desde hostname/subdomain
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private extractTenantId(request: Request): string {
     // Por ahora usamos 'default' hasta que se implemente multi-tenant real
     // En el futuro: return request.headers['x-tenant-id'] || request.hostname || 'default';
@@ -379,13 +378,14 @@ export class AdvancedThrottlerGuard implements CanActivate {
    */
   private buildKeyFromMetadata(
     metadata: RateLimitMetadata,
-    info: Required<Pick<KeyBuilderOptions, 'ip' | 'route' | 'method'>> & { user?: JwtPayload },
+    info: { ip: string; route: string; method: string; user?: JwtPayload },
   ): string {
     if (metadata.type === 'user' && info.user) {
       return buildUserKey({
         userId: info.user.sub,
         tenantId: this.extractTenantId({} as Request), // TODO
         prefix: metadata.policy || 'custom',
+        ip: info.ip, // Required by KeyBuilderOptions but not used by buildUserKey
       });
     }
     

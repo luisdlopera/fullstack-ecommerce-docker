@@ -219,6 +219,59 @@ export const countriesApi = {
 	delete: (id: string) => adminFetch<{ ok: boolean }>(`/admin/countries/${id}`, { method: 'DELETE' }),
 };
 
+// ─── Warehouses ───────────────────────────────────────────────────────
+
+export type Warehouse = {
+	id: string;
+	name: string;
+	code: string;
+	location: string | null;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+	inventoryCount: number;
+};
+
+export const warehousesApi = {
+	list: (params?: { page?: number; limit?: number; search?: string; isActive?: boolean }) =>
+		adminFetch<PaginatedResponse<Warehouse>>(`/admin/warehouses${buildQuery(params ?? {})}`),
+
+	getById: (id: string) => adminFetch<Warehouse & { recentInventory: unknown[] }>(`/admin/warehouses/${id}`),
+
+	create: (data: { name: string; code: string; location?: string }) =>
+		adminFetch<Warehouse>('/admin/warehouses', { method: 'POST', body: JSON.stringify(data) }),
+
+	update: (id: string, data: Partial<{ name: string; code: string; location: string; isActive: boolean }>) =>
+		adminFetch<Warehouse>(`/admin/warehouses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+	delete: (id: string) => adminFetch<{ ok: boolean; message: string }>(`/admin/warehouses/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Inventory Transfer ──────────────────────────────────────────────
+
+export type TransferInventoryInput = {
+	productId: string;
+	sourceWarehouseId: string;
+	targetWarehouseId: string;
+	quantity: number;
+	note?: string;
+};
+
+export type TransferInventoryResult = {
+	ok: boolean;
+	message: string;
+	sourceWarehouse: { id: string; name: string; code: string; availableQuantity: number };
+	targetWarehouse: { id: string; name: string; code: string; availableQuantity: number };
+};
+
+export const inventoryTransferApi = {
+	transfer: (data: TransferInventoryInput) =>
+		adminFetch<TransferInventoryResult>('/admin/inventory/transfer', {
+			method: 'POST',
+			body: JSON.stringify(data),
+		}),
+};
+
 // ─── Inventory ───────────────────────────────────────────────────────
 
 export const inventoryApi = {
@@ -256,4 +309,13 @@ export const inventoryApi = {
 	getLowStock: () => adminFetch<InventoryItem[]>('/admin/inventory/alerts/low-stock'),
 
 	getOutOfStock: () => adminFetch<InventoryItem[]>('/admin/inventory/alerts/out-of-stock'),
+
+	deleteItem: (id: string) =>
+		adminFetch<{ ok: boolean; message: string }>(`/admin/inventory/items/${id}`, { method: 'DELETE' }),
+
+	bulkDeleteItems: (ids: string[]) =>
+		adminFetch<{ ok: boolean; deleted: number; message: string }>('/admin/inventory/items/bulk', {
+			method: 'DELETE',
+			body: JSON.stringify({ ids }),
+		}),
 };

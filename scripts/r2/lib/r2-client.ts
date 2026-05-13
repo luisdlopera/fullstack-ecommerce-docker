@@ -112,8 +112,9 @@ export async function objectExists(
       Key: key,
     }));
     return true;
-  } catch (error: any) {
-    if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+  } catch (error: unknown) {
+    const awsError = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+    if (awsError.name === 'NotFound' || awsError.$metadata?.httpStatusCode === 404) {
       return false;
     }
     throw error;

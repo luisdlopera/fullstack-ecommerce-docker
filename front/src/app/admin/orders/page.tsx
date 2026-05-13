@@ -209,12 +209,11 @@ export default function AdminOrdersPage() {
 			<DataTable
 				columns={columns}
 				data={data?.data ?? []}
-				page={page}
-				totalPages={data?.meta.totalPages ?? 1}
-				total={data?.meta.total}
-				onPageChange={setPage}
+				paginationMeta={data?.meta}
+				onPaginationChange={(p) => setPage(p.page)}
 				isLoading={isLoading}
 				emptyMessage='No se encontraron órdenes'
+				rowKey={(o) => o.id}
 			/>
 
 			{detailOrder && (

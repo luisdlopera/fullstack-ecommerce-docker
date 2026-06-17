@@ -24,6 +24,8 @@ export type ClientMeta = {
   userAgent?: string;
 };
 
+const DUMMY_HASH = '$2a$10$vI8aWBnW3fID.ZQ4/zo1G.q1lRps.9cGLcZEiGDMVr5yUP1KUOYTa';
+
 @Injectable()
 export class LoginUseCase {
   constructor(
@@ -51,7 +53,7 @@ export class LoginUseCase {
       if (!user) {
         authDebugLog('[AUTH-BACK] User not found', { email: normalizedEmail });
         // Prevent timing attacks by hashing a static string
-        await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
+        await bcryptjs.compare(input.password, DUMMY_HASH);
         throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
 

@@ -38,18 +38,19 @@ export class LoginUseCase {
       hasMfaCode: Boolean(input.mfaCode),
       clientIp: clientMeta.ip,
       hasUserAgent: Boolean(clientMeta.userAgent),
+        event: 'login_attempt_received'
     });
 
     try {
       const normalizedEmail = this.normalizeEmail(input.email);
-      authDebugLog('[AUTH-BACK] email normalized', { email: normalizedEmail });
+        authDebugLog('[AUTH-BACK] email normalized', { email: normalizedEmail, event: 'email_normalized' });
 
-      authDebugLog('[AUTH-BACK] Looking up user by email...', { email: normalizedEmail });
+        authDebugLog('[AUTH-BACK] Looking up user by email...', { email: normalizedEmail, event: 'user_lookup_start' });
       const user = await this.authRepository.findUserByEmail(normalizedEmail);
-      authDebugLog('[AUTH-BACK] User lookup result', { found: !!user });
+        authDebugLog('[AUTH-BACK] User lookup result', { found: !!user, event: 'user_lookup_end' });
 
       if (!user) {
-        authDebugLog('[AUTH-BACK] User not found', { email: normalizedEmail });
+        authDebugLog('[AUTH-BACK] User not found', { email: normalizedEmail, event: 'user_not_found' });
         // Prevent timing attacks by hashing a static string
         await bcryptjs.compare(input.password, '$2a$12$dummyhashdummyhashdummyhashdummyhashdummyhashdummyha');
         throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
@@ -64,14 +65,15 @@ export class LoginUseCase {
         mfaEnabled: user.mfaEnabled,
         hasPassword: !!user.password,
         passwordLength: user.password?.length,
+        event: 'user_found'
       });
 
-      authDebugLog('[AUTH-BACK] Comparing passwords...', { userId: user.id });
+      authDebugLog('[AUTH-BACK] Comparing passwords...', { userId: user.id, event: 'password_compare_start' });
       const isPasswordValid = await bcryptjs.compare(input.password, user.password);
-      authDebugLog('[AUTH-BACK] Password comparison result', { userId: user.id, ok: isPasswordValid });
+      authDebugLog('[AUTH-BACK] Password comparison result', { userId: user.id, ok: isPasswordValid, event: 'password_compare_end' });
 
       if (!isPasswordValid) {
-        authDebugLog('[AUTH-BACK] Password mismatch', { userId: user.id });
+        authDebugLog('[AUTH-BACK] Password mismatch', { userId: user.id, event: 'password_mismatch' });
         throw new UnauthorizedError(AuthMessages.INVALID_CREDENTIALS);
       }
 
@@ -113,7 +115,7 @@ export class LoginUseCase {
       const familyId = randomUUID();
       authDebugLog('[AUTH-BACK] Generated familyId', { userId: user.id, familyId });
 
-      authDebugLog('[AUTH-BACK] Generating tokens...', { userId: user.id });
+      authDebugLog('[AUTH-BACK] Generating tokens...', { userId: user.id, event: 'token_generation_start' });
       const tokens = await this.tokenService.signTokens({
         sub: user.id,
         email: user.email,
@@ -124,6 +126,8 @@ export class LoginUseCase {
         hasAccessToken: !!tokens.accessToken,
         hasRefreshToken: !!tokens.refreshToken,
         hasRefreshJti: !!tokens.refreshJti,
+        event: 'token_generation_end',
+        accessTokenPayload: tokens.accessToken ? JSON.parse(Buffer.from(tokens.accessToken.split('.')[1], 'base64').toString()) : null
       });
 
       authDebugLog('[AUTH-BACK] Storing refresh token...', { userId: user.id });

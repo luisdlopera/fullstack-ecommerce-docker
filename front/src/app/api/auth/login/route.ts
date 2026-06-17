@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
 				hasUser: Boolean(payload.user),
 				hasAccessToken: Boolean(payload.accessToken),
 				hasRefreshToken: Boolean(payload.refreshToken),
+				errorDetails: 'Missing one or more required fields from backend: user, accessToken, or refreshToken',
 			});
 			return NextResponse.json({ message: 'Invalid auth response' }, { status: 502 });
 		}

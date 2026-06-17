@@ -98,6 +98,7 @@ export class AuthController {
       authDebugLog('[AUTH-BACK] login error', {
         requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
     }
